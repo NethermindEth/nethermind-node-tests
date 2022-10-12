@@ -4,6 +4,8 @@ on:
     types: [opened, edited]
 
 permissions:
+  contents: 'read'
+  id-token: 'write'
   issues: 'write'
 
 jobs:

@@ -1,2 +1,5 @@
 critical:
     - '(critical|urgent)'
+
+devops:
+    - '(Core DevOps)'

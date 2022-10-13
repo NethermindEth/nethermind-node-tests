@@ -17,7 +17,7 @@ namespace SedgeNodeFuzzer.Helpers
 
         private static void DockerCommandExecute(string command)
         {
-            var processInfo = new ProcessStartInfo("docker compose", $"{command}");
+            var processInfo = new ProcessStartInfo("docker", $" compose {command}");
 
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;

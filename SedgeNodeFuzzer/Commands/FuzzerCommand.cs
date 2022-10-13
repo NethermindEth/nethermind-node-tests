@@ -33,29 +33,19 @@ namespace SedgeNodeFuzzer.Commands
                     commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
                     result = commandResult.Result.Content.ReadAsStringAsync().Result;
                 }
-            }
+            }            
 
             int i = 0;
-            if (Count > 0)
+
+            while (Count > 0 ? i < Count : true)
             {
-                while (i < Count)
-                {
-                    DockerCommands.StopDockerContainer("execution");
-                    DockerCommands.StartDockerContainer("execution");
-                    Thread.Sleep(rand.Next(Minimum, Maximum) * 1000);
-                    i++;
-                }
-            }
-            else if (Count == 0)
-            {
-                while (true)
-                {
-                    DockerCommands.StopDockerContainer("execution");
-                    DockerCommands.StartDockerContainer("execution");
-                    Thread.Sleep(rand.Next(Minimum, Maximum) * 1000);
-                    i++;
-                }
-            }
+                Thread.Sleep(rand.Next(Minimum, Maximum) * 1000);
+                DockerCommands.StopDockerContainer("execution");
+                
+                Thread.Sleep(rand.Next(Minimum, Maximum) * 1000);
+                DockerCommands.StartDockerContainer("execution");
+                i++;
+            }            
         }
     }
 }

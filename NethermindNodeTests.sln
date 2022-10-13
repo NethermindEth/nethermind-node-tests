@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32811.315
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NethermindNodeTests", "NethermindNodeTests\NethermindNodeTests.csproj", "{617AEBF3-ABF8-46F4-A2D6-C41F3C48DCEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SedgeNodeFuzzer", "SedgeNodeFuzzer\SedgeNodeFuzzer.csproj", "{5BE88F17-5FEF-47BF-8231-989AC8A81395}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{617AEBF3-ABF8-46F4-A2D6-C41F3C48DCEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{617AEBF3-ABF8-46F4-A2D6-C41F3C48DCEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{617AEBF3-ABF8-46F4-A2D6-C41F3C48DCEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{617AEBF3-ABF8-46F4-A2D6-C41F3C48DCEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BE88F17-5FEF-47BF-8231-989AC8A81395}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BE88F17-5FEF-47BF-8231-989AC8A81395}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BE88F17-5FEF-47BF-8231-989AC8A81395}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BE88F17-5FEF-47BF-8231-989AC8A81395}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {66B017F0-4916-4105-B020-B9AB65865773}
+	EndGlobalSection
+EndGlobal

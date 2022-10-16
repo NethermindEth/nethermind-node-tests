@@ -18,6 +18,7 @@ namespace SedgeNodeFuzzer.Helpers
         public static bool CheckIfDockerContainerIsCreated(string containerName)
         {
             var result = DockerCommandExecute($"ps | grep {containerName}");
+            Console.WriteLine(DateTime.Now + " DOCKER PS " + result);
             return result.Contains(containerName) && result.Contains("running") ? true : false;
         }
 
@@ -39,7 +40,9 @@ namespace SedgeNodeFuzzer.Helpers
                 process.Start();
                 process.WaitForExit(1200000);
                 output = process.StandardOutput.ReadToEnd();
+                Console.WriteLine(DateTime.Now + " DOCKER inside output " + output);
                 error = process.StandardError.ReadToEnd();
+                Console.WriteLine(DateTime.Now + " DOCKER inside error " + error);
                 if (!process.HasExited)
                 {
                     process.Kill();

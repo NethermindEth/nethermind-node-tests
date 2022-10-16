@@ -33,6 +33,7 @@ namespace SedgeNodeFuzzer.Helpers
             processInfo.UseShellExecute = false;
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardError = true;
+            processInfo.WorkingDirectory = "$HOME";
 
             using (var process = new Process())
             {

@@ -39,9 +39,11 @@ namespace SedgeNodeFuzzer.Commands
 
             while (Count > 0 ? i < Count : true)
             {
+                Console.WriteLine(DateTime.Now + ": WAITING BEFORE STOP");
                 Thread.Sleep(rand.Next(Minimum, Maximum) * 1000);
                 DockerCommands.StopDockerContainer("execution");
-                
+
+                Console.WriteLine(DateTime.Now + ": WAITING BEFORE START");
                 Thread.Sleep(rand.Next(Minimum, Maximum) * 1000);
                 DockerCommands.StartDockerContainer("execution");
                 i++;

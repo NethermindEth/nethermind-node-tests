@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace SedgeNodeFuzzer.Helpers
 {
@@ -14,30 +15,40 @@ namespace SedgeNodeFuzzer.Helpers
             DockerCommandExecute("up -d " + containerName);
         }
 
+        public static bool CheckIfDockerContainerIsCreated(string containerName)
+        {
+            var result = DockerCommandExecute($"ps | grep {containerName}");
+            return result.Contains(containerName) && result.Contains("running") ? true : false;
+        }
 
-        private static void DockerCommandExecute(string command)
+
+        private static string DockerCommandExecute(string command)
         {
             var processInfo = new ProcessStartInfo("docker", $" compose {command}");
+            string output = "";
+            string error = "";
 
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardError = true;
 
-            int exitCode;
             using (var process = new Process())
             {
                 process.StartInfo = processInfo;
                 process.Start();
+                output = process.StandardOutput.ReadToEnd();
+                error = process.StandardError.ReadToEnd();
                 process.WaitForExit(1200000);
                 if (!process.HasExited)
                 {
                     process.Kill();
                 }
 
-                exitCode = process.ExitCode;
                 process.Close();
             }
+
+            return output;
         }
     }
 }

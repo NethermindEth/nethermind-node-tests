@@ -1,0 +1,12 @@
+[Unit]
+Description=Fuzzer Application
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+TimeoutStopSec=180
+ExecStart=/root/nethermind-node-tests/SedgeNodeFuzzer/bin/Release/net6.0/SedgeNodeFuzzer fuzzer --fullSync -c 0 --min 100 --max 1500
+
+[Install]
+WantedBy=default.target[Unit]

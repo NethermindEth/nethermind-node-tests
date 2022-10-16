@@ -37,9 +37,9 @@ namespace SedgeNodeFuzzer.Helpers
             {
                 process.StartInfo = processInfo;
                 process.Start();
+                process.WaitForExit(1200000);
                 output = process.StandardOutput.ReadToEnd();
                 error = process.StandardError.ReadToEnd();
-                process.WaitForExit(1200000);
                 if (!process.HasExited)
                 {
                     process.Kill();

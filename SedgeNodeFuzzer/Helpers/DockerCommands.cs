@@ -34,6 +34,7 @@ namespace SedgeNodeFuzzer.Helpers
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardError = true;
             processInfo.WorkingDirectory = "/root";
+            Console.WriteLine(processInfo.FileName + " " + processInfo.Arguments);
 
             using (var process = new Process())
             {

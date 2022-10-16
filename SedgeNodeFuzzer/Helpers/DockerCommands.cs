@@ -17,7 +17,7 @@ namespace SedgeNodeFuzzer.Helpers
 
         public static bool CheckIfDockerContainerIsCreated(string containerName)
         {
-            var result = DockerCommandExecute($"-f /root/docker-compose.yml ps | grep {containerName}");
+            var result = DockerCommandExecute($"ps | grep {containerName}");
             Console.WriteLine(DateTime.Now + " DOCKER PS " + result);
             return result.Contains(containerName) && result.Contains("running") ? true : false;
         }

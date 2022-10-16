@@ -18,7 +18,7 @@ namespace SedgeNodeFuzzer.Helpers
         public static bool CheckIfDockerContainerIsCreated(string containerName)
         {
             var result = DockerCommandExecute("inspect -f '{{.State.Status}}' " + containerName);
-            return result.Contains(containerName) && result.Contains("running") ? true : false;
+            return result.Contains("running") ? true : false;
         }
 
 
@@ -51,7 +51,7 @@ namespace SedgeNodeFuzzer.Helpers
                 process.Close();
             }
 
-            return output;
+            return output + "\n" + error;
         }
     }
 }

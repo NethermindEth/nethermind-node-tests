@@ -17,15 +17,14 @@ namespace SedgeNodeFuzzer.Helpers
 
         public static bool CheckIfDockerContainerIsCreated(string containerName)
         {
-            var result = DockerCommandExecute($"ps | grep {containerName}");
-            Console.WriteLine(DateTime.Now + " DOCKER PS " + result);
+            var result = DockerCommandExecute($"ps");
             return result.Contains(containerName) && result.Contains("running") ? true : false;
         }
 
 
         private static string DockerCommandExecute(string command)
         {
-            var processInfo = new ProcessStartInfo("docker", $"{command}");
+            var processInfo = new ProcessStartInfo("docker", $"compose {command}");
             string output = "";
             string error = "";
 
@@ -34,7 +33,6 @@ namespace SedgeNodeFuzzer.Helpers
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardError = true;
             processInfo.WorkingDirectory = "/root";
-            Console.WriteLine(processInfo.FileName + " " + processInfo.Arguments);
 
             using (var process = new Process())
             {
@@ -42,9 +40,9 @@ namespace SedgeNodeFuzzer.Helpers
                 process.Start();
                 process.WaitForExit(1200000);
                 output = process.StandardOutput.ReadToEnd();
-                Console.WriteLine(DateTime.Now + " DOCKER inside output " + output);
+                Console.WriteLine(DateTime.Now + " DOCKER inside output \n" + output);
                 error = process.StandardError.ReadToEnd();
-                Console.WriteLine(DateTime.Now + " DOCKER inside error " + error);
+                Console.WriteLine(DateTime.Now + " DOCKER inside error \n" + error);
                 if (!process.HasExited)
                 {
                     process.Kill();

@@ -7,24 +7,24 @@ namespace SedgeNodeFuzzer.Helpers
     {
         public static void StopDockerContainer(string containerName)
         {
-            DockerCommandExecute("stop " + containerName);
+            DockerCommandExecute("compose stop " + containerName);
         }
 
         public static void StartDockerContainer(string containerName)
         {
-            DockerCommandExecute("up -d " + containerName);
+            DockerCommandExecute("compose up -d " + containerName);
         }
 
         public static bool CheckIfDockerContainerIsCreated(string containerName)
         {
-            var result = DockerCommandExecute($"ps");
+            var result = DockerCommandExecute($"inspect -f '{{.State.Status}}' " + containerName);
             return result.Contains(containerName) && result.Contains("running") ? true : false;
         }
 
 
         private static string DockerCommandExecute(string command)
         {
-            var processInfo = new ProcessStartInfo("docker", $"compose {command}");
+            var processInfo = new ProcessStartInfo("docker", $"{command}");
             string output = "";
             string error = "";
 

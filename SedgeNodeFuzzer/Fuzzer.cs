@@ -2,7 +2,7 @@
 using SedgeNodeFuzzer.Commands;
 using SedgeNodeFuzzer.Helpers;
 
-while(DockerCommands.CheckIfDockerContainerIsCreated("execution") == false)
+while(DockerCommands.CheckIfDockerContainerIsCreated("execution-client") == false)
 {
     Console.WriteLine(DateTime.Now + ": Waiting for Execution to be started.");
     Thread.Sleep(60000);

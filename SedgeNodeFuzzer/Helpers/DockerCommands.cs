@@ -25,7 +25,7 @@ namespace SedgeNodeFuzzer.Helpers
 
         private static string DockerCommandExecute(string command)
         {
-            var processInfo = new ProcessStartInfo("docker", $" compose {command}");
+            var processInfo = new ProcessStartInfo("docker", $"{command}");
             string output = "";
             string error = "";
 

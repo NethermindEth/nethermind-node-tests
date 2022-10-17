@@ -30,7 +30,7 @@ namespace SedgeNodeFuzzer.Commands
                 while(!result.Contains("false"))
                 {
                     Console.WriteLine(DateTime.Now  + ": STILL SYNCING");
-                    Thread.Sleep(60000);
+                    Thread.Sleep(1000);
                     commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
                     result = commandResult.Result.Content.ReadAsStringAsync().Result;
                 }
@@ -51,6 +51,7 @@ namespace SedgeNodeFuzzer.Commands
                 else
                 {
                     Console.WriteLine(DateTime.Now + ": Killing docker \"execution\"");
+                    DockerCommands.PreventDockerContainerRestart("execution-client");
                     DockerCommands.KillDockerContainer("execution");
                 }
 

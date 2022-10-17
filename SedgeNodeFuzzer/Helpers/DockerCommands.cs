@@ -14,6 +14,11 @@ namespace SedgeNodeFuzzer.Helpers
             DockerCommandExecute("compose kill " + containerName);
         }
 
+        public static void PreventDockerContainerRestart(string containerName)
+        {
+            DockerCommandExecute("update --restart=no " + containerName);
+        }
+
         public static void StartDockerContainer(string containerName)
         {
             DockerCommandExecute("compose up -d " + containerName);

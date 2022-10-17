@@ -9,6 +9,10 @@ namespace SedgeNodeFuzzer.Helpers
         {
             DockerCommandExecute("compose stop " + containerName);
         }
+        public static void KillDockerContainer(string containerName)
+        {
+            DockerCommandExecute("compose kill " + containerName);
+        }
 
         public static void StartDockerContainer(string containerName)
         {

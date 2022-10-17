@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using SedgeNodeFuzzer.Helpers;
+using System;
 
 namespace SedgeNodeFuzzer.Commands
 {
@@ -39,12 +40,23 @@ namespace SedgeNodeFuzzer.Commands
 
             while (Count > 0 ? i < Count : true)
             {
-                Console.WriteLine(DateTime.Now + ": WAITING BEFORE STOP");
-                Thread.Sleep(rand.Next(Minimum, Maximum) * 1000);
-                DockerCommands.StopDockerContainer("execution");
+                int beforeStopWait = rand.Next(Minimum, Maximum) * 1000;
+                Console.WriteLine(DateTime.Now + ": WAITING BEFORE STOP for " + beforeStopWait);
+                Thread.Sleep(beforeStopWait);
+                if (beforeStopWait % 2 == 0)
+                {
+                    Console.WriteLine(DateTime.Now + ": Stopping gracefully docker \"execution\"");
+                    DockerCommands.StopDockerContainer("execution");
+                }
+                else
+                {
+                    Console.WriteLine(DateTime.Now + ": Killing docker \"execution\"");
+                    DockerCommands.KillDockerContainer("execution");
+                }
 
-                Console.WriteLine(DateTime.Now + ": WAITING BEFORE START");
-                Thread.Sleep(rand.Next(Minimum, Maximum) * 1000);
+                int beforeStartWait = rand.Next(Minimum, Maximum) * 1000;
+                Console.WriteLine(DateTime.Now + ": WAITING BEFORE START for " + beforeStartWait);
+                Thread.Sleep(beforeStartWait);
                 DockerCommands.StartDockerContainer("execution");
                 i++;
             }            

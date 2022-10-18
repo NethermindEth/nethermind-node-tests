@@ -47,7 +47,7 @@ namespace SedgeNodeFuzzer.Helpers
             {
                 process.StartInfo = processInfo;
                 process.Start();
-                process.WaitForExit(1200000);
+                process.WaitForExit(30000);
                 output = process.StandardOutput.ReadToEnd();
                 Console.WriteLine(DateTime.Now + " DOCKER inside output \n" + output);
                 error = process.StandardError.ReadToEnd();

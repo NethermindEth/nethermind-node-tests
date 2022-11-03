@@ -7,6 +7,8 @@ namespace SedgeNodeFuzzer.Commands
     [Verb("fuzzer", HelpText = "Execute fuzzing capability on node in various stages")]
     public class FuzzerCommand : ICommand
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
         [Option("fullSync", HelpText = "Wait for fully synced node only.")]
         public bool IsFullySyncedCheck { get; set; }
 
@@ -38,22 +40,22 @@ namespace SedgeNodeFuzzer.Commands
             while (Count > 0 ? i < Count : true)
             {
                 int beforeStopWait = rand.Next(Minimum, Maximum) * 1000;
-                Console.WriteLine(DateTime.Now + ": WAITING BEFORE STOP for: " + beforeStopWait / 1000 + " seconds");
+                Logger.Info("WAITING BEFORE STOP for: " + beforeStopWait / 1000 + " seconds");
                 Thread.Sleep(beforeStopWait);
                 if (beforeStopWait % 2 == 0 && !ShouldForceKillCommand)
                 {
-                    Console.WriteLine(DateTime.Now + ": Stopping gracefully docker \"execution\"");
+                    Logger.Info("Stopping gracefully docker \"execution\"");
                     DockerCommands.StopDockerContainer("execution");
                 }
                 else
                 {
-                    Console.WriteLine(DateTime.Now + ": Killing docker \"execution\"");
+                    Logger.Info("Killing docker \"execution\"");
                     DockerCommands.PreventDockerContainerRestart("execution-client");
                     DockerCommands.KillDockerContainer("execution");
                 }
 
                 int beforeStartWait = rand.Next(Minimum, Maximum) * 1000;
-                Console.WriteLine(DateTime.Now + ": WAITING BEFORE START for: " + beforeStartWait / 1000 + " seconds");
+                Logger.Info("WAITING BEFORE START for: " + beforeStartWait / 1000 + " seconds");
                 Thread.Sleep(beforeStartWait);
                 DockerCommands.StartDockerContainer("execution");
                 i++;
@@ -66,7 +68,7 @@ namespace SedgeNodeFuzzer.Commands
             var result = commandResult.Result.Content.ReadAsStringAsync().Result;
             while (!result.Contains("false"))
             {
-                Console.WriteLine(DateTime.Now + ": STILL SYNCING");
+                Logger.Info("STILL SYNCING");
                 Thread.Sleep(1000);
                 commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
                 result = commandResult.Result.Content.ReadAsStringAsync().Result;

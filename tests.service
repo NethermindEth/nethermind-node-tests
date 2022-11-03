@@ -6,7 +6,9 @@ Type=simple
 Restart=always
 RestartSec=5
 TimeoutStopSec=180
+WorkingDirectory=/root/nethermind-node-tests
 ExecStart=dotnet test NethermindNodeTests.sln
+Environment=DOTNET_CLI_HOME=/tmp/
 
 [Install]
 WantedBy=default.target[Unit]

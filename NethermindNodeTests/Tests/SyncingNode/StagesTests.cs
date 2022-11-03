@@ -31,12 +31,15 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         int MaxWaitTimeForStageToCompleteInMilliseconds = 36 * 60 * 60 * 1000;
 
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
         [TestCase(SyncTypes.SnapSync, Category = "SnapSync")]
         [TestCase(SyncTypes.FastSync, Category = "FastSync")]
         public void VerfiyCorrectnessOfSnapSyncStages(SyncTypes syncType)
         {
             foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
             {
+                Logger.Info("Waiting for stage: " + stage.Stages.ToJoinedString());
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
@@ -54,6 +57,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                     Thread.Sleep(1000);
                 }
                 sw.Stop();
+                Logger.Info("Stage found! " + stage.Stages.ToJoinedString());
             }
         }
 
@@ -64,6 +68,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
             try
             {
                 dynamic output = JsonConvert.DeserializeObject(commandResult.Result.Content.ReadAsStringAsync().Result);
+                Logger.Info("Current stage is: " + output.result.currentStage.ToString());
                 return output.result.currentStage.ToString();
             }
             catch (Exception e)

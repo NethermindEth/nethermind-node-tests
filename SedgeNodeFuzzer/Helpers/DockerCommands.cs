@@ -5,6 +5,7 @@ namespace SedgeNodeFuzzer.Helpers
 {
     public static class DockerCommands
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         public static void StopDockerContainer(string containerName)
         {
             DockerCommandExecute("compose stop " + containerName);
@@ -49,9 +50,9 @@ namespace SedgeNodeFuzzer.Helpers
                 process.Start();
                 process.WaitForExit(30000);
                 output = process.StandardOutput.ReadToEnd();
-                Console.WriteLine(DateTime.Now + " DOCKER inside output \n" + output);
+                Logger.Info("DOCKER inside output \n" + output);
                 error = process.StandardError.ReadToEnd();
-                Console.WriteLine(DateTime.Now + " DOCKER inside error \n" + error);
+                Logger.Info("DOCKER inside error \n" + error);
                 if (!process.HasExited)
                 {
                     process.Kill();

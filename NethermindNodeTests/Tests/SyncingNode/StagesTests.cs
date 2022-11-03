@@ -39,7 +39,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
         {
             foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
             {
-                Logger.Info("Waiting for stage: " + stage.Stages.ToJoinedString());
+                Logger.Info("Waiting stage: " + stage.Stages.ToJoinedString());
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 

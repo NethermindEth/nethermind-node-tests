@@ -3,11 +3,11 @@ Description=Nethermind Node Tests
 
 [Service]
 Type=simple
-Restart=always
+Restart=on-failure
 RestartSec=5
 TimeoutStopSec=180
 WorkingDirectory=/root/nethermind-node-tests
-ExecStart=dotnet test NethermindNodeTests.sln
+ExecStart=dotnet test NethermindNodeTests.sln -c Release --filter CATEGORIES
 Environment=DOTNET_CLI_HOME=/tmp/
 
 [Install]

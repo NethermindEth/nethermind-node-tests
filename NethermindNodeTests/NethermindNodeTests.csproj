@@ -16,4 +16,14 @@
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Tests\FastSync\" />
+    <Folder Include="Tests\SnapSync\" />
+    <Folder Include="Tests\SyncedNode\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SedgeNodeFuzzer\SedgeNodeFuzzer.csproj" />
+  </ItemGroup>
+
 </Project>

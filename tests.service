@@ -1,0 +1,12 @@
+[Unit]
+Description=Nethermind Node Tests
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+TimeoutStopSec=180
+ExecStart=dotnet test NethermindNodeTests.sln
+
+[Install]
+WantedBy=default.target[Unit]

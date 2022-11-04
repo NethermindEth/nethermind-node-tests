@@ -2,13 +2,7 @@
 using NethermindNodeTests.Helpers;
 using Newtonsoft.Json;
 using SedgeNodeFuzzer.Helpers;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NethermindNodeTests.Tests.SyncingNode
 {
@@ -37,6 +31,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
         [TestCase(SyncTypes.FastSync, Category = "FastSync")]
         public void VerfiyCorrectnessOfSnapSyncStages(SyncTypes syncType)
         {
+            Logger.Info("***Starting test: VerfiyCorrectnessOfSnapSyncStages --- syncType: " + syncType.ToString() + "***");
             foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
             {
                 Logger.Info("Waiting stage: " + stage.Stages.ToJoinedString());

@@ -5,7 +5,7 @@ using System;
 namespace SedgeNodeFuzzer.Commands
 {
     [Verb("fuzzer", HelpText = "Execute fuzzing capability on node in various stages")]
-    public class FuzzerCommand : ICommand
+    public class FuzzerCommand : ICommand, IFuzzerCommand
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -24,6 +24,20 @@ namespace SedgeNodeFuzzer.Commands
         [Option("max", Required = false, HelpText = "Maximum wait time in seconds between two loops.", Default = 0)]
         public int Maximum { get; set; }
 
+        public FuzzerCommand()
+        {
+
+        }
+
+        public FuzzerCommand(IFuzzerCommand fuzzerCommandOptions)
+        {
+            IsFullySyncedCheck = fuzzerCommandOptions.IsFullySyncedCheck;
+            ShouldForceKillCommand = fuzzerCommandOptions.ShouldForceKillCommand;
+            Count = fuzzerCommandOptions.Count;
+            Minimum = fuzzerCommandOptions.Minimum;
+            Maximum = fuzzerCommandOptions.Maximum;
+        }
+
         public void Execute()
         {
             VerifyParams();
@@ -34,7 +48,7 @@ namespace SedgeNodeFuzzer.Commands
             {
                 WaitForNodeSynced();
             }
-
+            
             int i = 0;
 
             while (Count > 0 ? i < Count : true)

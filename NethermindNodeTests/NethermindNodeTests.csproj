@@ -26,7 +26,6 @@
   <ItemGroup>
     <Folder Include="Tests\FastSync\" />
     <Folder Include="Tests\SnapSync\" />
-    <Folder Include="Tests\SyncedNode\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -64,7 +64,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private string GetCurrentStage()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("debug_getSynsStage", "http://localhost:8545");
+            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncsStage", "http://localhost:8545");
             try
             {
                 dynamic output = JsonConvert.DeserializeObject(commandResult.Result.Content.ReadAsStringAsync().Result);

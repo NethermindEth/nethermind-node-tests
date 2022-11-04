@@ -1,4 +1,5 @@
 ﻿using NethermindNodeTests.Helpers;
+using SedgeNodeFuzzer.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,12 @@ namespace NethermindNodeTests.Tests.SyncedNode
         [Category("ArchiveSync")]
         public void ShouldRestartNodeMultipleTimesOnSyncedNode(int restartCount, int minimumWait, int maximumWait)
         {
+            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client") == false)
+            {
+                Logger.Info("Waiting for Execution to be started.");
+                Thread.Sleep(5000);
+            }
+
             Logger.Info("***Starting test: ShouldRestartNodeMultipleTimesOnSyncedNode***");
             FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait });
         }

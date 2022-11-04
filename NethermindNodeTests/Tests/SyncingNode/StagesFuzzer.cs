@@ -17,6 +17,12 @@ namespace NethermindNodeTests.Tests.SyncingNode
         [Category("ArchiveSync")]
         public void ShouldKillNodeOnAllPossibleStages()
         {
+            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client") == false)
+            {
+                Logger.Info("Waiting for Execution to be started.");
+                Thread.Sleep(5000);
+            }
+
             Logger.Info("***Starting test: ShouldKillNodeOnAllPossibleStages***");
             while (IsFullySynced())
             {

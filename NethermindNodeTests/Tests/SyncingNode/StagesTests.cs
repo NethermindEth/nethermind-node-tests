@@ -70,6 +70,8 @@ namespace NethermindNodeTests.Tests.SyncingNode
             }
             catch (Exception e)
             {
+                Logger.Error(e.Message);
+                Logger.Error(e.InnerException?.Message);
                 if (e.Message.Contains("No connection could be made because the target machine actively refused it."))
                     return "WaitingForConnection";
                 else

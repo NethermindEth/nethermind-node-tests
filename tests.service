@@ -7,10 +7,10 @@ Restart=on-failure
 RestartSec=5
 TimeoutStopSec=180
 WorkingDirectory=/root/nethermind-node-tests
-ExecStart=dotnet test NethermindNodeTests.sln -c Release --logger:"nunit;LogFilePath=test-result.xml" --filter CATEGORIES
+ExecStart=dotnet test NethermindNodeTests.sln -c Release --logger:"nunit;LogFilePath=/root/test-result.xml" --filter CATEGORIES
 Environment=DOTNET_CLI_HOME=/tmp/
-StandardOutput=append:/root/log/testsOutput.log
-StandardError=append:/root/log/testsErrors.log
+StandardOutput=file:/root/testsOutput.log
+StandardError=file:/root/testsErrors.log
 
 [Install]
 WantedBy=default.target[Unit]

@@ -38,7 +38,8 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                while (stage.ShouldOccureAlone ? GetCurrentStage() != stage.Stages.ToJoinedString() : !GetCurrentStage().Contains(stage.Stages.ToJoinedString()))
+                var currentStage = GetCurrentStage();
+                while (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString()))
                 {
                     if (sw.ElapsedMilliseconds > MaxWaitTimeForStageToCompleteInMilliseconds)
                     {
@@ -46,10 +47,11 @@ namespace NethermindNodeTests.Tests.SyncingNode
                         throw new AssertionException(
                             "Timout while waiting for stage to complete." + " \n" +
                             "Expected stage to be next: " + stage + " \n" +
-                            "Current stage is: " + GetCurrentStage()
+                            "Current stage is: " + currentStage
                             );
                     }
                     Thread.Sleep(1000);
+                    currentStage = GetCurrentStage();
                 }
                 sw.Stop();
                 Logger.Info("Stage found! " + stage.Stages.ToJoinedString());
@@ -59,9 +61,9 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private string GetCurrentStage()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncsStage", "http://localhost:8545");
             try
             {
+                var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncsStage", "http://localhost:8545");
                 dynamic output = JsonConvert.DeserializeObject(commandResult.Result.Content.ReadAsStringAsync().Result);
                 Logger.Info("Current stage is: " + output.result.currentStage.ToString());
                 return output.result.currentStage.ToString();
@@ -70,8 +72,9 @@ namespace NethermindNodeTests.Tests.SyncingNode
             {
                 if (e.Message.Contains("No connection could be made because the target machine actively refused it."))
                     return "WaitingForConnection";
+                else
+                    throw e;
             }
-            return string.Empty;
         }
     }
 }

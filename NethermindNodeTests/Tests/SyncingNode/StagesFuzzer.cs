@@ -4,7 +4,7 @@ using SedgeNodeFuzzer.Helpers;
 
 namespace NethermindNodeTests.Tests.SyncingNode
 {
-    
+
     public class StagesFuzzer
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
@@ -39,9 +39,9 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private string GetCurrentStage()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncsStage", "http://localhost:8545");
             try
             {
+                var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncsStage", "http://localhost:8545");
                 dynamic output = JsonConvert.DeserializeObject(commandResult.Result.Content.ReadAsStringAsync().Result);
                 Logger.Info("Current stage is: " + output.result.currentStage.ToString());
                 return output.result.currentStage.ToString();
@@ -50,15 +50,26 @@ namespace NethermindNodeTests.Tests.SyncingNode
             {
                 if (e.Message.Contains("No connection could be made because the target machine actively refused it."))
                     return "WaitingForConnection";
+                else
+                    throw e;
             }
-            return string.Empty;
         }
 
         private bool IsFullySynced()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
-            var result = commandResult.Result.Content.ReadAsStringAsync().Result;
-            return result.Contains("false");
+            try
+            {
+                var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
+                var result = commandResult.Result.Content.ReadAsStringAsync().Result;
+                return result.Contains("false");
+            }
+            catch (Exception e)
+            {
+                if (e.Message.Contains("No connection could be made because the target machine actively refused it."))
+                    return false;
+                else
+                    throw e;
+            }
         }
     }
 }

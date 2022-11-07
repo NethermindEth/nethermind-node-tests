@@ -1,4 +1,5 @@
 ﻿using NethermindNodeTests.Helpers;
+using NUnit.Framework;
 using SedgeNodeFuzzer.Helpers;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace NethermindNodeTests.Tests.SyncedNode
         {
             while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client") == false)
             {
-                Logger.Info("Waiting for Execution to be started.");
+                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting for Execution to be started.");
                 Thread.Sleep(5000);
             }
 

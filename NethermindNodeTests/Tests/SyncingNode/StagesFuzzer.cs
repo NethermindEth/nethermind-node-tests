@@ -19,7 +19,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
         {
             while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client") == false)
             {
-                Logger.Info("Waiting for Execution to be started.");
+                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting for Execution to be started.");
                 Thread.Sleep(5000);
             }
 
@@ -30,11 +30,11 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 if (!_stagesFound.Contains(currentStage))
                 {
                     _stagesFound.Add(currentStage);
-                    Logger.Info("Fuzzing at stage: " + currentStage);
+                    Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Fuzzing at stage: " + currentStage);
                     FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true });
                 }
             }
-            Logger.Info("Node is synced so test passed correctly");
+            Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Node is synced so test passed correctly");
         }
 
         private string GetCurrentStage()
@@ -43,7 +43,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
             {
                 var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545");
                 dynamic output = JsonConvert.DeserializeObject(commandResult.Result.Content.ReadAsStringAsync().Result);
-                Logger.Info("Current stage is: " + output.result.currentStage.ToString());
+                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output.result.currentStage.ToString());
                 return output.result.currentStage.ToString();
             }
             catch (Exception e)

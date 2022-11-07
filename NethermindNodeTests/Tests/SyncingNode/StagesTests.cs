@@ -34,7 +34,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
             Logger.Info("***Starting test: VerfiyCorrectnessOfSnapSyncStages --- syncType: " + syncType.ToString() + "***");
             foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
             {
-                Logger.Info("Waiting stage: " + stage.Stages.ToJoinedString());
+                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting stage: " + stage.Stages.ToJoinedString());
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
@@ -54,7 +54,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                     currentStage = GetCurrentStage();
                 }
                 sw.Stop();
-                Logger.Info("Stage found! " + stage.Stages.ToJoinedString());
+                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Stage found! " + stage.Stages.ToJoinedString());
             }
         }
 
@@ -65,7 +65,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
             {
                 var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545");
                 dynamic output = JsonConvert.DeserializeObject(commandResult.Result.Content.ReadAsStringAsync().Result);
-                Logger.Info("Current stage is: " + output.result.currentStage.ToString());
+                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output.result.currentStage.ToString());
                 return output.result.currentStage.ToString();
             }
             catch (Exception e)

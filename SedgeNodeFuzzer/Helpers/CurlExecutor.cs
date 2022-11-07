@@ -26,11 +26,18 @@ namespace SedgeNodeFuzzer.Helpers
                 response = await client.PostAsync(url, data);
                 return response;
             }
-            catch (IOException e)
+            catch (AggregateException e)
             {
-                Logger.Error(e.Message);
-                Logger.Error(e.StackTrace);
-                return null;
+                if (e.InnerException is HttpRequestException)
+                {
+                    if (e.InnerException is IOException)
+                    {
+                        Logger.Error(e.Message);
+                        Logger.Error(e.StackTrace);
+                        return null;
+                    }
+                }
+                throw e;
             }
         }
     }

@@ -50,9 +50,12 @@ namespace SedgeNodeFuzzer.Helpers
                 process.Start();
                 process.WaitForExit(30000);
                 output = process.StandardOutput.ReadToEnd();
-                Logger.Info("DOCKER inside output \n" + output);
                 error = process.StandardError.ReadToEnd();
-                Logger.Info("DOCKER inside error \n" + error);
+                if (Logger.IsTraceEnabled)
+                {
+                    Logger.Trace("DOCKER inside output \n" + output);
+                    Logger.Trace("DOCKER inside error \n" + error);
+                }
                 if (!process.HasExited)
                 {
                     process.Kill();

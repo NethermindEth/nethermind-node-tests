@@ -7,15 +7,31 @@ namespace SedgeNodeFuzzer.Helpers
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public async static Task<HttpResponseMessage> ExecuteCommand(string command, string url)
+        public async static Task<string?> ExecuteCommand(string command, string url)
         {
-            var client = new HttpClient();
             if (Logger.IsTraceEnabled)
                 Logger.Trace("Executing command: " + command);
             var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
-            var response = await client.PostAsync(url, data);
+            var response = await TryPostAsync(url, data);
+                     
+            return response?.Content.ReadAsStringAsync().Result;
+        }
 
-            return response;
+        private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data)
+        {
+            var client = new HttpClient();
+            HttpResponseMessage response;
+            try
+            {
+                response = await client.PostAsync(url, data);
+                return response;
+            }
+            catch (IOException e)
+            {
+                Logger.Error(e.Message);
+                Logger.Error(e.StackTrace);
+                return null;
+            }
         }
     }
 }

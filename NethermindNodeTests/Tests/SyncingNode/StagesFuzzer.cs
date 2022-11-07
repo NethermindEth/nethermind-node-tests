@@ -39,41 +39,17 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private string GetCurrentStage()
         {
-            try
-            {
-                var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545");
-                dynamic output = JsonConvert.DeserializeObject(commandResult.Result.Content.ReadAsStringAsync().Result);
-                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output.result.currentStage.ToString());
-                return output.result.currentStage.ToString();
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e.Message);
-                Logger.Error(e.InnerException?.Message);
-                if (e.Message.Contains("No connection could be made because the target machine actively refused it."))
-                    return "WaitingForConnection";
-                else
-                    throw e;
-            }
+            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545");
+            dynamic output = commandResult == null ? "WaitingForConnection" : JsonConvert.DeserializeObject(commandResult.Result);
+            Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output.result.currentStage.ToString());
+            return output.result.currentStage.ToString();
         }
 
         private bool IsFullySynced()
         {
-            try
-            {
-                var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
-                var result = commandResult.Result.Content.ReadAsStringAsync().Result;
-                return result.Contains("false");
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e.Message);
-                Logger.Error(e.InnerException?.Message);
-                if (e.Message.Contains("No connection could be made because the target machine actively refused it."))
-                    return false;
-                else
-                    throw e;
-            }
+            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
+            var result = commandResult.Result;
+            return result == null ? false : result.Contains("false");
         }
     }
 }

@@ -78,15 +78,18 @@ namespace SedgeNodeFuzzer.Commands
 
         private void WaitForNodeSynced()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
-            var result = commandResult.Result.Content.ReadAsStringAsync().Result;
-            while (!result.Contains("false"))
+            while (!IsFullySynced())
             {
                 Logger.Info("STILL SYNCING");
                 Thread.Sleep(1000);
-                commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
-                result = commandResult.Result.Content.ReadAsStringAsync().Result;
             }
+        }
+
+        private bool IsFullySynced()
+        {
+            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
+            var result = commandResult.Result;
+            return result == null ? false : result.Contains("false");
         }
 
         private void VerifyParams()

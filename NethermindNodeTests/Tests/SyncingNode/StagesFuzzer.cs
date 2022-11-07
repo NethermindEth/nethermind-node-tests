@@ -24,7 +24,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
             }
 
             Logger.Info("***Starting test: ShouldKillNodeOnAllPossibleStages***");
-            while (IsFullySynced())
+            while (!IsFullySynced())
             {
                 var currentStage = GetCurrentStage();
                 if (!_stagesFound.Contains(currentStage))

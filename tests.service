@@ -4,7 +4,7 @@ Description=Nethermind Node Tests
 [Service]
 Type=simple
 Restart=on-failure
-RestartSec=5
+RestartSec=30
 TimeoutStopSec=180
 WorkingDirectory=/root/nethermind-node-tests
 ExecStart=dotnet test NethermindNodeTests.sln -c Release --logger:"nunit;LogFilePath=/root/test-result.xml" --filter CATEGORIES

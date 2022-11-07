@@ -40,7 +40,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
         private string GetCurrentStage()
         {
             var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545");
-            dynamic output = commandResult == null ? "WaitingForConnection" : JsonConvert.DeserializeObject(commandResult.Result);
+            dynamic output = commandResult.Result == null ? "WaitingForConnection" : JsonConvert.DeserializeObject(commandResult.Result);
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output.result.currentStage.ToString());
             return output.result.currentStage.ToString();
         }

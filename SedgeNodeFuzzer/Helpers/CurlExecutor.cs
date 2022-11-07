@@ -13,7 +13,7 @@ namespace SedgeNodeFuzzer.Helpers
                 Logger.Trace("Executing command: " + command);
             var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
             var response = await TryPostAsync(url, data);
-                     
+
             return response?.Content.ReadAsStringAsync().Result;
         }
 
@@ -26,16 +26,13 @@ namespace SedgeNodeFuzzer.Helpers
                 response = await client.PostAsync(url, data);
                 return response;
             }
-            catch (AggregateException e)
+            catch (HttpRequestException e)
             {
-                if (e.InnerException is HttpRequestException)
+                if (e.InnerException is IOException)
                 {
-                    if (e.InnerException is IOException)
-                    {
-                        Logger.Error(e.Message);
-                        Logger.Error(e.StackTrace);
-                        return null;
-                    }
+                    Logger.Error(e.Message);
+                    Logger.Error(e.StackTrace);
+                    return null;
                 }
                 throw e;
             }

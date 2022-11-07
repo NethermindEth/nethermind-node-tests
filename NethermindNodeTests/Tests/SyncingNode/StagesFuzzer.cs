@@ -33,6 +33,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                     Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Fuzzing at stage: " + currentStage);
                     FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true });
                 }
+                Thread.Sleep(1000);
             }
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Node is synced so test passed correctly");
         }

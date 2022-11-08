@@ -30,8 +30,11 @@ namespace SedgeNodeFuzzer.Helpers
             {
                 if (e.InnerException is IOException)
                 {
-                    Logger.Error(e.Message);
-                    Logger.Error(e.StackTrace);
+                    if (Logger.IsTraceEnabled)
+                    {
+                        Logger.Trace(e.Message);
+                        Logger.Trace(e.StackTrace);
+                    }
                     return null;
                 }
                 throw e;

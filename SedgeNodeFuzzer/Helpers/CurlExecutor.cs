@@ -1,4 +1,5 @@
 ﻿using NLog;
+using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -39,7 +40,7 @@ namespace SedgeNodeFuzzer.Helpers
                     return null;
                 }
 
-                if (e.InnerException is WebSocketException && e.InnerException.Message.Contains("Connection refused"))
+                if (e.InnerException is SocketException && e.InnerException.Message.Contains("Connection refused"))
                 {
                     if (Logger.IsTraceEnabled)
                     {

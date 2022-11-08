@@ -1,4 +1,5 @@
 ﻿using NLog;
+using System.Net.WebSockets;
 using System.Text;
 
 namespace SedgeNodeFuzzer.Helpers
@@ -28,7 +29,17 @@ namespace SedgeNodeFuzzer.Helpers
             }
             catch (HttpRequestException e)
             {
-                if (e.InnerException is IOException)
+                if (e.InnerException is IOException && e.InnerException.Message.Contains("prematurely"))
+                {
+                    if (Logger.IsTraceEnabled)
+                    {
+                        Logger.Trace(e.Message);
+                        Logger.Trace(e.StackTrace);
+                    }
+                    return null;
+                }
+
+                if (e.InnerException is WebSocketException && e.InnerException.Message.Contains("Connection refused"))
                 {
                     if (Logger.IsTraceEnabled)
                     {

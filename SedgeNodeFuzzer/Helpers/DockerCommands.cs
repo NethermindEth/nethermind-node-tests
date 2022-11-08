@@ -59,6 +59,13 @@ namespace SedgeNodeFuzzer.Helpers
                         Logger.Trace("DOCKER inside output \n" + output);
                         Logger.Trace("DOCKER inside error \n" + error);
                     }
+                    if (!process.HasExited)
+                    {
+                        process.Kill();
+                    }
+
+                    process.Close();
+
                 }
                 catch (Win32Exception e)
                 {
@@ -66,15 +73,6 @@ namespace SedgeNodeFuzzer.Helpers
                     {
                         return "";
                     }
-                }
-                finally
-                {
-                    if (!process.HasExited)
-                    {
-                        process.Kill();
-                    }
-
-                    process.Close();
                 }
             }
 

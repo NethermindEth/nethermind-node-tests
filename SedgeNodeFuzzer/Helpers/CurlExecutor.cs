@@ -1,17 +1,62 @@
-﻿using System.Text;
+﻿using NLog;
+using System.Net.Sockets;
+using System.Net.WebSockets;
+using System.Text;
 
 namespace SedgeNodeFuzzer.Helpers
 {
     public static class CurlExecutor
     {
-        public async static Task<HttpResponseMessage> ExecuteCommand(string command, string url)
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+        public async static Task<string?> ExecuteCommand(string command, string url)
+        {
+            if (Logger.IsTraceEnabled)
+                Logger.Trace("Executing command: " + command);
+            var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
+            var response = await TryPostAsync(url, data);
+
+            return response?.Content.ReadAsStringAsync().Result;
+        }
+
+        private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data)
         {
             var client = new HttpClient();
+            HttpResponseMessage response;
+            try
+            {
+                response = await client.PostAsync(url, data);
+                return response;
+            }
+            //TODO: some better way to catch those exceptions which are result of not started node (we want to have tests that are able to wait properly until node is deployed)
+            catch (HttpRequestException e)
+            {
+                if (e.InnerException is IOException &&
+                        (
+                        e.InnerException.Message.Contains("Connection reset by peer") ||
+                        e.InnerException.Message.Contains("premature")
+                        )
+                    )
+                {
+                    if (Logger.IsTraceEnabled)
+                    {
+                        Logger.Trace(e.Message);
+                        Logger.Trace(e.StackTrace);
+                    }
+                    return null;
+                }
 
-            var data = new StringContent("{\"method\":\"eth_syncing\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}", Encoding.UTF8, "application/json");
-            var response = await client.PostAsync(url, data);
-
-            return response;
+                if (e.InnerException is SocketException && e.InnerException.Message.Contains("Connection refused"))
+                {
+                    if (Logger.IsTraceEnabled)
+                    {
+                        Logger.Trace(e.Message);
+                        Logger.Trace(e.StackTrace);
+                    }
+                    return null;
+                }
+                throw e;
+            }
         }
     }
 }

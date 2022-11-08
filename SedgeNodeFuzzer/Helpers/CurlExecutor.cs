@@ -28,9 +28,15 @@ namespace SedgeNodeFuzzer.Helpers
                 response = await client.PostAsync(url, data);
                 return response;
             }
+            //TODO: some better way to catch those exceptions which are result of not started node (we want to have tests that are able to wait properly until node is deployed)
             catch (HttpRequestException e)
             {
-                if (e.InnerException is IOException && e.InnerException.Message.Contains("prematurely"))
+                if (e.InnerException is IOException &&
+                        (
+                        e.InnerException.Message.Contains("Connection reset by peer") ||
+                        e.InnerException.Message.Contains("premature")
+                        )
+                    )
                 {
                     if (Logger.IsTraceEnabled)
                     {

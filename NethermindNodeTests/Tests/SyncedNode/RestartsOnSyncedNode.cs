@@ -22,13 +22,14 @@ namespace NethermindNodeTests.Tests.SyncedNode
         [Category("ArchiveSync")]
         public void ShouldRestartNodeMultipleTimesOnSyncedNode(int restartCount, int minimumWait, int maximumWait)
         {
+            Logger.Info("***Starting test: ShouldRestartNodeMultipleTimesOnSyncedNode***");
+
             while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client") == false)
             {
                 Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting for Execution to be started.");
                 Thread.Sleep(5000);
             }
-
-            Logger.Info("***Starting test: ShouldRestartNodeMultipleTimesOnSyncedNode***");
+            
             FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait });
         }
     }

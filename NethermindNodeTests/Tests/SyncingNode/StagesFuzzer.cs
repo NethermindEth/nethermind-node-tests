@@ -4,7 +4,8 @@ using SedgeNodeFuzzer.Helpers;
 
 namespace NethermindNodeTests.Tests.SyncingNode
 {
-
+    [TestFixture]
+    [Parallelizable(ParallelScope.All)]
     public class StagesFuzzer
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();

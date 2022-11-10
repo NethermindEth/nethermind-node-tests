@@ -7,7 +7,7 @@ namespace SedgeNodeFuzzer.Commands
     [Verb("fuzzer", HelpText = "Execute fuzzing capability on node in various stages")]
     public class FuzzerCommand : ICommand, IFuzzerCommand
     {
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+        private static NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
         [Option("fullSync", HelpText = "Wait for fully synced node only.")]
         public bool IsFullySyncedCheck { get; set; }
@@ -29,13 +29,15 @@ namespace SedgeNodeFuzzer.Commands
 
         }
 
-        public FuzzerCommand(IFuzzerCommand fuzzerCommandOptions)
+        public FuzzerCommand(IFuzzerCommand fuzzerCommandOptions, NLog.Logger logger)
         {
             IsFullySyncedCheck = fuzzerCommandOptions.IsFullySyncedCheck;
             ShouldForceKillCommand = fuzzerCommandOptions.ShouldForceKillCommand;
             Count = fuzzerCommandOptions.Count;
             Minimum = fuzzerCommandOptions.Minimum;
             Maximum = fuzzerCommandOptions.Maximum;
+
+            Logger = logger;
         }
 
         public void Execute()
@@ -59,19 +61,19 @@ namespace SedgeNodeFuzzer.Commands
                 if (beforeStopWait % 2 == 0 && !ShouldForceKillCommand)
                 {
                     Logger.Info("Stopping gracefully docker \"execution\"");
-                    DockerCommands.StopDockerContainer("execution");
+                    DockerCommands.StopDockerContainer("execution", Logger);
                 }
                 else
                 {
                     Logger.Info("Killing docker \"execution\"");
-                    DockerCommands.PreventDockerContainerRestart("execution-client");
-                    DockerCommands.KillDockerContainer("execution");
+                    DockerCommands.PreventDockerContainerRestart("execution-client", Logger);
+                    DockerCommands.KillDockerContainer("execution", Logger);
                 }
 
                 int beforeStartWait = rand.Next(Minimum, Maximum) * 1000;
                 Logger.Info("WAITING BEFORE START for: " + beforeStartWait / 1000 + " seconds");
                 Thread.Sleep(beforeStartWait);
-                DockerCommands.StartDockerContainer("execution");
+                DockerCommands.StartDockerContainer("execution", Logger);
                 i++;
             }
         }
@@ -87,7 +89,7 @@ namespace SedgeNodeFuzzer.Commands
 
         private bool IsFullySynced()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
+            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545", Logger);
             var result = commandResult.Result;
             return result == null ? false : result.Contains("false");
         }

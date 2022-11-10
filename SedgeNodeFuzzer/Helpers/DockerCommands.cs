@@ -6,34 +6,33 @@ namespace SedgeNodeFuzzer.Helpers
 {
     public static class DockerCommands
     {
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-        public static void StopDockerContainer(string containerName)
+        public static void StopDockerContainer(string containerName, NLog.Logger logger)
         {
-            DockerCommandExecute("compose stop " + containerName);
+            DockerCommandExecute("compose stop " + containerName, logger);
         }
 
-        public static void KillDockerContainer(string containerName)
+        public static void KillDockerContainer(string containerName, NLog.Logger logger)
         {
-            DockerCommandExecute("compose kill " + containerName);
+            DockerCommandExecute("compose kill " + containerName, logger);
         }
 
-        public static void PreventDockerContainerRestart(string containerName)
+        public static void PreventDockerContainerRestart(string containerName, NLog.Logger logger)
         {
-            DockerCommandExecute("update --restart=no " + containerName);
+            DockerCommandExecute("update --restart=no " + containerName, logger);
         }
 
-        public static void StartDockerContainer(string containerName)
+        public static void StartDockerContainer(string containerName, NLog.Logger logger)
         {
-            DockerCommandExecute("compose up -d " + containerName);
+            DockerCommandExecute("compose up -d " + containerName, logger);
         }
 
-        public static bool CheckIfDockerContainerIsCreated(string containerName)
+        public static bool CheckIfDockerContainerIsCreated(string containerName, NLog.Logger logger)
         {
-            var result = DockerCommandExecute("inspect -f '{{.State.Status}}' " + containerName);
+            var result = DockerCommandExecute("inspect -f '{{.State.Status}}' " + containerName, logger);
             return result.Contains("running") ? true : false;
         }
 
-        private static string DockerCommandExecute(string command)
+        private static string DockerCommandExecute(string command, NLog.Logger logger)
         {
             var processInfo = new ProcessStartInfo("docker", $"{command}");
             string output = "";
@@ -54,10 +53,10 @@ namespace SedgeNodeFuzzer.Helpers
                     process.WaitForExit(30000);
                     output = process.StandardOutput.ReadToEnd();
                     error = process.StandardError.ReadToEnd();
-                    if (Logger.IsTraceEnabled)
+                    if (logger.IsTraceEnabled)
                     {
-                        Logger.Trace("DOCKER inside output \n" + output);
-                        Logger.Trace("DOCKER inside error \n" + error);
+                        logger.Trace("DOCKER inside output \n" + output);
+                        logger.Trace("DOCKER inside error \n" + error);
                     }
                     if (!process.HasExited)
                     {

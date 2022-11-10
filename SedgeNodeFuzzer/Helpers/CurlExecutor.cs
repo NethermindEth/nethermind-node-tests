@@ -7,19 +7,17 @@ namespace SedgeNodeFuzzer.Helpers
 {
     public static class CurlExecutor
     {
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
-        public async static Task<string?> ExecuteCommand(string command, string url)
+        public async static Task<string?> ExecuteCommand(string command, string url, NLog.Logger logger)
         {
-            if (Logger.IsTraceEnabled)
-                Logger.Trace("Executing command: " + command);
+            if (logger.IsTraceEnabled)
+                logger.Trace("Executing command: " + command);
             var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
-            var response = await TryPostAsync(url, data);
+            var response = await TryPostAsync(url, data, logger);
 
             return response?.Content.ReadAsStringAsync().Result;
         }
 
-        private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data)
+        private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data, NLog.Logger logger)
         {
             var client = new HttpClient();
             HttpResponseMessage response;
@@ -38,20 +36,20 @@ namespace SedgeNodeFuzzer.Helpers
                         )
                     )
                 {
-                    if (Logger.IsTraceEnabled)
+                    if (logger.IsTraceEnabled)
                     {
-                        Logger.Trace(e.Message);
-                        Logger.Trace(e.StackTrace);
+                        logger.Trace(e.Message);
+                        logger.Trace(e.StackTrace);
                     }
                     return null;
                 }
 
                 if (e.InnerException is SocketException && e.InnerException.Message.Contains("Connection refused"))
                 {
-                    if (Logger.IsTraceEnabled)
+                    if (logger.IsTraceEnabled)
                     {
-                        Logger.Trace(e.Message);
-                        Logger.Trace(e.StackTrace);
+                        logger.Trace(e.Message);
+                        logger.Trace(e.StackTrace);
                     }
                     return null;
                 }

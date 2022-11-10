@@ -12,9 +12,9 @@ namespace NethermindNodeTests.Helpers
 {
     public static class FuzzerHelper
     {
-        public static void Fuzz(FuzzerCommandOptions fuzzerCommandOptions)
+        public static void Fuzz(FuzzerCommandOptions fuzzerCommandOptions, NLog.Logger logger)
         {
-            FuzzerCommand fuzzer = new FuzzerCommand(fuzzerCommandOptions);
+            FuzzerCommand fuzzer = new FuzzerCommand(fuzzerCommandOptions, logger);
             fuzzer.Execute();
         }
     }

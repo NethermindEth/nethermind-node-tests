@@ -4,7 +4,7 @@ using SedgeNodeFuzzer.Helpers;
 
 NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client") == false)
+while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
 {
     Logger.Info("Waiting for Execution to be started.");
     Thread.Sleep(5000);

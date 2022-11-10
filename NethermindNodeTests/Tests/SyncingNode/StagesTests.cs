@@ -25,7 +25,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         int MaxWaitTimeForStageToCompleteInMilliseconds = 36 * 60 * 60 * 1000;
 
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
         [TestCase(SyncTypes.SnapSync, Category = "SnapSync")]
         [TestCase(SyncTypes.FastSync, Category = "FastSync")]
@@ -61,7 +61,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private string GetCurrentStage()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545");
+            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545", Logger);
             string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
             return output;

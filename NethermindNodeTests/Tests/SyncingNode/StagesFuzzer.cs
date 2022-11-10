@@ -8,7 +8,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
     [Parallelizable(ParallelScope.All)]
     public class StagesFuzzer
     {
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
         private List<string> _stagesFound = new List<string>();
 
         [Test]
@@ -20,7 +20,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
         {
             Logger.Info("***Starting test: ShouldKillNodeOnAllPossibleStages***");
 
-            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client") == false)
+            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
             {
                 Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting for Execution to be started.");
                 Thread.Sleep(5000);
@@ -28,11 +28,11 @@ namespace NethermindNodeTests.Tests.SyncingNode
             while (!IsFullySynced())
             {
                 var currentStage = GetCurrentStage();
-                if (!_stagesFound.Contains(currentStage))
+                if (!_stagesFound.Contains(currentStage) && currentStage != "WaitingForConnection")
                 {
                     _stagesFound.Add(currentStage);
                     Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Fuzzing at stage: " + currentStage);
-                    FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true });
+                    FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true }, Logger);
                 }
                 Thread.Sleep(1000);
             }
@@ -41,7 +41,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private string GetCurrentStage()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545");
+            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545", Logger);
             string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
             return output;
@@ -49,7 +49,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private bool IsFullySynced()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545");
+            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545", Logger);
             var result = commandResult.Result;
             return result == null ? false : result.Contains("false");
         }

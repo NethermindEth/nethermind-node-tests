@@ -102,7 +102,7 @@ namespace NethermindNodeTests.Tests.SnapSync
                 {
                     writer.WriteLine($"{startDateTime},{nethermindImage},{consensusClient},{monitoringStage.Stage},{monitoringStage.StartTime}, {monitoringStage.EndTime},{monitoringStage.Total}");
 
-                    if (network?.ToLower() == "mainnet")
+                    if (network?.ToLower() == "sepolia")
                     {
                         //Send all data to Notion
                         NotionHelper notionHelper = new NotionHelper();

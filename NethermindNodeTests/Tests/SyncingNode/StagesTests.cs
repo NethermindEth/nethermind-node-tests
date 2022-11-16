@@ -8,7 +8,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 {
     [TestFixture]
     [Parallelizable(ParallelScope.All)]
-    public class StagesTests
+    public class StagesTests : BaseTest
     {
         List<Stage> correctOrderOfStages = new List<Stage>()
             {
@@ -61,7 +61,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private string GetCurrentStage()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545", Logger);
+            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", Logger);
             string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
             return output;

@@ -7,7 +7,7 @@ namespace SedgeNodeFuzzer.Helpers
 {
     public static class CurlExecutor
     {
-        public async static Task<string?> ExecuteCommand(string command, string url, NLog.Logger logger)
+        public async static Task<string?> ExecuteNethermindJsonRpcCommand(string command, string url, NLog.Logger logger)
         {
             if (logger.IsTraceEnabled)
                 logger.Trace("Executing command: " + command);

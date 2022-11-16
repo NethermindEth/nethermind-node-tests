@@ -6,7 +6,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 {
     [TestFixture]
     [Parallelizable(ParallelScope.All)]
-    public class StagesFuzzer
+    public class StagesFuzzer : BaseTest
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
         private List<string> _stagesFound = new List<string>();
@@ -41,7 +41,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private string GetCurrentStage()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("debug_getSyncStage", "http://localhost:8545", Logger);
+            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", Logger);
             string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
             return output;
@@ -49,7 +49,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         private bool IsFullySynced()
         {
-            var commandResult = CurlExecutor.ExecuteCommand("eth_syncing", "http://localhost:8545", Logger);
+            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "http://localhost:8545", Logger);
             var result = commandResult.Result;
             return result == null ? false : result.Contains("false");
         }

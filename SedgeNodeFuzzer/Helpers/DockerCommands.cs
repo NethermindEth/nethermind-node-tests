@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -30,6 +31,18 @@ namespace SedgeNodeFuzzer.Helpers
         {
             var result = DockerCommandExecute("inspect -f '{{.State.Status}}' " + containerName, logger);
             return result.Contains("running") ? true : false;
+        }
+
+        public static string GetImageName(string containerName, NLog.Logger logger)
+        {
+            var result = DockerCommandExecute("inspect -f '{{.Config.image}}' " + containerName, logger);
+            return result;
+        }
+
+        public static string GetDockerDetails(string containerName, string dataToFetch, Logger logger)
+        {
+            var result = DockerCommandExecute("inspect -f '{{" + dataToFetch + "}}' " + containerName, logger);
+            return result;
         }
 
         private static string DockerCommandExecute(string command, NLog.Logger logger)

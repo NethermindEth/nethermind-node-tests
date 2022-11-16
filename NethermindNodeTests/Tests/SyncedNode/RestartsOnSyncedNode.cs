@@ -11,7 +11,7 @@ namespace NethermindNodeTests.Tests.SyncedNode
 {
     [TestFixture]
     [Parallelizable(ParallelScope.All)]
-    public class RestartsOnSyncedNode
+    public class RestartsOnSyncedNode : BaseTest
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 

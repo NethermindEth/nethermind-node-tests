@@ -75,6 +75,7 @@ namespace NethermindNodeTests.Tests.SnapSync
                         monitoringStage.EndTime = DateTime.UtcNow;
                     }
                 }
+                Thread.Sleep(1000);
             }
             var endDateTime = DateTime.UtcNow;
             sw.Stop();

@@ -7,7 +7,7 @@ namespace SedgeNodeFuzzer.Helpers
 {
     public static class CurlExecutor
     {
-        public async static Task<string?> ExecuteCommand(string command, string url, NLog.Logger logger)
+        public async static Task<string?> ExecuteNethermindJsonRpcCommand(string command, string url, NLog.Logger logger)
         {
             if (logger.IsTraceEnabled)
                 logger.Trace("Executing command: " + command);
@@ -44,7 +44,13 @@ namespace SedgeNodeFuzzer.Helpers
                     return null;
                 }
 
-                if (e.InnerException is SocketException && e.InnerException.Message.Contains("Connection refused"))
+                if (e.InnerException is SocketException && 
+                    (
+                        e.InnerException.Message.Contains("Connection refused") ||
+                        e.InnerException.Message.Contains("Network is unreachable") ||
+                        e.InnerException.Message.Contains("Cannot assign requested address")
+                    )
+                )
                 {
                     if (logger.IsTraceEnabled)
                     {

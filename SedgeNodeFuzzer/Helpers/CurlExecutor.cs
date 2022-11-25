@@ -44,7 +44,13 @@ namespace SedgeNodeFuzzer.Helpers
                     return null;
                 }
 
-                if (e.InnerException is SocketException && e.InnerException.Message.Contains("Connection refused"))
+                if (e.InnerException is SocketException && 
+                    (
+                        e.InnerException.Message.Contains("Connection refused") ||
+                        e.InnerException.Message.Contains("Network is unreachable") ||
+                        e.InnerException.Message.Contains("Cannot assign requested address")
+                    )
+                )
                 {
                     if (logger.IsTraceEnabled)
                     {

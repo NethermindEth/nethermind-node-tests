@@ -13,7 +13,7 @@ namespace NethermindNodeTests.Tests.Resyncs
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
         [TestCase(10)]
-        [Category("PerfMonitoring")]
+        [Category("Resyncs")]
         public void ShouldResyncAfterFullSync(int repeatCount)
         {
             Logger.Info($"***Starting test: ShouldResyncAfterFullSync --- repeatCount: {repeatCount}***");

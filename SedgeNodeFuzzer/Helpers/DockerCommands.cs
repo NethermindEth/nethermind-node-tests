@@ -27,10 +27,15 @@ namespace SedgeNodeFuzzer.Helpers
             DockerCommandExecute("compose up -d " + containerName, logger);
         }
 
-        public static bool CheckIfDockerContainerIsCreated(string containerName, NLog.Logger logger)
+        public static string GetDockerContainerStatus(string containerName, NLog.Logger logger)
         {
             var result = DockerCommandExecute("inspect -f '{{.State.Status}}' " + containerName, logger);
-            return result.Contains("running") ? true : false;
+            return result;
+        }
+
+        public static bool CheckIfDockerContainerIsCreated(string containerName, NLog.Logger logger)
+        {
+            return GetDockerContainerStatus(containerName, logger).Contains("running") ? true : false;
         }
 
         public static string GetImageName(string containerName, NLog.Logger logger)

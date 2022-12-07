@@ -23,14 +23,14 @@ namespace NethermindNodeTests.Tests.Resyncs
                 while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
                 {
                     Logger.Info("Waiting for Execution to be started.");
-                    Thread.Sleep(5000);
+                    Thread.Sleep(30000);
                 }
 
                 //Waiting for Full Sync
                 while (!IsFullySynced())
                 {
                     Logger.Info("Waiting for node to be fully synced.");
-                    Thread.Sleep(5000);
+                    Thread.Sleep(30000);
                 }
 
                 //Stopping and clearing EL
@@ -38,11 +38,12 @@ namespace NethermindNodeTests.Tests.Resyncs
                 while (!DockerCommands.GetDockerContainerStatus("execution-client", Logger).Contains("exited"))
                 {
                     Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
-                    Thread.Sleep(5000);
+                    Thread.Sleep(30000);
                 }
                 CommandExecutor.RemoveDirectory("/root/execution-client/nethermind_db", Logger);
 
                 //Restarting Node - freshSync
+                Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
                 DockerCommands.StartDockerContainer("execution", Logger);
             }
         }

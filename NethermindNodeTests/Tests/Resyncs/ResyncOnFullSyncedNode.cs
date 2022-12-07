@@ -40,7 +40,7 @@ namespace NethermindNodeTests.Tests.Resyncs
                     Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
                     Thread.Sleep(30000);
                 }
-                CommandExecutor.RemoveDirectory("/root/execution-client/nethermind_db", Logger);
+                CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
 
                 //Restarting Node - freshSync
                 Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");

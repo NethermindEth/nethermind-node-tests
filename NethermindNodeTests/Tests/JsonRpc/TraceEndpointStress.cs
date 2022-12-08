@@ -44,11 +44,11 @@ namespace NethermindNodeTests.Tests.JsonRpc
                 using (FileStream fs = File.Create(fileName))
                 {
                     // Add some text to file    
-                    Byte[] averageByte =                new UTF8Encoding(true).GetBytes("Average: " + average);
-                    Byte[] totalRequestsExecuted =      new UTF8Encoding(true).GetBytes("Requests executed: " + repeatCount);
-                    Byte[] totalRequestsSucceededByte = new UTF8Encoding(true).GetBytes("Requests Succeeded: " + totalRequestsSucceeded);
-                    Byte[] minByte =                    new UTF8Encoding(true).GetBytes("Minimum: " + min);
-                    Byte[] maxByte =                    new UTF8Encoding(true).GetBytes("Maximum: " + max);
+                    Byte[] averageByte =                new UTF8Encoding(true).GetBytes("Average: " + average + "\n");
+                    Byte[] totalRequestsExecuted =      new UTF8Encoding(true).GetBytes("Requests executed: " + repeatCount + "\n");
+                    Byte[] totalRequestsSucceededByte = new UTF8Encoding(true).GetBytes("Requests Succeeded: " + totalRequestsSucceeded + "\n");
+                    Byte[] minByte =                    new UTF8Encoding(true).GetBytes("Minimum: " + min + "\n");
+                    Byte[] maxByte =                    new UTF8Encoding(true).GetBytes("Maximum: " + max + "\n");
                     fs.Write(averageByte, 0, averageByte.Length);
                     fs.Write(totalRequestsExecuted, 0, totalRequestsExecuted.Length);
                     fs.Write(totalRequestsSucceededByte, 0, totalRequestsSucceededByte.Length);

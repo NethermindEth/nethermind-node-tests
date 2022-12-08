@@ -13,7 +13,7 @@ namespace NethermindNodeTests.Tests.JsonRpc
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-        [TestCase(10)]
+        [TestCase(1000)]
         [Category("JsonRpc")]
         public async Task TraceBlock(int repeatCount)
         {

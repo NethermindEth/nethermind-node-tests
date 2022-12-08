@@ -50,7 +50,7 @@ namespace NethermindNodeTests.Tests.Resyncs
 
         private bool IsFullySynced()
         {
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "http://localhost:8545", Logger);
+            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", Logger);
             var result = commandResult.Result;
             return result == null ? false : result.Contains("false");
         }

@@ -1,4 +1,6 @@
 ﻿using NLog;
+using System;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
@@ -7,14 +9,44 @@ namespace SedgeNodeFuzzer.Helpers
 {
     public static class CurlExecutor
     {
-        public async static Task<string?> ExecuteNethermindJsonRpcCommand(string command, string url, NLog.Logger logger)
+        public async static Task<Tuple<HttpResponseMessage, TimeSpan, bool>> ExecuteBenchmarkedNethermindJsonRpcCommand(string command, string parameters, string url, NLog.Logger logger)
         {
             if (logger.IsTraceEnabled)
                 logger.Trace("Executing command: " + command);
-            var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
+            var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
+            var response = await PostHttpWithTimingInfo(url, data, logger);
+
+            return response;
+        }
+
+        public async static Task<string?> ExecuteNethermindJsonRpcCommand(string command, string parameters, string url, NLog.Logger logger)
+        {
+            if (logger.IsTraceEnabled)
+                logger.Trace("Executing command: " + command);
+            var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
             var response = await TryPostAsync(url, data, logger);
 
             return response?.Content.ReadAsStringAsync().Result;
+        }
+
+        private async static Task<Tuple<HttpResponseMessage, TimeSpan, bool>> PostHttpWithTimingInfo(string url, StringContent? data, NLog.Logger logger)
+        {
+            var stopWatch = Stopwatch.StartNew();
+            using (var client = new HttpClient())
+            {
+                bool isSuccess = false;
+                HttpResponseMessage result = new HttpResponseMessage();
+                try
+                {
+                    result = await client.PostAsync(url, data);
+                    isSuccess = true;
+                }
+                catch
+                {
+                    //Can be skipped for now - just to see if request failed
+                }
+                return new Tuple<HttpResponseMessage, TimeSpan, bool>(result, stopWatch.Elapsed, isSuccess);
+            }
         }
 
         private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data, NLog.Logger logger)

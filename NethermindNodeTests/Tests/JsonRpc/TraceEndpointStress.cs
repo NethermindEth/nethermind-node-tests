@@ -26,10 +26,10 @@ namespace NethermindNodeTests.Tests.JsonRpc
                 {
                     var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
                     //Test result
-                    var isVerifiedPositively = VerifyResponse(result.Item1);
+                    var isVerifiedPositively = VerifyResponse(result.Result.Item1);
 
-                    if (result.Item3 /* && testing succeeded */)
-                        executionTimes.Add(result.Item2);
+                    if (result.Result.Item3 /* && testing succeeded */)
+                        executionTimes.Add(result.Result.Item2);
                 });
 
             Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");

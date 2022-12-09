@@ -57,6 +57,7 @@ namespace NethermindNodeTests.Tests.JsonRpc
 
         private object VerifyResponse(HttpResponseMessage item1)
         {
+            return null;
             //throw new NotImplementedException();
         }
     }

@@ -15,7 +15,7 @@ namespace SedgeNodeFuzzer.Helpers
                 logger.Trace("Executing command: " + command);
             var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
             var response = await PostHttpWithTimingInfo(url, data, logger);
-            logger.Info(response.Item1.Content.ReadAsStringAsync());
+            logger.Info(response.Item1.Content.ReadAsStringAsync().Result);
 
             return response;
         }

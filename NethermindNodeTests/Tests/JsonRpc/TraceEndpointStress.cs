@@ -43,7 +43,7 @@ namespace NethermindNodeTests.Tests.JsonRpc
             var min = executionTimes.Min(x => x.Milliseconds);
             var max = executionTimes.Max(x => x.Milliseconds);
 
-            string fileName = "TraceBlockPerformance.txt";
+            string fileName = $"TraceBlockPerformance_{repeatCount}_{parallelizableLevel}.txt";
 
             try
             {
@@ -57,11 +57,13 @@ namespace NethermindNodeTests.Tests.JsonRpc
                 using (FileStream fs = File.Create(fileName))
                 {
                     // Add some text to file    
+                    Byte[] levelOfParralelizm = new UTF8Encoding(true).GetBytes("Level of Parralelizm: " + parallelizableLevel + "\n");
                     Byte[] averageByte = new UTF8Encoding(true).GetBytes("Average: " + average + "\n");
                     Byte[] totalRequestsExecuted = new UTF8Encoding(true).GetBytes("Requests executed: " + repeatCount + "\n");
                     Byte[] totalRequestsSucceededByte = new UTF8Encoding(true).GetBytes("Requests Succeeded: " + totalRequestsSucceeded + "\n");
                     Byte[] minByte = new UTF8Encoding(true).GetBytes("Minimum: " + min + "\n");
                     Byte[] maxByte = new UTF8Encoding(true).GetBytes("Maximum: " + max + "\n");
+                    fs.Write(levelOfParralelizm, 0, levelOfParralelizm.Length);
                     fs.Write(averageByte, 0, averageByte.Length);
                     fs.Write(totalRequestsExecuted, 0, totalRequestsExecuted.Length);
                     fs.Write(totalRequestsSucceededByte, 0, totalRequestsSucceededByte.Length);

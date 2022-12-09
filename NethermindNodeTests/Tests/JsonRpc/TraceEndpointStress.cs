@@ -1,4 +1,6 @@
-﻿using SedgeNodeFuzzer.Helpers;
+﻿using NethermindNodeTests.CustomObjects;
+using Newtonsoft.Json;
+using SedgeNodeFuzzer.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,38 +45,21 @@ namespace NethermindNodeTests.Tests.JsonRpc
             var min = executionTimes.Min(x => x.Milliseconds);
             var max = executionTimes.Max(x => x.Milliseconds);
 
-            string fileName = $"TraceBlockPerformance_{repeatCount}_{parallelizableLevel}.txt";
+            string fileName = $"TraceBlockPerformance_{repeatCount}_{parallelizableLevel}.json";
 
-            try
+            BenchmarkedJsonRpcEndpoint result = new BenchmarkedJsonRpcEndpoint()
             {
-                // Check if file already exists. If yes, delete it.     
-                if (File.Exists(fileName))
-                {
-                    File.Delete(fileName);
-                }
+                EndpointName = "trace_block",
+                LevelOfParralelizm = parallelizableLevel,
+                AverageTimeInMs = average,
+                TotalRequestsExecuted = repeatCount,
+                TotalRequestsSucceeded = totalRequestsSucceeded,
+                MinimumTimeOfExecution = min,
+                MaximumTimeOfExecution = max
+            };
 
-                // Create a new file     
-                using (FileStream fs = File.Create(fileName))
-                {
-                    // Add some text to file    
-                    Byte[] levelOfParralelizm = new UTF8Encoding(true).GetBytes("Level of Parralelizm: " + parallelizableLevel + "\n");
-                    Byte[] averageByte = new UTF8Encoding(true).GetBytes("Average: " + average + "\n");
-                    Byte[] totalRequestsExecuted = new UTF8Encoding(true).GetBytes("Requests executed: " + repeatCount + "\n");
-                    Byte[] totalRequestsSucceededByte = new UTF8Encoding(true).GetBytes("Requests Succeeded: " + totalRequestsSucceeded + "\n");
-                    Byte[] minByte = new UTF8Encoding(true).GetBytes("Minimum: " + min + "\n");
-                    Byte[] maxByte = new UTF8Encoding(true).GetBytes("Maximum: " + max + "\n");
-                    fs.Write(levelOfParralelizm, 0, levelOfParralelizm.Length);
-                    fs.Write(averageByte, 0, averageByte.Length);
-                    fs.Write(totalRequestsExecuted, 0, totalRequestsExecuted.Length);
-                    fs.Write(totalRequestsSucceededByte, 0, totalRequestsSucceededByte.Length);
-                    fs.Write(minByte, 0, minByte.Length);
-                    fs.Write(maxByte, 0, maxByte.Length);
-                }
-            }
-            catch (Exception Ex)
-            {
-                Console.WriteLine(Ex.ToString());
-            }
+            var serializedJson = JsonConvert.SerializeObject(result);
+            File.WriteAllText(fileName, serializedJson, Encoding.UTF8);
         }
     }
 }

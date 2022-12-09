@@ -1,4 +1,5 @@
-﻿using NethermindNodeTests.Enums;
+﻿using NethermindNodeTests.CustomObjects;
+using NethermindNodeTests.Enums;
 using NethermindNodeTests.Helpers;
 using Newtonsoft.Json;
 using SedgeNodeFuzzer.Helpers;

@@ -32,6 +32,7 @@ namespace NethermindNodeTests.Tests.JsonRpc
                     if (result.Item3 /* && testing succeeded */)
                         executionTimes.Add(result.Item2);
                 });
+            Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");
 
             var average = executionTimes.Average(x => x.Milliseconds);
             var totalRequestsSucceeded = executionTimes.Count();

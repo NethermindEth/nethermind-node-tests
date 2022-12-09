@@ -11,10 +11,10 @@ namespace NethermindNodeTests.Tests.JsonRpc
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-        [TestCase(1000, 1)]
-        [TestCase(1000, 5)]
-        [TestCase(1000, 10)]
-        [Category("JsonRpc")]
+        [TestCase(1, 1, Category = "JsonRpc")]
+        [TestCase(1000, 1, Category = "JsonRpcBenchmark")]
+        [TestCase(1000, 5, Category = "JsonRpcBenchmark")]
+        [TestCase(1000, 10, Category = "JsonRpcBenchmark")]
         public async Task TraceBlock(int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();

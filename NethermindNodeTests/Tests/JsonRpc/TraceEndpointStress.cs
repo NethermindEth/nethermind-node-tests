@@ -19,9 +19,8 @@ namespace NethermindNodeTests.Tests.JsonRpc
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
 
-            var loop = Parallel.For(
-                0,
-                repeatCount,
+            Parallel.ForEach(
+                Enumerable.Range(0, repeatCount),
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 async (task) =>
                 {
@@ -32,10 +31,6 @@ namespace NethermindNodeTests.Tests.JsonRpc
                     if (result.Item3 /* && testing succeeded */)
                         executionTimes.Add(result.Item2);
                 });
-            while(loop.IsCompleted)
-            {
-                Thread.Sleep(1000);
-            }
 
             Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");
 

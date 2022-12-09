@@ -13,17 +13,30 @@ namespace NethermindNodeTests.Tests.JsonRpc
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-        [TestCase(10000)]
+        [TestCase(1000, 1)]
+        [TestCase(1000, 5)]
+        [TestCase(1000, 10)]
         [Category("JsonRpc")]
-        public async Task TraceBlock(int repeatCount)
+        public async Task TraceBlock(int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
-            for (int i = 0; i < repeatCount; i++)
-            {
-                var result = await CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
-                if (result.Item3)
-                    executionTimes.Add(result.Item2);
-            }
+            //for (int i = 0; i < repeatCount; i++)
+            //{
+            //    var result = await CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
+            //    if (result.Item3)
+            //        executionTimes.Add(result.Item2);
+            //}
+
+            Parallel.For(
+                0,
+                repeatCount,
+                new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
+                async (task) =>
+                {
+                    var result = await CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
+                    if (result.Item3)
+                        executionTimes.Add(result.Item2);
+                });
 
             var average = executionTimes.Average(x => x.Milliseconds);
             var totalRequestsSucceeded = executionTimes.Count();
@@ -44,11 +57,11 @@ namespace NethermindNodeTests.Tests.JsonRpc
                 using (FileStream fs = File.Create(fileName))
                 {
                     // Add some text to file    
-                    Byte[] averageByte =                new UTF8Encoding(true).GetBytes("Average: " + average + "\n");
-                    Byte[] totalRequestsExecuted =      new UTF8Encoding(true).GetBytes("Requests executed: " + repeatCount + "\n");
+                    Byte[] averageByte = new UTF8Encoding(true).GetBytes("Average: " + average + "\n");
+                    Byte[] totalRequestsExecuted = new UTF8Encoding(true).GetBytes("Requests executed: " + repeatCount + "\n");
                     Byte[] totalRequestsSucceededByte = new UTF8Encoding(true).GetBytes("Requests Succeeded: " + totalRequestsSucceeded + "\n");
-                    Byte[] minByte =                    new UTF8Encoding(true).GetBytes("Minimum: " + min + "\n");
-                    Byte[] maxByte =                    new UTF8Encoding(true).GetBytes("Maximum: " + max + "\n");
+                    Byte[] minByte = new UTF8Encoding(true).GetBytes("Minimum: " + min + "\n");
+                    Byte[] maxByte = new UTF8Encoding(true).GetBytes("Maximum: " + max + "\n");
                     fs.Write(averageByte, 0, averageByte.Length);
                     fs.Write(totalRequestsExecuted, 0, totalRequestsExecuted.Length);
                     fs.Write(totalRequestsSucceededByte, 0, totalRequestsSucceededByte.Length);

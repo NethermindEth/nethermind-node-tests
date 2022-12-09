@@ -6,7 +6,7 @@ using System.Text;
 namespace NethermindNodeTests.Tests.JsonRpc
 {
     [TestFixture]
-    [Parallelizable(ParallelScope.All)]
+    [Parallelizable(ParallelScope.None)]
     public class TraceEndpointStress : BaseTest
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);

@@ -18,12 +18,6 @@ namespace NethermindNodeTests.Tests.JsonRpc
         public async Task TraceBlock(int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
-            //for (int i = 0; i < repeatCount; i++)
-            //{
-            //    var result = await CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
-            //    if (result.Item3)
-            //        executionTimes.Add(result.Item2);
-            //}
 
             Parallel.For(
                 0,
@@ -32,7 +26,10 @@ namespace NethermindNodeTests.Tests.JsonRpc
                 async (task) =>
                 {
                     var result = await CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
-                    if (result.Item3)
+                    //Test result
+                    var isVerifiedPositively = VerifyResponse(result.Item1);
+
+                    if (result.Item3 /* && testing succeeded */)
                         executionTimes.Add(result.Item2);
                 });
 
@@ -56,6 +53,11 @@ namespace NethermindNodeTests.Tests.JsonRpc
 
             var serializedJson = JsonConvert.SerializeObject(result);
             File.WriteAllText(fileName, serializedJson, Encoding.UTF8);
+        }
+
+        private object VerifyResponse(HttpResponseMessage item1)
+        {
+            //throw new NotImplementedException();
         }
     }
 }

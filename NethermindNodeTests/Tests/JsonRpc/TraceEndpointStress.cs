@@ -28,9 +28,9 @@ namespace NethermindNodeTests.Tests.JsonRpc
                 {
                     var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
                     //Test result
-                    var isVerifiedPositively = VerifyResponse(result.Result.Item1);
+                    bool isVerifiedPositively = VerifyResponse(result.Result.Item1);
 
-                    if (result.Result.Item3 /* && testing succeeded */)
+                    if (result.Result.Item3 && isVerifiedPositively)
                         executionTimes.Add(result.Result.Item2);
                 });
 

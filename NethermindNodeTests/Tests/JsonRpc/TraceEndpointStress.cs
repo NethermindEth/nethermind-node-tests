@@ -32,6 +32,8 @@ namespace NethermindNodeTests.Tests.JsonRpc
 
                     if (result.Result.Item3 && isVerifiedPositively)
                         executionTimes.Add(result.Result.Item2);
+                    else
+                        Logger.Info(result.Result.Item1.Content.ReadAsStringAsync().Result);
                 });
 
             Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");

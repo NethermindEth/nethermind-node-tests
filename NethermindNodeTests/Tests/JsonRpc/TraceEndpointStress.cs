@@ -1,4 +1,6 @@
-﻿using NethermindNodeTests.CustomObjects;
+﻿using CommandLine;
+using NethermindNodeTests.CustomObjects;
+using NethermindNodeTests.RpcResponses;
 using Newtonsoft.Json;
 using SedgeNodeFuzzer.Helpers;
 using System.Text;
@@ -56,10 +58,20 @@ namespace NethermindNodeTests.Tests.JsonRpc
             File.WriteAllText(fileName, serializedJson, Encoding.UTF8);
         }
 
-        private object VerifyResponse(HttpResponseMessage item1)
+        private bool VerifyResponse(HttpResponseMessage result)
         {
-            return null;
-            //throw new NotImplementedException();
+            try
+            {
+                TraceBlock parsed = JsonConvert.DeserializeObject<TraceBlock>(result.Content.ReadAsStringAsync().Result);
+                if (parsed == null)
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

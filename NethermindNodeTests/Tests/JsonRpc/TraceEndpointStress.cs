@@ -8,7 +8,7 @@ using System.Text;
 namespace NethermindNodeTests.Tests.JsonRpc
 {
     [TestFixture]
-    [Parallelizable(ParallelScope.None)]
+    [Parallelizable(ParallelScope.All)]
     public class TraceEndpointStress : BaseTest
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
@@ -16,7 +16,7 @@ namespace NethermindNodeTests.Tests.JsonRpc
         [TestCase(1, 1, Category = "JsonRpc")]
         //[TestCase(1000, 1, Category = "JsonRpcBenchmark")]
         //[TestCase(100, 5, Category = "JsonRpcBenchmark")]
-        [TestCase(10000, 10, Category = "JsonRpcBenchmark")]
+        [TestCase(100000, 50, Category = "JsonRpcBenchmark")]
         public async Task TraceBlock(int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -33,7 +33,7 @@ namespace NethermindNodeTests.Tests.JsonRpc
                     if (result.Result.Item3 && isVerifiedPositively)
                         executionTimes.Add(result.Result.Item2);
                     else
-                        Logger.Info(result.Result.Item1.Content.ReadAsStringAsync().Result);
+                        Logger.Error(result.Result.Item1);
                 });
 
             Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");
@@ -60,11 +60,11 @@ namespace NethermindNodeTests.Tests.JsonRpc
             File.WriteAllText(fileName, serializedJson, Encoding.UTF8);
         }
 
-        private bool VerifyResponse(HttpResponseMessage result)
+        private bool VerifyResponse(string result)
         {
             try
             {
-                TraceBlock parsed = JsonConvert.DeserializeObject<TraceBlock>(result.Content.ReadAsStringAsync().Result);
+                TraceBlock parsed = JsonConvert.DeserializeObject<TraceBlock>(result);
                 if (parsed == null)
                     return false;
             }

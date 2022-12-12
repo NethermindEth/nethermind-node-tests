@@ -9,7 +9,7 @@ namespace SedgeNodeFuzzer.Helpers
 {
     public static class CurlExecutor
     {
-        public async static Task<Tuple<HttpResponseMessage, TimeSpan, bool>> ExecuteBenchmarkedNethermindJsonRpcCommand(string command, string parameters, string url, NLog.Logger logger)
+        public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBenchmarkedNethermindJsonRpcCommand(string command, string parameters, string url, NLog.Logger logger)
         {
             if (logger.IsTraceEnabled)
                 logger.Trace("Executing command: " + command);
@@ -29,12 +29,13 @@ namespace SedgeNodeFuzzer.Helpers
             return response?.Content.ReadAsStringAsync().Result;
         }
 
-        private async static Task<Tuple<HttpResponseMessage, TimeSpan, bool>> PostHttpWithTimingInfo(string url, StringContent? data, NLog.Logger logger)
+        private async static Task<Tuple<string, TimeSpan, bool>> PostHttpWithTimingInfo(string url, StringContent? data, NLog.Logger logger)
         {
             var stopWatch = Stopwatch.StartNew();
             using (var client = new HttpClient())
             {
                 bool isSuccess = false;
+                string responseString = "";
                 HttpResponseMessage result = new HttpResponseMessage();
                 try
                 {
@@ -45,7 +46,14 @@ namespace SedgeNodeFuzzer.Helpers
                 {
                     //Can be skipped for now - just to see if request failed
                 }
-                return new Tuple<HttpResponseMessage, TimeSpan, bool>(result, stopWatch.Elapsed, isSuccess);
+                if (result.IsSuccessStatusCode)
+                {
+                    var responseContent = result.Content;
+
+                    // by calling .Result you are synchronously reading the result
+                    responseString = responseContent.ReadAsStringAsync().Result;
+                }
+                return new Tuple<string, TimeSpan, bool>(responseString, stopWatch.Elapsed, isSuccess);
             }
         }
 

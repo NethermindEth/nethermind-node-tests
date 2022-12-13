@@ -8,15 +8,15 @@ using System.Text;
 namespace NethermindNodeTests.Tests.JsonRpc
 {
     [TestFixture]
-    [Parallelizable(ParallelScope.All)]
+    [Parallelizable(ParallelScope.None)]
     public class TraceEndpointStress : BaseTest
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
         [TestCase(1, 1, Category = "JsonRpc")]
-        //[TestCase(1000, 1, Category = "JsonRpcBenchmark")]
-        //[TestCase(100, 5, Category = "JsonRpcBenchmark")]
-        [TestCase(100000, 50, Category = "JsonRpcBenchmark")]
+        [TestCase(1000, 1, Category = "JsonRpcBenchmark")]
+        [TestCase(1000, 5, Category = "JsonRpcBenchmark")]
+        [TestCase(1000, 10, Category = "JsonRpcBenchmark")]
         public async Task TraceBlock(int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -26,12 +26,15 @@ namespace NethermindNodeTests.Tests.JsonRpc
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task) =>
                 {
-                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
+                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://139.144.27.40:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = VerifyResponse(result.Result.Item1);
 
                     if (result.Result.Item3 && isVerifiedPositively)
+                    {
+                        Logger.Info(result.Result.Item1);
                         executionTimes.Add(result.Result.Item2);
+                    }
                     else
                         Logger.Error(result.Result.Item1);
                 });

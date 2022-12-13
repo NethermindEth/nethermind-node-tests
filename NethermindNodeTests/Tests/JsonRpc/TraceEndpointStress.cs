@@ -68,6 +68,7 @@ namespace NethermindNodeTests.Tests.JsonRpc
             try
             {
                 TraceBlock parsed = JsonConvert.DeserializeObject<TraceBlock>(result);
+                Logger.Info(parsed);
                 if (parsed == null)
                     return false;
             }

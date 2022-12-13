@@ -32,7 +32,6 @@ namespace NethermindNodeTests.Tests.JsonRpc
 
                     if (result.Result.Item3 && isVerifiedPositively)
                     {
-                        Logger.Info(result.Result.Item1);
                         executionTimes.Add(result.Result.Item2);
                     }
                     else
@@ -68,7 +67,6 @@ namespace NethermindNodeTests.Tests.JsonRpc
             try
             {
                 TraceBlock parsed = JsonConvert.DeserializeObject<TraceBlock>(result);
-                Logger.Info(parsed);
                 if (parsed == null || parsed.Result == null)
                     return false;
             }

@@ -5,28 +5,31 @@ using Newtonsoft.Json;
 using SedgeNodeFuzzer.Helpers;
 using System.Text;
 
-namespace NethermindNodeTests.Tests.JsonRpc
+namespace NethermindNodeTests.Tests.JsonRpc.Trace
 {
     [TestFixture]
     [Parallelizable(ParallelScope.None)]
-    public class TraceEndpointStress : BaseTest
+    public class TraceBlockTests : BaseTest
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
         [TestCase(1, 1, Category = "JsonRpc")]
-        //[TestCase(1000, 1, Category = "JsonRpcBenchmark")]
-        //[TestCase(1000, 5, Category = "JsonRpcBenchmark")]
-        [TestCase(100000, 10, Category = "JsonRpcBenchmark")]
+        [TestCase(1000, 1, Category = "JsonRpcBenchmark,JsonRpcBenchmarkSimple")]
+        [TestCase(1000, 5, Category = "JsonRpcBenchmark")]
+        [TestCase(1000, 10, Category = "JsonRpcBenchmark")]
+        [TestCase(100000, 100, Category = "JsonRpcBenchmarkStress")]
         public async Task TraceBlock(int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
+            Random rnd = new Random();
 
             Parallel.ForEach(
                 Enumerable.Range(0, repeatCount),
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task) =>
                 {
-                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", "\"latest\"", "http://localhost:8545", Logger);
+                    int num = rnd.Next(16189109, 16189300);
+                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://50.116.32.22:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = VerifyResponse(result.Result.Item1);
 

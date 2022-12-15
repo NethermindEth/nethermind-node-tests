@@ -28,7 +28,7 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task) =>
                 {
-                    int num = rnd.Next(16189109, 16189300);
+                    int num = rnd.Next(16189109, 16189320);
                     var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://50.116.32.22:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = VerifyResponse(result.Result.Item1);

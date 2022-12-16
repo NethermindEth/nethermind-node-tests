@@ -13,7 +13,7 @@ namespace NethermindNodeTests.CustomObjects
         public double AverageTimeInMs { get; set; }
         public int TotalRequestsExecuted { get; set; }
         public int TotalRequestsSucceeded { get; set; }
-        public int MinimumTimeOfExecution { get; set; }
-        public int MaximumTimeOfExecution { get; set; }
+        public double MinimumTimeOfExecution { get; set; }
+        public double MaximumTimeOfExecution { get; set; }
     }
 }

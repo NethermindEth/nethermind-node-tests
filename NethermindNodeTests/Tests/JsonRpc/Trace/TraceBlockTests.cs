@@ -32,7 +32,7 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                 {
                     //temp fixed numbers
                     int num = rnd.Next(16219714, 16219919);
-                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://50.116.32.22:8545", Logger);
+                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://localhost:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);
 

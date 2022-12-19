@@ -30,10 +30,10 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {
-                    var tempNum = 26219920;
+                    var tempNum = 16219920;
                     //temp fixed numbers
                     int num = tempNum + task;
-                    if (num == 26221067)
+                    if (num == 16220381)
                         loopState.Stop();
                     var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://localhost:8545", Logger);
                     //Test result

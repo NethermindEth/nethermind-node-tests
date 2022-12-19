@@ -31,7 +31,7 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                 (task) =>
                 {
                     //temp fixed numbers
-                    int num = rnd.Next(16219714, 16219919);
+                    int num = rnd.Next(16219714, 16220015);
                     var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://localhost:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);

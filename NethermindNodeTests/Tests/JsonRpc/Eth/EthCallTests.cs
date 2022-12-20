@@ -17,7 +17,7 @@ namespace NethermindNodeTests.Tests.JsonRpc.Eth
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
         [TestCase(1, 1, Category = "JsonRpc")]
-        //[TestCase(10000, 5, Category = "JsonRpcBenchmark")]
+        [TestCase(10000, 5, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmark")]
         public async Task EthCall(int repeatCount, int parallelizableLevel)
         {
             int i = 0;

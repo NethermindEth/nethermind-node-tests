@@ -52,7 +52,7 @@ namespace NethermindNodeTests.Tests.JsonRpc.Eth
         {
             try
             {
-                var w3 = new Web3("http://localhost:8545");
+                var w3 = new Web3("http://50.116.32.22:8545");
 
                 var callInput = new CallInput
                 {
@@ -77,6 +77,11 @@ namespace NethermindNodeTests.Tests.JsonRpc.Eth
                         throw innner;
                     }
                 }                
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e.Message);
+                Logger.Error(e.StackTrace);
             }
         }
     }

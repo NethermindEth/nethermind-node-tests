@@ -15,11 +15,11 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
         [TestCase(1, 1, Category = "JsonRpc")]
-        [TestCase(1000, 1, Category = "JsonRpcTraceSimple")]
+        [TestCase(10, 1, Category = "JsonRpcTraceSimple")]
         [TestCase(1000, 1, Category = "JsonRpcBenchmark,JsonRpcBenchmarkSimple")]
         [TestCase(1000, 5, Category = "JsonRpcBenchmark")]
         [TestCase(1000, 10, Category = "JsonRpcBenchmark")]
-        [TestCase(100000, 100, Category = "JsonRpcBenchmarkStress")]
+        [TestCase(100000, 5, Category = "JsonRpcBenchmarkStress")]
         public void TraceBlock(int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -28,13 +28,10 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
             Parallel.ForEach(
                 Enumerable.Range(0, repeatCount),
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
-                (task, loopState) =>
+                (task) =>
                 {
-                    var tempNum = 16219920;
                     //temp fixed numbers
-                    int num = tempNum + task;
-                    if (num == 16220381)
-                        loopState.Stop();
+                    int num = rnd.Next(16219714, 16224612);
                     var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://localhost:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);

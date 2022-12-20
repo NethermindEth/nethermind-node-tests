@@ -25,13 +25,35 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
             List<TimeSpan> executionTimes = new List<TimeSpan>();
             Random rnd = new Random();
 
+           //Parallel.ForEach(
+           //    Enumerable.Range(0, repeatCount),
+           //    new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
+           //    (task) =>
+           //    {
+           //        //temp fixed numbers
+           //        int num = rnd.Next(16219714, 16225841);
+           //        var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://localhost:8545", Logger);
+           //        //Test result
+           //        bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);
+           //
+           //        if (result.Result.Item3 && isVerifiedPositively)
+           //        {
+           //            executionTimes.Add(result.Result.Item2);
+           //        }
+           //        else
+           //            Logger.Error(result.Result.Item1);
+           //    });
+
             Parallel.ForEach(
                 Enumerable.Range(0, repeatCount),
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
-                (task) =>
+                (task, loopState) =>
                 {
+                    var tempNum = 16219714;
                     //temp fixed numbers
-                    int num = rnd.Next(16219714, 16224612);
+                    int num = tempNum + task;
+                    if (num == 16225841)
+                        loopState.Stop();
                     var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{num}\"", "http://localhost:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);

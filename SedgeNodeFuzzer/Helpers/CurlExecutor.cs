@@ -14,7 +14,7 @@ namespace SedgeNodeFuzzer.Helpers
             var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
             var response = await TryPostAsync(url, data, logger);
 
-            return response?.Content.ReadAsStringAsync().Result;
+            return response?.Content.ReadAsStringAsync().Result.ToString();
         }
 
         private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data, NLog.Logger logger)

@@ -26,7 +26,7 @@ namespace NethermindNodeTests.Tests.Resyncs
                 }
 
                 //Waiting for OldBodie (stage after state sync)
-                while (GetCurrentStage() != desiredStage)
+                while (!GetCurrentStage().Contains(desiredStage))
                 {
                     Logger.Info("Waiting for node to be synced until stage :" + desiredStage);
                     Thread.Sleep(30000);
@@ -40,7 +40,16 @@ namespace NethermindNodeTests.Tests.Resyncs
         private string GetCurrentStage()
         {
             var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", Logger);
-            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+            string output;
+            if (commandResult.Result == null)
+            {
+                output = "WaitingForConnection";
+            }
+            else
+            {
+                output = ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+            }
+
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
             return output;
         }

@@ -47,7 +47,7 @@ namespace NethermindNodeTests.Tests.Resyncs
             }
             else
             {
-                output = ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+                output = (JsonConvert.DeserializeObject(commandResult.Result) as dynamic).result.currentStage.ToString();
             }
 
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);

@@ -28,7 +28,7 @@ namespace NethermindNodeTests.Tests.Resyncs
                 //Waiting for OldBodie (stage after state sync)
                 while (GetCurrentStage() != desiredStage)
                 {
-                    Logger.Info("Waiting for node to be fully synced.");
+                    Logger.Info("Waiting for node to be synced until stage: " + desiredStage);
                     Thread.Sleep(30000);
                 }
 

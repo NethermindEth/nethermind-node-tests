@@ -41,7 +41,7 @@ namespace NethermindNodeTests.Tests.Resyncs
         {
             var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", Logger);
             string output;
-            if (commandResult.Result == null)
+            if (commandResult.Result == null || commandResult.Result == "")
             {
                 output = "WaitingForConnection";
             }

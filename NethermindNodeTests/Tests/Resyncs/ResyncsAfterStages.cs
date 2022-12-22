@@ -41,13 +41,21 @@ namespace NethermindNodeTests.Tests.Resyncs
         {
             var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", Logger);
             string output;
-            if (commandResult.Result == null && commandResult.Result == "" && JsonConvert.DeserializeObject(commandResult.Result) == null)
+            if (commandResult.Result == null)
             {
                 output = "WaitingForConnection";
             }
             else
             {
-                output = (JsonConvert.DeserializeObject(commandResult.Result) as dynamic).result.currentStage.ToString();
+                var value = JsonConvert.DeserializeObject(commandResult.Result);
+                if (value == null)
+                {
+                    output = "WaitingForConnection";
+                }
+                else
+                {
+                    output = ((dynamic)value).result.currentStage.ToString();
+                }
             }
 
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);

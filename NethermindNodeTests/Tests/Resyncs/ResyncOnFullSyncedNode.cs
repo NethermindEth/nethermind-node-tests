@@ -27,7 +27,7 @@ namespace NethermindNodeTests.Tests.Resyncs
                 }
 
                 //Waiting for Full Sync
-                while (!IsFullySynced())
+                while (!NodeInfo.IsFullySynced(Logger))
                 {
                     Logger.Info("Waiting for node to be fully synced.");
                     Thread.Sleep(30000);
@@ -46,13 +46,6 @@ namespace NethermindNodeTests.Tests.Resyncs
                 Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
                 DockerCommands.StartDockerContainer("execution", Logger);
             }
-        }
-
-        private bool IsFullySynced()
-        {
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "http://localhost:8545", Logger);
-            var result = commandResult.Result;
-            return result == null ? false : result.Contains("false");
         }
     }
 }

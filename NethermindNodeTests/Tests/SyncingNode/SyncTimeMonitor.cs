@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NethermindNodeTests.Tests.SnapSync
+namespace NethermindNodeTests.Tests.SyncingNode
 {
     [TestFixture]
     public class SyncTimeMonitor : BaseTest

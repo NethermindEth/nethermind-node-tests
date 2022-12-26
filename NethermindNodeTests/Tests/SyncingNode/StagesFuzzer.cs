@@ -25,9 +25,9 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting for Execution to be started.");
                 Thread.Sleep(5000);
             }
-            while (!IsFullySynced())
+            while (!NodeInfo.IsFullySynced(Logger))
             {
-                var currentStage = GetCurrentStage();
+                var currentStage = NodeInfo.GetCurrentStage(Logger);
                 if (!_stagesFound.Contains(currentStage) && currentStage != "WaitingForConnection")
                 {
                     _stagesFound.Add(currentStage);
@@ -37,21 +37,6 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 Thread.Sleep(1000);
             }
             Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Node is synced so test passed correctly");
-        }
-
-        private string GetCurrentStage()
-        {
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", Logger);
-            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
-            Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
-            return output;
-        }
-
-        private bool IsFullySynced()
-        {
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "http://localhost:8545", Logger);
-            var result = commandResult.Result;
-            return result == null ? false : result.Contains("false");
         }
     }
 }

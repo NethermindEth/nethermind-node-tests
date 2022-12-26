@@ -38,7 +38,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                var currentStage = GetCurrentStage();
+                var currentStage = NodeInfo.GetCurrentStage(Logger);
                 while (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString()))
                 {
                     if (sw.ElapsedMilliseconds > MaxWaitTimeForStageToCompleteInMilliseconds)
@@ -51,20 +51,11 @@ namespace NethermindNodeTests.Tests.SyncingNode
                             );
                     }
                     Thread.Sleep(1000);
-                    currentStage = GetCurrentStage();
+                    currentStage = NodeInfo.GetCurrentStage(Logger);
                 }
                 sw.Stop();
                 Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Stage found! " + stage.Stages.ToJoinedString());
             }
-        }
-
-
-        private string GetCurrentStage()
-        {
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", Logger);
-            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
-            Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
-            return output;
         }
     }
 }

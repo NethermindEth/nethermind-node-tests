@@ -41,7 +41,7 @@ namespace NethermindNodeTests.Tests.SnapSync
 
             while (stagesToMonitor.Any(x => x.EndTime == null))
             {
-                var currentStages = GetCurrentStage();
+                var currentStages = NodeInfo.GetCurrentStages(Logger);
 
                 //Need to have any check for maximum sync time - if more than MaxWaitTimeForSyncToComplete then something must have gone wrong and we will fail test
                 if (sw.ElapsedMilliseconds > MaxWaitTimeForSyncToComplete)

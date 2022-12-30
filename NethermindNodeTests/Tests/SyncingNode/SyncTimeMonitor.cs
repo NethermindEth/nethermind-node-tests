@@ -36,10 +36,10 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 List<MetricStage> stagesToMonitor = new List<MetricStage>()
                 {
                     //new MetricStage(){ Stage = Stages.FastHeaders },
-                    new MetricStage(){ Stage = Stages.BeaconHeaders }
+                    new MetricStage(){ Stage = Stages.BeaconHeaders },
                     //new MetricStage(){ Stage = Stages.FastSync },
-                    //new MetricStage(){ Stage = Stages.SnapSync },
-                    //new MetricStage(){ Stage = Stages.StateNodes },
+                    new MetricStage(){ Stage = Stages.SnapSync },
+                    new MetricStage(){ Stage = Stages.StateNodes }
                     //new MetricStage(){ Stage = Stages.FastBodies },
                     //new MetricStage(){ Stage = Stages.FastReceipts }
                 };
@@ -112,8 +112,11 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 results.Add(i, stagesToMonitor);
                 totals.Add(i, sw.Elapsed.TotalSeconds);
 
+                AddRecordToNotion(stagesToMonitor);
+
                 //Resync and start second measurement
-                StopAndResync();
+                if (i + 1 < repeatCount)
+                    StopAndResync();
             }
 
             //Find longest and shortest runs and remove them
@@ -132,22 +135,22 @@ namespace NethermindNodeTests.Tests.SyncingNode
                     //    Stage = Stages.FastHeaders,
                     //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.Total)).Average()
                     //},
-                    new MetricStage(){ 
+                    new MetricStage(){
                         Stage = Stages.BeaconHeaders,
                         Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.Total)).Average()
-                    }
+                    },
                     //new MetricStage(){ 
                     //    Stage = Stages.FastSync,
                     //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastSync).Select(y => y.Total)).Average()
                     //},
-                    //new MetricStage(){ 
-                    //    Stage = Stages.SnapSync,
-                    //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.Total)).Average()
-                    //},
-                    //new MetricStage(){ 
-                    //    Stage = Stages.StateNodes,
-                    //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.Total)).Average()
-                    //},
+                    new MetricStage(){
+                        Stage = Stages.SnapSync,
+                        Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.Total)).Average()
+                    },
+                    new MetricStage(){
+                        Stage = Stages.StateNodes,
+                        Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.Total)).Average()
+                    }
                     //new MetricStage(){ 
                     //    Stage = Stages.FastBodies,
                     //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.Total)).Average()
@@ -158,53 +161,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                     //}
                 };
 
-            Regex pattern = new Regex(@"--config=(?<network>\w+)|--Metrics.NodeName=(?<nodeName>\w+)");
-
-            //Get data to csv format
-            var nethermindImage = DockerCommands.GetImageName("execution-client", Logger).Trim();
-            var consensusImage = DockerCommands.GetImageName("consensus-client", Logger).Trim();
-            var executionCmd = DockerCommands.GetDockerDetails("execution-client", ".Config.Cmd", Logger);
-            Match cmdExecutionMatch = pattern.Match(executionCmd);
-            var nethermindNodeName = cmdExecutionMatch.Groups["nodeName"].Value.Split(' ').ToList();
-            var network = cmdExecutionMatch.Groups["network"].Value;
-            MachineInformation info = MachineInformationGatherer.GatherInformation();
-
-            var filePath = TestContext.CurrentContext.Test.MethodName + "_" + network + ".csv";
-
-            using (StreamWriter writer = new StreamWriter(new FileStream(filePath, FileMode.Create, FileAccess.Write)))
-            {
-                writer.WriteLine("Date Of Execution,Nethermind Image,Consensus Layer Client,Stage,Total Time,Network,CPU");
-
-                foreach (var monitoringStage in averagedResult)
-                {
-                    writer.WriteLine($"{startTime},{nethermindImage},{consensusImage},{monitoringStage.Stage},{monitoringStage.StartTime}, {monitoringStage.EndTime},{monitoringStage.Total}");
-
-                    //Send all data to Notion
-                    NotionHelper notionHelper = new NotionHelper();
-
-                    var properties = new Dictionary<string, PropertyValue>
-                        {
-                            { "Date Of Execution",      new NotionDate(startTime) },
-                            { "Nethermind Image",       new NotionText(nethermindImage) },
-                            { "Consensus Layer Client", new NotionText(consensusImage) },
-                            { "Stage",                  new NotionText(monitoringStage.Stage.ToString()) },
-                            { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
-                            { "Network",                new NotionText(network) },
-                            { "CPU",                    new NotionText(info.Cpu.ToString()) },
-                        };
-
-                    PagesCreateParameters record = new PagesCreateParameters()
-                    {
-                        Properties = properties,
-                        Parent = new DatabaseParentInput()
-                        {
-                            DatabaseId = ConfigurationHelper.Configuration["SyncTimesDatabaseId"]
-                        }
-                    };
-
-                    notionHelper.AddRecord(record);
-                }
-            }
+            AddRecordToNotion(averagedResult, results.Count);
         }
 
         internal class MetricStage
@@ -233,6 +190,49 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
             //Restarting Node - freshSync
             DockerCommands.StartDockerContainer("execution", Logger);
+        }
+
+        private void AddRecordToNotion(List<MetricStage> averagedResult, int numberOfProbes = 0)
+        {
+            Regex pattern = new Regex(@"--config=(?<network>\w+)|--Metrics.NodeName=(?<nodeName>\w+)");
+
+            //Get data to csv format
+            var nethermindImage = DockerCommands.GetImageName("execution-client", Logger).Trim();
+            var consensusImage = DockerCommands.GetImageName("consensus-client", Logger).Trim();
+            var executionCmd = DockerCommands.GetDockerDetails("execution-client", ".Config.Cmd", Logger);
+            Match cmdExecutionMatch = pattern.Match(executionCmd);
+            var nethermindNodeName = cmdExecutionMatch.Groups["nodeName"].Value.Split(' ').ToList();
+            var network = cmdExecutionMatch.Groups["network"].Value;
+            MachineInformation info = MachineInformationGatherer.GatherInformation();
+
+            foreach (var monitoringStage in averagedResult)
+            {
+                //Send all data to Notion
+                NotionHelper notionHelper = new NotionHelper();
+
+                var properties = new Dictionary<string, PropertyValue>
+                        {
+                            { "Date Of Execution",      new NotionDate(startTime) },
+                            { "Nethermind Image",       new NotionText(nethermindImage) },
+                            { "Consensus Layer Client", new NotionText(consensusImage) },
+                            { "Stage",                  new NotionText(monitoringStage.Stage.ToString()) },
+                            { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
+                            { "Network",                new NotionText(network) },
+                            { "CPU",                    new NotionText(info.Cpu.ToString()) },
+                            { "Probe count",            new NotionNumber(numberOfProbes) },
+                        };
+
+                PagesCreateParameters record = new PagesCreateParameters()
+                {
+                    Properties = properties,
+                    Parent = new DatabaseParentInput()
+                    {
+                        DatabaseId = ConfigurationHelper.Configuration["SyncTimesDatabaseId"]
+                    }
+                };
+
+                notionHelper.AddRecord(record);
+            }
         }
     }
 }

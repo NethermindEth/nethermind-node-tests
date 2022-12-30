@@ -61,7 +61,7 @@ namespace SedgeNodeFuzzer.Commands
                 if (beforeStopWait % 2 == 0 && !ShouldForceKillCommand)
                 {
                     Logger.Info("Stopping gracefully docker \"execution\"");
-                    DockerCommands.StopDockerContainer("execution", Logger);
+                    DockerCommands.StopDockerContainer("execution-client", Logger);
                 }
                 else
                 {

@@ -9,7 +9,7 @@ namespace SedgeNodeFuzzer.Helpers
     {
         public static void StopDockerContainer(string containerName, NLog.Logger logger)
         {
-            DockerCommandExecute("compose stop " + containerName, logger);
+            DockerCommandExecute("stop " + containerName, logger);
         }
 
         public static void KillDockerContainer(string containerName, NLog.Logger logger)
@@ -40,25 +40,18 @@ namespace SedgeNodeFuzzer.Helpers
 
         public static string GetImageName(string containerName, NLog.Logger logger)
         {
-            var result = DockerCommandExecute("inspect -f '{{.Config.image}}' " + containerName, logger);
+            var result = DockerCommandExecute("inspect -f '{{.Config.Image}}' " + containerName, logger);
             return result;
         }
 
         public static string GetDockerDetails(string containerName, string dataToFetch, Logger logger)
         {
+#if DEBUG
+            dataToFetch = dataToFetch.Replace("\"", "\\\"");
+            var result = DockerCommandExecute("inspect -f \"{{" + dataToFetch + "}}\" " + containerName, logger);
+#else
             var result = DockerCommandExecute("inspect -f '{{" + dataToFetch + "}}' " + containerName, logger);
-            return result;
-        }
-
-        public static string GetImageName(string containerName, NLog.Logger logger)
-        {
-            var result = DockerCommandExecute("inspect -f '{{.Config.image}}' " + containerName, logger);
-            return result;
-        }
-
-        public static string GetDockerDetails(string containerName, string dataToFetch, Logger logger)
-        {
-            var result = DockerCommandExecute("inspect -f '{{" + dataToFetch + "}}' " + containerName, logger);
+#endif
             return result;
         }
 
@@ -72,7 +65,7 @@ namespace SedgeNodeFuzzer.Helpers
             processInfo.UseShellExecute = false;
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardError = true;
-            processInfo.WorkingDirectory = "/root";
+            //processInfo.WorkingDirectory = "/root";
 
             using (var process = new Process())
             {
@@ -105,7 +98,7 @@ namespace SedgeNodeFuzzer.Helpers
                 }
             }
 
-            return output + "\n" + error;
+            return output;
         }
     }
 }

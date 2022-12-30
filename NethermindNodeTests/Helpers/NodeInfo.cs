@@ -1,4 +1,5 @@
-﻿using NethermindNodeTests.Enums;
+﻿using Microsoft.CSharp.RuntimeBinder;
+using NethermindNodeTests.Enums;
 using Newtonsoft.Json;
 using SedgeNodeFuzzer.Helpers;
 using System;
@@ -32,20 +33,19 @@ namespace NethermindNodeTests.Helpers
         {
             var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", logger);
             string output;
-            if (commandResult.Result == null)
+            try
             {
-                output = "WaitingForConnection";
+                output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
             }
-            else
+            catch (RuntimeBinderException e)
             {
-                var value = JsonConvert.DeserializeObject(commandResult.Result);
-                if (value == null)
+                if (e.Message.Contains("Cannot perform runtime binding on a null reference"))
                 {
-                    output = "WaitingForConnection";
+                    throw new Exception("Binding exception. Possible module not enabled on JSON RPC.");
                 }
                 else
                 {
-                    output = ((dynamic)value).result.currentStage.ToString();
+                    throw e;
                 }
             }
 
@@ -57,7 +57,22 @@ namespace NethermindNodeTests.Helpers
         {
             List<Stages> result = new List<Stages>();
             var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", logger);
-            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+            string output = "";
+            try
+            {
+                output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+            }
+            catch (RuntimeBinderException e)
+            {
+                if (e.Message.Contains("Cannot perform runtime binding on a null reference"))
+                {
+                    throw new Exception("Binding exception. Possible module not enabled on JSON RPC.");
+                }
+                else
+                {
+                    throw e;
+                }
+            }
             foreach (string stage in output.Split(','))
             {
                 bool parsed = Enum.TryParse(stage.Trim(), out Stages parsedStage);
@@ -67,7 +82,7 @@ namespace NethermindNodeTests.Helpers
                 }
             }
 
-            logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
+            logger.Info("Current stage is: " + output);
             return result;
         }
     }

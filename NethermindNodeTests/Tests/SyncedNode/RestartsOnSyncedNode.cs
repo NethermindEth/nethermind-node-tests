@@ -26,7 +26,7 @@ namespace NethermindNodeTests.Tests.SyncedNode
 
             while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
             {
-                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting for Execution to be started.");
+                Logger.Info("Waiting for Execution to be started.");
                 Thread.Sleep(5000);
             }
             

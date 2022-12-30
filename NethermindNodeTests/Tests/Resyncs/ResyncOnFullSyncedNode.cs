@@ -34,7 +34,7 @@ namespace NethermindNodeTests.Tests.Resyncs
                 }
 
                 //Stopping and clearing EL
-                DockerCommands.StopDockerContainer("execution", Logger);
+                DockerCommands.StopDockerContainer("execution-client", Logger);
                 while (!DockerCommands.GetDockerContainerStatus("execution-client", Logger).Contains("exited"))
                 {
                     Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");

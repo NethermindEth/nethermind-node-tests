@@ -1,4 +1,7 @@
-﻿using NLog;
+﻿using Microsoft.CSharp.RuntimeBinder;
+using NLog;
+using NLog.Targets;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
@@ -27,6 +30,7 @@ namespace SedgeNodeFuzzer.Helpers
                 return response;
             }
             //TODO: some better way to catch those exceptions which are result of not started node (we want to have tests that are able to wait properly until node is deployed)
+            
             catch (HttpRequestException e)
             {
                 if (e.InnerException is IOException &&
@@ -44,8 +48,9 @@ namespace SedgeNodeFuzzer.Helpers
                     return null;
                 }
 
-                if (e.InnerException is SocketException && 
-                    (
+                if (e.InnerException is SocketException &&
+                (
+                        e.InnerException.Message.Contains("No connection could be made because the target machine actively refused it") ||
                         e.InnerException.Message.Contains("Connection refused") ||
                         e.InnerException.Message.Contains("Network is unreachable") ||
                         e.InnerException.Message.Contains("Cannot assign requested address")

@@ -48,10 +48,8 @@ namespace SedgeNodeFuzzer.Helpers
         {
 #if DEBUG
             dataToFetch = dataToFetch.Replace("\"", "\\\"");
-            var result = DockerCommandExecute("inspect -f \"{{" + dataToFetch + "}}\" " + containerName, logger);
-#else
-            var result = DockerCommandExecute("inspect -f '{{" + dataToFetch + "}}' " + containerName, logger);
 #endif
+            var result = DockerCommandExecute("inspect -f \"{{" + dataToFetch + "}}\" " + containerName, logger);
             return result;
         }
 

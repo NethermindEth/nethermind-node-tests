@@ -60,7 +60,10 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 {
                     var currentStages = NodeInfo.GetCurrentStages(Logger);
                     if (currentStages.Count == 0)
+                    {
+                        Thread.Sleep(1000);
                         continue;
+                    }
 
                     //Need to have any check for maximum sync time - if more than MaxWaitTimeForSyncToComplete then something must have gone wrong and we will fail test
                     if (sw.ElapsedMilliseconds > MaxWaitTimeForSyncToComplete)

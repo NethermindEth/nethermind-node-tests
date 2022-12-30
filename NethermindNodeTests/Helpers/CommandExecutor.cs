@@ -1,6 +1,4 @@
-﻿using CommandLine;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace NethermindNodeTests.Helpers
@@ -24,9 +22,6 @@ namespace NethermindNodeTests.Helpers
                 throw new ArgumentOutOfRangeException();
             }
 
-            string output = "";
-            string error = "";
-
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
 
@@ -35,17 +30,6 @@ namespace NethermindNodeTests.Helpers
                 process.StartInfo = processInfo;
                 process.Start();
                 process.WaitForExit(30000);
-                output = process.StandardOutput.ReadToEnd();
-                error = process.StandardError.ReadToEnd();
-                //if (logger.IsTraceEnabled)
-                //{
-                    logger.Trace("RemoveDirectoryOut \n" + output);
-                    logger.Trace("RemoveDirectoryErr \n" + error);
-                //}
-                if (!process.HasExited)
-                {
-                    process.Kill();
-                }
 
                 process.Close();
             }

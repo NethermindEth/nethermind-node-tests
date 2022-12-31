@@ -9,9 +9,9 @@ namespace NethermindNodeTests.NotionDataStructures
 {
     public class NotionDate : DatePropertyValue
     {
-        public NotionDate(DateTime dateTime)
+        public NotionDate(DateTime dateTime) : base()
         {
-            new DatePropertyValue() { Date = new Date() { Start = dateTime } };
+             Date = new Date() { Start = dateTime };
         }
     }
 }

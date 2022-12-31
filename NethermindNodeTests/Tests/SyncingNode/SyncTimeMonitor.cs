@@ -59,7 +59,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 while (stagesToMonitor.Any(x => x.EndTime == null))
                 {
                     var currentStages = NodeInfo.GetCurrentStages(Logger);
-                    if (currentStages.Count == 0)
+                    if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None))
                     {
                         Thread.Sleep(1000);
                         continue;
@@ -210,6 +210,8 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 //Send all data to Notion
                 NotionHelper notionHelper = new NotionHelper();
 
+                var date = new NotionDate(startTime);
+
                 var properties = new Dictionary<string, PropertyValue>
                         {
                             { "Date Of Execution",      new NotionDate(startTime) },
@@ -218,7 +220,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                             { "Stage",                  new NotionText(monitoringStage.Stage.ToString()) },
                             { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
                             { "Network",                new NotionText(network) },
-                            { "CPU",                    new NotionText(info.Cpu.ToString()) },
+                            { "CPU",                    new NotionText(info.Cpu.Name.ToString()) },
                             { "Probe count",            new NotionNumber(numberOfProbes) },
                         };
 

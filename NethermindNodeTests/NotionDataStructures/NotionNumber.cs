@@ -11,7 +11,7 @@ namespace NethermindNodeTests.NotionDataStructures
     {
         public NotionNumber(double? value)
         {
-            new NumberPropertyValue() { Number = value };
+            Number = value;
         }
     }
 }

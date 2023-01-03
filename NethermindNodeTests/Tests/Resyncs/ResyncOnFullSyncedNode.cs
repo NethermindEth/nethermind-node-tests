@@ -44,7 +44,7 @@ namespace NethermindNodeTests.Tests.Resyncs
 
                 //Restarting Node - freshSync
                 Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
-                DockerCommands.StartDockerContainer("execution", Logger);
+                DockerCommands.StartDockerContainer("execution-client", Logger);
             }
         }
     }

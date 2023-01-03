@@ -23,7 +23,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
         int MaxWaitTimeForSyncToComplete = 36 * 60 * 60 * 1000; //1,5day
 
-        [TestCase(5)]
+        [TestCase(12)]
         [Category("PerfMonitoring")]
         public void MonitorSyncTimesOfStagesInSnapSync(int repeatCount)
         {
@@ -35,13 +35,13 @@ namespace NethermindNodeTests.Tests.SyncingNode
             {
                 List<MetricStage> stagesToMonitor = new List<MetricStage>()
                 {
-                    //new MetricStage(){ Stage = Stages.FastHeaders },
+                    new MetricStage(){ Stage = Stages.FastHeaders },
                     new MetricStage(){ Stage = Stages.BeaconHeaders },
                     //new MetricStage(){ Stage = Stages.FastSync },
                     new MetricStage(){ Stage = Stages.SnapSync },
-                    new MetricStage(){ Stage = Stages.StateNodes }
-                    //new MetricStage(){ Stage = Stages.FastBodies },
-                    //new MetricStage(){ Stage = Stages.FastReceipts }
+                    new MetricStage(){ Stage = Stages.StateNodes },
+                    new MetricStage(){ Stage = Stages.FastBodies },
+                    new MetricStage(){ Stage = Stages.FastReceipts }
                 };
 
                 while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
@@ -131,10 +131,10 @@ namespace NethermindNodeTests.Tests.SyncingNode
             //Generate averaged result
             List<MetricStage> averagedResult = new List<MetricStage>()
                 {
-                    //new MetricStage(){
-                    //    Stage = Stages.FastHeaders,
-                    //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.Total)).Average()
-                    //},
+                    new MetricStage(){
+                        Stage = Stages.FastHeaders,
+                        Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.Total)).Average()
+                    },
                     new MetricStage(){
                         Stage = Stages.BeaconHeaders,
                         Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.Total)).Average()
@@ -150,15 +150,15 @@ namespace NethermindNodeTests.Tests.SyncingNode
                     new MetricStage(){
                         Stage = Stages.StateNodes,
                         Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.Total)).Average()
+                    },
+                    new MetricStage(){ 
+                        Stage = Stages.FastBodies,
+                        Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.Total)).Average()
+                    },
+                    new MetricStage(){ 
+                        Stage = Stages.FastReceipts,
+                        Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastReceipts).Select(y => y.Total)).Average()
                     }
-                    //new MetricStage(){ 
-                    //    Stage = Stages.FastBodies,
-                    //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.Total)).Average()
-                    //},
-                    //new MetricStage(){ 
-                    //    Stage = Stages.FastReceipts,
-                    //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastReceipts).Select(y => y.Total)).Average()
-                    //}
                 };
 
             AddRecordToNotion(averagedResult, results.Count);
@@ -181,15 +181,12 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
                 Thread.Sleep(30000);
             }
-#if DEBUG
+
             var path = DockerCommands.GetDockerDetails("execution-client", " range .Mounts }}{{ if eq .Destination \"/nethermind/data\" }}{{ .Source }}{{ end }}{{ end ", Logger).Trim();
             CommandExecutor.RemoveDirectory(path, Logger);
-#else
-            CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
-#endif
 
             //Restarting Node - freshSync
-            DockerCommands.StartDockerContainer("execution", Logger);
+            DockerCommands.StartDockerContainer("execution-client", Logger);
         }
 
         private void AddRecordToNotion(List<MetricStage> averagedResult, int numberOfProbes = 0)
@@ -203,6 +200,8 @@ namespace NethermindNodeTests.Tests.SyncingNode
             Match cmdExecutionMatch = pattern.Match(executionCmd);
             var nethermindNodeName = cmdExecutionMatch.Groups["nodeName"].Value.Split(' ').ToList();
             var network = cmdExecutionMatch.Groups["network"].Value;
+
+            ulong oneGb = 1073741824;
             MachineInformation info = MachineInformationGatherer.GatherInformation();
 
             foreach (var monitoringStage in averagedResult)
@@ -221,6 +220,8 @@ namespace NethermindNodeTests.Tests.SyncingNode
                             { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
                             { "Network",                new NotionText(network) },
                             { "CPU",                    new NotionText(info.Cpu.Name.ToString()) },
+                            { "RAM",                    new NotionText(info.RAMSticks.Sum(x => (decimal)x.Capacity / oneGb).ToString()) },
+                            { "DbSize",                 new NotionText(info.RAMSticks.Sum(x => (decimal)x.Capacity / oneGb).ToString()) },
                             { "Probe count",            new NotionNumber(numberOfProbes) },
                         };
 

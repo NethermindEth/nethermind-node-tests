@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace SedgeNodeFuzzer.Helpers
 {
@@ -24,7 +25,7 @@ namespace SedgeNodeFuzzer.Helpers
 
         public static void StartDockerContainer(string containerName, NLog.Logger logger)
         {
-            DockerCommandExecute("compose up -d " + containerName, logger);
+            DockerCommandExecute("up -d " + containerName, logger);
         }
 
         public static string GetDockerContainerStatus(string containerName, NLog.Logger logger)
@@ -49,6 +50,10 @@ namespace SedgeNodeFuzzer.Helpers
 #if DEBUG
             dataToFetch = dataToFetch.Replace("\"", "\\\"");
 #endif
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                dataToFetch = dataToFetch.Replace("\"", "\\\"");
+            }
             var result = DockerCommandExecute("inspect -f \"{{" + dataToFetch + "}}\" " + containerName, logger);
             return result;
         }
@@ -63,7 +68,6 @@ namespace SedgeNodeFuzzer.Helpers
             processInfo.UseShellExecute = false;
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardError = true;
-            //processInfo.WorkingDirectory = "/root";
 
             using (var process = new Process())
             {

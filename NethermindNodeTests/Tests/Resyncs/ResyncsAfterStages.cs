@@ -49,7 +49,7 @@ namespace NethermindNodeTests.Tests.Resyncs
             CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
 
             //Restarting Node - freshSync
-            DockerCommands.StartDockerContainer("execution", Logger);
+            DockerCommands.StartDockerContainer("execution-client", Logger);
         }
     }
 }

@@ -73,7 +73,7 @@ namespace SedgeNodeFuzzer.Commands
                 int beforeStartWait = rand.Next(Minimum, Maximum) * 1000;
                 Logger.Info("WAITING BEFORE START for: " + beforeStartWait / 1000 + " seconds");
                 Thread.Sleep(beforeStartWait);
-                DockerCommands.StartDockerContainer("execution", Logger);
+                DockerCommands.StartDockerContainer("execution-client", Logger);
                 i++;
             }
         }

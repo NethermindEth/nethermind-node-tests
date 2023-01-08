@@ -40,7 +40,6 @@ namespace SedgeNodeFuzzer.Helpers
                 try
                 {
                     result = await client.PostAsync(url, data);
-                    isSuccess = true;
                 }
                 catch
                 {
@@ -48,6 +47,7 @@ namespace SedgeNodeFuzzer.Helpers
                 }
                 if (result.IsSuccessStatusCode)
                 {
+                    isSuccess = true;
                     var responseContent = result.Content;
 
                     // by calling .Result you are synchronously reading the result

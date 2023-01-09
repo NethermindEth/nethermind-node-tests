@@ -182,8 +182,12 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 Thread.Sleep(30000);
             }
 
+#if DEBUG
             var path = DockerCommands.GetDockerDetails("execution-client", " range .Mounts }}{{ if eq .Destination \"/nethermind/data\" }}{{ .Source }}{{ end }}{{ end ", Logger).Trim();
             CommandExecutor.RemoveDirectory(path, Logger);
+#else
+            CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
+#endif
 
             //Restarting Node - freshSync
             DockerCommands.StartDockerContainer("execution-client", Logger);

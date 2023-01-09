@@ -25,7 +25,7 @@ namespace SedgeNodeFuzzer.Helpers
 
         public static void StartDockerContainer(string containerName, NLog.Logger logger)
         {
-            DockerCommandExecute("up -d " + containerName, logger);
+            DockerCommandExecute("start " + containerName, logger);
         }
 
         public static string GetDockerContainerStatus(string containerName, NLog.Logger logger)

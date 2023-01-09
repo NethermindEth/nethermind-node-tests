@@ -215,6 +215,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
 
                 var date = new NotionDate(startTime);
 
+
                 var properties = new Dictionary<string, PropertyValue>
                         {
                             { "Date Of Execution",      new NotionDate(startTime) },

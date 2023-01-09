@@ -67,7 +67,7 @@ namespace SedgeNodeFuzzer.Commands
                 {
                     Logger.Info("Killing docker \"execution\"");
                     DockerCommands.PreventDockerContainerRestart("execution-client", Logger);
-                    DockerCommands.KillDockerContainer("execution", Logger);
+                    DockerCommands.KillDockerContainer("execution-client", Logger);
                 }
 
                 int beforeStartWait = rand.Next(Minimum, Maximum) * 1000;

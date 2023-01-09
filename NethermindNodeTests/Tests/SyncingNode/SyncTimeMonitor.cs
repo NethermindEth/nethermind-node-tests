@@ -224,7 +224,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                             { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
                             { "Network",                new NotionText(network) },
                             { "CPU",                    new NotionText(info.Cpu.Name.ToString()) },
-                            { "RAM",                    new NotionText(info.RAMSticks.Sum(x => (decimal)x.Capacity / oneGb).ToString()) },
+                            { "RAM",                    new NotionText("RAMSticks count: " + info.RAMSticks.Count + ", Total Memory: " + info.RAMSticks.Sum(x => (decimal)x.Capacity / oneGb).ToString()) },
                             { "DbSize",                 new NotionText(info.RAMSticks.Sum(x => (decimal)x.Capacity / oneGb).ToString()) },
                             { "Probe count",            new NotionNumber(numberOfProbes) },
                         };

@@ -15,7 +15,7 @@ namespace SedgeNodeFuzzer.Helpers
 
         public static void KillDockerContainer(string containerName, NLog.Logger logger)
         {
-            DockerCommandExecute("compose kill " + containerName, logger);
+            DockerCommandExecute("kill " + containerName, logger);
         }
 
         public static void PreventDockerContainerRestart(string containerName, NLog.Logger logger)

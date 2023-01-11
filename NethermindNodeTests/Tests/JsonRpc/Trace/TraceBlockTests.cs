@@ -34,13 +34,6 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {
-                    //TODO: Find a PIVOT as a first number and get latest processed block and use it as finilizer in if condition
-                    //TODO: For Archive node 
-                    //var tempNum = 16326200;
-                    ////temp fixed numbers
-                    //int num = tempNum + task;
-                    //if (num == 16326700)
-                    //    loopState.Break();
                     var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://170.187.152.20:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);
@@ -83,9 +76,9 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
             Console.WriteLine(serializedJson);
         }
 
-        [TestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcBenchmark")]
-        [TestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmark")]
-        [TestCase("170.187.152.20", "51.159.102.95", 500, 10, Category = "JsonRpcBenchmark")]
+        [TestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcComapare")]
+        [TestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmarkComapare")]
+        [TestCase("170.187.152.20", "51.159.102.95", 500, 10, Category = "JsonRpcBenchmarkComapare")]
         public void TraceBlockCompare(string sourceNode, string targetNode, int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -102,20 +95,10 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                     bool isVerifiedPositivelySource = JsonRpcHelper.DeserializeReponse<TraceBlock>(resultSource.Result.Item1);
                     bool isVerifiedPositivelyTarget = JsonRpcHelper.DeserializeReponse<TraceBlock>(resultTarget.Result.Item1);
 
-                    //Assert.True(isVerifiedPositivelySource);
-                    //Assert.True(isVerifiedPositivelyTarget);
-                    //Assert.True(resultSource.Result.Item3);
-                    //Assert.True(resultTarget.Result.Item3);
-                    Assert.AreEqual(isVerifiedPositivelySource, isVerifiedPositivelyTarget);
-                    Assert.AreEqual(resultSource.Result.Item3, resultTarget.Result.Item3);
-                    Assert.AreEqual(resultSource.Result.Item1, resultTarget.Result.Item1);
+                    Assert.That(isVerifiedPositivelyTarget, Is.EqualTo(isVerifiedPositivelySource), "Parsing result of both responses to TraceBlock schema is not the same.");
+                    Assert.That(resultTarget.Result.Item3, Is.EqualTo(resultSource.Result.Item3), "Response code is not the same for both requests.");
+                    Assert.That(resultTarget.Result.Item1, Is.EqualTo(resultSource.Result.Item1), "Response body is not equal for both requests.");
 
-                    //if (result.Result.Item3 && isVerifiedPositively)
-                    //{
-                    //    executionTimes.Add(result.Result.Item2);
-                    //}
-                    //else
-                    //    Logger.Error(result.Result.Item1);
                 });
         }
     }

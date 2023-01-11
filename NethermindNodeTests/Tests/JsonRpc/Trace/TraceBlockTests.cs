@@ -16,12 +16,13 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
         [TestCase(1, 1, Category = "JsonRpc")]
-        [TestCase(10, 1, Category = "JsonRpcTraceSimple")]
-        [TestCase(1000, 1, Category = "JsonRpcBenchmark,JsonRpcBenchmarkSimple")]
+        [TestCase(100, 1, Category = "JsonRpcBenchmark")]
+        [TestCase(1000, 1, Category = "JsonRpcBenchmark")]
+        [TestCase(100, 5, Category = "JsonRpcBenchmark")]
         [TestCase(1000, 5, Category = "JsonRpcBenchmark")]
-        [TestCase(500, 10, Category = "JsonRpcBenchmark"), Repeat(5)]
+        [TestCase(100, 10, Category = "JsonRpcBenchmark")]
         [TestCase(1000, 10, Category = "JsonRpcBenchmark")]
-        [TestCase(100000, 5, Category = "JsonRpcBenchmarkStress")]
+        [TestCase(1000, 100, Category = "JsonRpcBenchmarkStress")]
         [Description("This test should be used only on Archive node OR on node with Pruning.Mode=None")]
         public void TraceBlock(int repeatCount, int parallelizableLevel)
         {
@@ -29,7 +30,7 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
             Random rnd = new Random();
 
             Parallel.ForEach(
-                Enumerable.Range(16332732, repeatCount),
+                Enumerable.Range(16375600, repeatCount),
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {
@@ -40,7 +41,7 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                     //int num = tempNum + task;
                     //if (num == 16326700)
                     //    loopState.Break();
-                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://139.144.31.115:8545", Logger);
+                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://170.187.152.20:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);
 
@@ -49,7 +50,12 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                         executionTimes.Add(result.Result.Item2);
                     }
                     else
+                    {
                         Logger.Error(result.Result.Item1);
+                        Console.WriteLine("Curl reslt: " + result.Result.Item3);
+                        Console.WriteLine("Parsing result: " + isVerifiedPositively);
+                        Console.WriteLine("Output: " + result.Result.Item1);
+                    }
                 });
 
             Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");
@@ -74,18 +80,19 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
 
             var serializedJson = JsonConvert.SerializeObject(result);
             File.WriteAllText(fileName, serializedJson, Encoding.UTF8);
+            Console.WriteLine(serializedJson);
         }
 
-        [TestCase("139.144.31.231", "139.144.31.115", 1, 1, Category = "JsonRpcBenchmark")]
-        [TestCase("139.144.31.231", "139.144.31.115", 40, 10, Category = "JsonRpcBenchmark")]
-        [TestCase("139.144.31.231", "139.144.31.115", 500, 10, Category = "JsonRpcBenchmark")]
+        [TestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcBenchmark")]
+        [TestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmark")]
+        [TestCase("170.187.152.20", "51.159.102.95", 500, 10, Category = "JsonRpcBenchmark")]
         public void TraceBlockCompare(string sourceNode, string targetNode, int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
             Random rnd = new Random();
 
             Parallel.ForEach(
-                Enumerable.Range(16333777, repeatCount),
+                Enumerable.Range(16375600, repeatCount),
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {

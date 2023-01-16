@@ -78,14 +78,14 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
 
         [TestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcComapare")]
         [TestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmarkComapare")]
-        [TestCase("170.187.152.20", "51.159.102.95", 500, 10, Category = "JsonRpcBenchmarkComapare")]
+        [TestCase("18.222.197.12", "18.216.213.143", 500, 10, Category = "JsonRpcBenchmarkComapare")]
         public void TraceBlockCompare(string sourceNode, string targetNode, int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
             Random rnd = new Random();
 
             Parallel.ForEach(
-                Enumerable.Range(16375600, repeatCount),
+                Enumerable.Range(16398035, repeatCount),
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {
@@ -99,6 +99,33 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                     Assert.That(resultTarget.Result.Item3, Is.EqualTo(resultSource.Result.Item3), "Response code is not the same for both requests.");
                     Assert.That(resultTarget.Result.Item1, Is.EqualTo(resultSource.Result.Item1), "Response body is not equal for both requests.");
 
+                });
+        }
+
+        [TestCase("18.222.197.12", "18.216.213.143", 500, 5, 10, Category = "JsonRpcBenchmarkComapare")]
+        public void TraceBlockBatchedCompare(string sourceNode, string targetNode, int requestsCount, int step, int parallelizableLevel)
+        {
+            List<TimeSpan> executionTimes = new List<TimeSpan>();
+            Random rnd = new Random();
+
+            int start = 16398000;
+            int end = start + requestsCount;
+
+            Parallel.ForEach(
+                Enumerable.Range(start, requestsCount).Where(x => (x - start) % step == 0).ToList(),
+                new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
+                (task, loopState) =>
+                {
+                    var batchedIds = Enumerable.Range(task, step).Select(x => $"\"{x}\"").ToList();
+                    var resultSource = CurlExecutor.ExecuteBatchedBenchmarkedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{sourceNode}:8545", Logger);
+                    var resultTarget = CurlExecutor.ExecuteBatchedBenchmarkedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{targetNode}:8545", Logger);
+                    //Test result
+                    bool isVerifiedPositivelySource = JsonRpcHelper.DeserializeReponse<List<TraceBlock>>(resultSource.Result.Item1);
+                    bool isVerifiedPositivelyTarget = JsonRpcHelper.DeserializeReponse<List<TraceBlock>>(resultTarget.Result.Item1);
+
+                    Assert.That(isVerifiedPositivelyTarget, Is.EqualTo(isVerifiedPositivelySource), "Parsing result of both responses to TraceBlock schema is not the same.");
+                    Assert.That(resultTarget.Result.Item3, Is.EqualTo(resultSource.Result.Item3), "Response code is not the same for both requests.");
+                    Assert.That(resultTarget.Result.Item1, Is.EqualTo(resultSource.Result.Item1), "Response body is not equal for both requests.");
                 });
         }
     }

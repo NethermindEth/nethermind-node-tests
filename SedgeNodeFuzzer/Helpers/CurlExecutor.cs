@@ -19,6 +19,27 @@ namespace SedgeNodeFuzzer.Helpers
             return response;
         }
 
+        public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBatchedBenchmarkedNethermindJsonRpcCommand(string command, List<string> parameters, string url, NLog.Logger logger)
+        {
+            if (logger.IsTraceEnabled)
+                logger.Trace("Executing command: " + command);
+
+            //generate content
+            List<string> content = new List<string>();
+            int i = 1;
+            foreach (var item in parameters)
+            {
+                content.Add($"{{\"method\":\"{command}\",\"params\":[{item}],\"id\":{i},\"jsonrpc\":\"2.0\"}}");
+                i++;
+            }
+            string contentString = "[" + content.Aggregate((x, y) => x + "," + y) + "]";
+
+            StringContent dataList = new StringContent(contentString, Encoding.UTF8, "application/json");
+            var response = await PostHttpWithTimingInfo(url, dataList, logger);
+
+            return response;
+        }
+
         public async static Task<string?> ExecuteNethermindJsonRpcCommand(string command, string parameters, string url, NLog.Logger logger)
         {
             if (logger.IsTraceEnabled)

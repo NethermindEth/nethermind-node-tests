@@ -1,8 +1,8 @@
-﻿using NethermindNodeTests.Helpers;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.Helpers;
 using Newtonsoft.Json;
-using SedgeNodeFuzzer.Helpers;
 
-namespace NethermindNodeTests.Tests.SyncingNode
+namespace NethermindNode.Tests.SyncingNode
 {
     [TestFixture]
     [Parallelizable(ParallelScope.All)]

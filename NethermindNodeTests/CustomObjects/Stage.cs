@@ -1,11 +1,6 @@
-﻿using NethermindNodeTests.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NethermindNode.Tests.Enums;
 
-namespace NethermindNodeTests.CustomObjects
+namespace NethermindNode.Tests.CustomObjects
 {
     public struct Stage
     {

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NethermindNodeTests.CustomObjects
+﻿namespace NethermindNode.Tests.CustomObjects
 {
     public class BenchmarkedJsonRpcEndpoint
     {

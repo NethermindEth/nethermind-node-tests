@@ -1,14 +1,6 @@
-﻿using CommandLine.Text;
-using CommandLine;
-using Newtonsoft.Json;
-using SedgeNodeFuzzer.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NethermindNode.SedgeFuzzer.Commands;
 
-namespace NethermindNodeTests.Helpers
+namespace NethermindNode.Tests.Helpers
 {
     public static class FuzzerHelper
     {

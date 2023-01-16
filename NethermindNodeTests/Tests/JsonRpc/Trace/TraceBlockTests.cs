@@ -1,13 +1,11 @@
-﻿using CommandLine;
-using Nethereum.Contracts.QueryHandlers.MultiCall;
-using NethermindNodeTests.CustomObjects;
-using NethermindNodeTests.Helpers;
-using NethermindNodeTests.RpcResponses;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomObjects;
+using NethermindNode.Tests.Helpers;
+using NethermindNode.Tests.RpcResponses;
 using Newtonsoft.Json;
-using SedgeNodeFuzzer.Helpers;
 using System.Text;
 
-namespace NethermindNodeTests.Tests.JsonRpc.Trace
+namespace NethermindNode.Tests.JsonRpc.Trace
 {
     [TestFixture]
     [Parallelizable(ParallelScope.None)]
@@ -16,25 +14,17 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
         [TestCase(1, 1, Category = "JsonRpc")]
-        [TestCase(100, 1, Category = "JsonRpcBenchmark")]
-        [TestCase(1000, 1, Category = "JsonRpcBenchmark")]
-        [TestCase(100, 5, Category = "JsonRpcBenchmark")]
-        [TestCase(1000, 5, Category = "JsonRpcBenchmark")]
-        [TestCase(100, 10, Category = "JsonRpcBenchmark")]
-        [TestCase(1000, 10, Category = "JsonRpcBenchmark")]
-        [TestCase(1000, 100, Category = "JsonRpcBenchmarkStress")]
         [Description("This test should be used only on Archive node OR on node with Pruning.Mode=None")]
-        public void TraceBlock(int repeatCount, int parallelizableLevel)
+        public void TraceBlockHttp(int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
-            Random rnd = new Random();
 
             Parallel.ForEach(
-                Enumerable.Range(16375600, repeatCount),
+                Enumerable.Range(16419108, repeatCount),
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {
-                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://170.187.152.20:8545", Logger);
+                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://45.79.220.73:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);
 
@@ -45,7 +35,64 @@ namespace NethermindNodeTests.Tests.JsonRpc.Trace
                     else
                     {
                         Logger.Error(result.Result.Item1);
-                        Console.WriteLine("Curl reslt: " + result.Result.Item3);
+                        Console.WriteLine("Curl result: " + result.Result.Item3);
+                        Console.WriteLine("Parsing result: " + isVerifiedPositively);
+                        Console.WriteLine("Output: " + result.Result.Item1);
+                    }
+                });
+
+            Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");
+
+            var average = executionTimes.Average(x => x.TotalMilliseconds);
+            var totalRequestsSucceeded = executionTimes.Count();
+            var min = executionTimes.Min(x => x.TotalMilliseconds);
+            var max = executionTimes.Max(x => x.TotalMilliseconds);
+
+            string fileName = $"TraceBlockPerformance_{repeatCount}_{parallelizableLevel}.json";
+
+            BenchmarkedJsonRpcEndpoint result = new BenchmarkedJsonRpcEndpoint()
+            {
+                EndpointName = "trace_block",
+                LevelOfParralelizm = parallelizableLevel,
+                AverageTimeInMs = average,
+                TotalRequestsExecuted = repeatCount,
+                TotalRequestsSucceeded = totalRequestsSucceeded,
+                MinimumTimeOfExecution = min,
+                MaximumTimeOfExecution = max
+            };
+
+            var serializedJson = JsonConvert.SerializeObject(result);
+            File.WriteAllText(fileName, serializedJson, Encoding.UTF8);
+            Console.WriteLine(serializedJson);
+        }
+
+        [TestCase(50, 5, 1, Category = "JsonRpc")]
+        [Description("This test should be used only on Archive node OR on node with Pruning.Mode=None")]
+        public void TraceBlockBatched(int repeatCount, int batchSize, int parallelizableLevel)
+        {
+            List<TimeSpan> executionTimes = new List<TimeSpan>();
+
+            int start = 16419108;
+            int end = start + repeatCount;
+
+            Parallel.ForEach(
+                Enumerable.Range(start, repeatCount).Where(x => (x - start) % batchSize == 0).ToList(),
+                new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
+                (task, loopState) =>
+                {
+                    var batchedIds = Enumerable.Range(task, batchSize).Select(x => $"\"{x}\"").ToList();
+                    var result = CurlExecutor.ExecuteBatchedBenchmarkedNethermindJsonRpcCommand("trace_block", batchedIds, "http://45.79.220.73:8545", Logger);
+                    //Test result
+                    bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<List<TraceBlock>>(result.Result.Item1);
+
+                    if (result.Result.Item3 && isVerifiedPositively)
+                    {
+                        executionTimes.Add(result.Result.Item2);
+                    }
+                    else
+                    {
+                        Logger.Error(result.Result.Item1);
+                        Console.WriteLine("Curl result: " + result.Result.Item3);
                         Console.WriteLine("Parsing result: " + isVerifiedPositively);
                         Console.WriteLine("Output: " + result.Result.Item1);
                     }

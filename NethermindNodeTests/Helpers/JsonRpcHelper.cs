@@ -1,12 +1,6 @@
-﻿using NethermindNodeTests.RpcResponses;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
 
-namespace NethermindNodeTests.Helpers
+namespace NethermindNode.Tests.Helpers
 {
     public static class JsonRpcHelper
     {

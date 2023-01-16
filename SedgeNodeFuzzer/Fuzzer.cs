@@ -1,6 +1,6 @@
 ﻿using CommandLine;
-using SedgeNodeFuzzer.Commands;
-using SedgeNodeFuzzer.Helpers;
+using NethermindNode.Core.Helpers;
+using NethermindNode.SedgeFuzzer.Commands;
 
 NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 

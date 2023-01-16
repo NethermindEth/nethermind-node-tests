@@ -14,7 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
     <PackageReference Include="Nethereum.Web3" Version="4.12.0" />
-    <PackageReference Include="NLog" Version="5.0.5" />
+    <PackageReference Include="NLog" Version="5.1.1" />
     <PackageReference Include="Notion.Net" Version="4.0.0" />
     <PackageReference Include="NUnit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.3.0" />
@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SedgeNodeFuzzer\SedgeNodeFuzzer.csproj" />
+    <ProjectReference Include="..\SedgeNodeFuzzer\NethermindNode.SedgeFuzzer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

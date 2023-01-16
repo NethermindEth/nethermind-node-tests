@@ -1,13 +1,7 @@
-﻿using NethermindNodeTests.Helpers;
-using NUnit.Framework;
-using SedgeNodeFuzzer.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.Helpers;
 
-namespace NethermindNodeTests.Tests.SyncedNode
+namespace NethermindNode.Tests.SyncedNode
 {
     [TestFixture]
     [Parallelizable(ParallelScope.All)]

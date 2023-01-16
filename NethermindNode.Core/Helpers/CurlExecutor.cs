@@ -1,15 +1,13 @@
 ﻿using NLog;
-using System;
 using System.Diagnostics;
 using System.Net.Sockets;
-using System.Net.WebSockets;
 using System.Text;
 
-namespace SedgeNodeFuzzer.Helpers
+namespace NethermindNode.Core.Helpers
 {
     public static class CurlExecutor
     {
-        public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBenchmarkedNethermindJsonRpcCommand(string command, string parameters, string url, NLog.Logger logger)
+        public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBenchmarkedNethermindJsonRpcCommand(string command, string parameters, string url, Logger logger)
         {
             if (logger.IsTraceEnabled)
                 logger.Trace("Executing command: " + command);
@@ -19,7 +17,7 @@ namespace SedgeNodeFuzzer.Helpers
             return response;
         }
 
-        public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBatchedBenchmarkedNethermindJsonRpcCommand(string command, List<string> parameters, string url, NLog.Logger logger)
+        public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBatchedBenchmarkedNethermindJsonRpcCommand(string command, List<string> parameters, string url, Logger logger)
         {
             if (logger.IsTraceEnabled)
                 logger.Trace("Executing command: " + command);
@@ -40,7 +38,7 @@ namespace SedgeNodeFuzzer.Helpers
             return response;
         }
 
-        public async static Task<string?> ExecuteNethermindJsonRpcCommand(string command, string parameters, string url, NLog.Logger logger)
+        public async static Task<string?> ExecuteNethermindJsonRpcCommand(string command, string parameters, string url, Logger logger)
         {
             if (logger.IsTraceEnabled)
                 logger.Trace("Executing command: " + command);
@@ -50,7 +48,7 @@ namespace SedgeNodeFuzzer.Helpers
             return response?.Content.ReadAsStringAsync().Result;
         }
 
-        private async static Task<Tuple<string, TimeSpan, bool>> PostHttpWithTimingInfo(string url, StringContent? data, NLog.Logger logger)
+        private async static Task<Tuple<string, TimeSpan, bool>> PostHttpWithTimingInfo(string url, StringContent? data, Logger logger)
         {
             var stopWatch = Stopwatch.StartNew();
             using (var client = new HttpClient())
@@ -78,7 +76,7 @@ namespace SedgeNodeFuzzer.Helpers
             }
         }
 
-        private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data, NLog.Logger logger)
+        private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data, Logger logger)
         {
             var client = new HttpClient();
             HttpResponseMessage response;
@@ -105,7 +103,7 @@ namespace SedgeNodeFuzzer.Helpers
                     return null;
                 }
 
-                if (e.InnerException is SocketException && 
+                if (e.InnerException is SocketException &&
                     (
                         e.InnerException.Message.Contains("Connection refused") ||
                         e.InnerException.Message.Contains("Network is unreachable") ||

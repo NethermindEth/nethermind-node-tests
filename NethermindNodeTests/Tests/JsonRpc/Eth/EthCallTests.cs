@@ -1,14 +1,9 @@
-﻿using NethermindNodeTests.Helpers;
-using NethermindNodeTests.RpcResponses;
-using SedgeNodeFuzzer.Helpers;
-using Nethereum.Web3;
+﻿using Nethereum.Web3;
 using Nethereum.RPC.Eth.DTOs;
-using System;
 using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
-using Newtonsoft.Json.Linq;
 
-namespace NethermindNodeTests.Tests.JsonRpc.Eth
+namespace NethermindNode.Tests.JsonRpc.Eth
 {
     [TestFixture]
     [Parallelizable(ParallelScope.None)]

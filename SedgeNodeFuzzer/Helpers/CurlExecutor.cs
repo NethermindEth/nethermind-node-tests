@@ -53,7 +53,8 @@ namespace SedgeNodeFuzzer.Helpers
                         e.InnerException.Message.Contains("No connection could be made because the target machine actively refused it") ||
                         e.InnerException.Message.Contains("Connection refused") ||
                         e.InnerException.Message.Contains("Network is unreachable") ||
-                        e.InnerException.Message.Contains("Cannot assign requested address")
+                        e.InnerException.Message.Contains("Cannot assign requested address") ||
+                        e.InnerException.Message.Contains("A task was canceled")
                     )
                 )
                 {

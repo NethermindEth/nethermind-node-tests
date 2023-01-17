@@ -35,7 +35,7 @@ namespace NethermindNode.Tests.SyncingNode
             Logger.Info("***Starting test: VerfiyCorrectnessOfSnapSyncStages --- syncType: " + syncType.ToString() + "***");
             foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
             {
-                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting stage: " + stage.Stages.ToJoinedString());
+                Logger.Info("Waiting stage: " + stage.Stages.ToJoinedString());
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
@@ -55,7 +55,7 @@ namespace NethermindNode.Tests.SyncingNode
                     currentStage = GetCurrentStage();
                 }
                 sw.Stop();
-                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Stage found! " + stage.Stages.ToJoinedString());
+                Logger.Info("Stage found! " + stage.Stages.ToJoinedString());
             }
         }
 
@@ -64,7 +64,7 @@ namespace NethermindNode.Tests.SyncingNode
         {
             var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", Logger);
             string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
-            Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
+            Logger.Info("Current stage is: " + output);
             return output;
         }
     }

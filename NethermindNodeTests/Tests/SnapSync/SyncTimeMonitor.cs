@@ -172,7 +172,7 @@ namespace NethermindNode.Tests.SnapSync
                 }
             }
 
-            Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
+            Logger.Info("Current stage is: " + output);
             return result;
         }
 

@@ -22,7 +22,7 @@ namespace NethermindNode.Tests.SyncingNode
 
             while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
             {
-                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting for Execution to be started.");
+                Logger.Info("Waiting for Execution to be started.");
                 Thread.Sleep(5000);
             }
             while (!IsFullySynced())
@@ -31,19 +31,19 @@ namespace NethermindNode.Tests.SyncingNode
                 if (!_stagesFound.Contains(currentStage) && currentStage != "WaitingForConnection")
                 {
                     _stagesFound.Add(currentStage);
-                    Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Fuzzing at stage: " + currentStage);
+                    Logger.Info("Fuzzing at stage: " + currentStage);
                     FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true }, Logger);
                 }
                 Thread.Sleep(1000);
             }
-            Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Node is synced so test passed correctly");
+            Logger.Info("Node is synced so test passed correctly");
         }
 
         private string GetCurrentStage()
         {
             var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", Logger);
             string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
-            Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Current stage is: " + output);
+            Logger.Info("Current stage is: " + output);
             return output;
         }
 

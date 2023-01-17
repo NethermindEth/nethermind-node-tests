@@ -13,7 +13,8 @@ namespace NethermindNode.Tests.JsonRpc.Trace
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-        [TestCase(1, 1, Category = "JsonRpc")]
+        [TestCase(5, 1, Category = "JsonRpc")]
+        [TestCase(50, 1, Category = "JsonRpc")]
         [Description("This test should be used only on Archive node OR on node with Pruning.Mode=None")]
         public void TraceBlockHttp(int repeatCount, int parallelizableLevel)
         {
@@ -66,6 +67,7 @@ namespace NethermindNode.Tests.JsonRpc.Trace
             Console.WriteLine(serializedJson);
         }
 
+        [TestCase(5, 5, 1, Category = "JsonRpc")]
         [TestCase(50, 5, 1, Category = "JsonRpc")]
         [Description("This test should be used only on Archive node OR on node with Pruning.Mode=None")]
         public void TraceBlockBatched(int repeatCount, int batchSize, int parallelizableLevel)

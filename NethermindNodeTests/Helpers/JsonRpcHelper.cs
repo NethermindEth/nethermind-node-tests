@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections;
 
 namespace NethermindNode.Tests.Helpers
 {
@@ -9,10 +10,20 @@ namespace NethermindNode.Tests.Helpers
             try
             {
                 dynamic parsed = JsonConvert.DeserializeObject<T>(result);
-                if (parsed == null || parsed.Result == null)
+
+                if (parsed == null || parsed.GetType().GetProperty("error") != null)
                     return false;
+
+                if (parsed is IEnumerable)
+                {
+                    foreach(var item in parsed)
+                    {
+                        if (item.GetType().GetProperty("error") != null)
+                            return false;
+                    }
+                }
             }
-            catch (Exception ex)
+            catch
             {
                 return false;
             }

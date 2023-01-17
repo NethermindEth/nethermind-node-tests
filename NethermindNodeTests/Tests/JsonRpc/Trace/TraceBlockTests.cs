@@ -25,7 +25,7 @@ namespace NethermindNode.Tests.JsonRpc.Trace
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {
-                    var result = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://45.79.220.73:8545", Logger);
+                    var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://45.79.220.73:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);
 
@@ -83,7 +83,7 @@ namespace NethermindNode.Tests.JsonRpc.Trace
                 (task, loopState) =>
                 {
                     var batchedIds = Enumerable.Range(task, batchSize).Select(x => $"\"{x}\"").ToList();
-                    var result = CurlExecutor.ExecuteBatchedBenchmarkedNethermindJsonRpcCommand("trace_block", batchedIds, "http://45.79.220.73:8545", Logger);
+                    var result = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, "http://45.79.220.73:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<List<TraceBlock>>(result.Result.Item1);
 
@@ -138,8 +138,8 @@ namespace NethermindNode.Tests.JsonRpc.Trace
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {
-                    var resultSource = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{sourceNode}:8545", Logger);
-                    var resultTarget = CurlExecutor.ExecuteBenchmarkedNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{targetNode}:8545", Logger);
+                    var resultSource = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{sourceNode}:8545", Logger);
+                    var resultTarget = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{targetNode}:8545", Logger);
                     //Test result
                     bool isVerifiedPositivelySource = JsonRpcHelper.DeserializeReponse<TraceBlock>(resultSource.Result.Item1);
                     bool isVerifiedPositivelyTarget = JsonRpcHelper.DeserializeReponse<TraceBlock>(resultTarget.Result.Item1);
@@ -166,8 +166,8 @@ namespace NethermindNode.Tests.JsonRpc.Trace
                 (task, loopState) =>
                 {
                     var batchedIds = Enumerable.Range(task, step).Select(x => $"\"{x}\"").ToList();
-                    var resultSource = CurlExecutor.ExecuteBatchedBenchmarkedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{sourceNode}:8545", Logger);
-                    var resultTarget = CurlExecutor.ExecuteBatchedBenchmarkedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{targetNode}:8545", Logger);
+                    var resultSource = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{sourceNode}:8545", Logger);
+                    var resultTarget = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{targetNode}:8545", Logger);
                     //Test result
                     bool isVerifiedPositivelySource = JsonRpcHelper.DeserializeReponse<List<TraceBlock>>(resultSource.Result.Item1);
                     bool isVerifiedPositivelyTarget = JsonRpcHelper.DeserializeReponse<List<TraceBlock>>(resultTarget.Result.Item1);

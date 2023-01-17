@@ -161,8 +161,8 @@ namespace NethermindNode.Tests.SnapSync
         private List<Stages> GetCurrentStage()
         {
             List<Stages> result = new List<Stages>();
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", Logger);
-            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", Logger);
+            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
             foreach (string stage in output.Split(','))
             {
                 bool parsed = Enum.TryParse(stage.Trim(), out Stages parsedStage);

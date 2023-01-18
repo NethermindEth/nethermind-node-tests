@@ -1,8 +1,8 @@
-﻿using NethermindNodeTests.Helpers;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.Helpers;
 using Newtonsoft.Json;
-using SedgeNodeFuzzer.Helpers;
 
-namespace NethermindNodeTests.Tests.SyncingNode
+namespace NethermindNode.Tests.SyncingNode
 {
     [TestFixture]
     [Parallelizable(ParallelScope.All)]
@@ -37,6 +37,21 @@ namespace NethermindNodeTests.Tests.SyncingNode
                 Thread.Sleep(1000);
             }
             Logger.Info("Node is synced so test passed correctly");
+        }
+
+        private string GetCurrentStage()
+        {
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", Logger);
+            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
+            Logger.Info("Current stage is: " + output);
+            return output;
+        }
+
+        private bool IsFullySynced()
+        {
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", Logger);
+            var result = commandResult.Result;
+            return result == null ? false : result.Item1.Contains("false");
         }
     }
 }

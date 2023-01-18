@@ -1,12 +1,7 @@
-﻿using NethermindNodeTests.Helpers;
-using SedgeNodeFuzzer.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.Helpers;
 
-namespace NethermindNodeTests.Tests.Resyncs
+namespace NethermindNode.Tests.Resyncs
 {
     internal class ResyncOnFullSyncedNode
     {
@@ -46,6 +41,13 @@ namespace NethermindNodeTests.Tests.Resyncs
                 Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
                 DockerCommands.StartDockerContainer("execution-client", Logger);
             }
+        }
+
+        private bool IsFullySynced()
+        {
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", Logger);
+            var result = commandResult.Result;
+            return result == null ? false : result.Item1.Contains("false");
         }
     }
 }

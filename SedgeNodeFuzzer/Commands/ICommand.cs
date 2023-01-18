@@ -1,4 +1,4 @@
-﻿namespace SedgeNodeFuzzer.Commands
+﻿namespace NethermindNode.SedgeFuzzer.Commands
 {
     public interface ICommand
     {

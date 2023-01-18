@@ -1,45 +1,44 @@
 ﻿using NLog;
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace SedgeNodeFuzzer.Helpers
+namespace NethermindNode.Core.Helpers
 {
     public static class DockerCommands
     {
-        public static void StopDockerContainer(string containerName, NLog.Logger logger)
+        public static void StopDockerContainer(string containerName, Logger logger)
         {
             DockerCommandExecute("stop " + containerName, logger);
         }
 
-        public static void KillDockerContainer(string containerName, NLog.Logger logger)
+        public static void KillDockerContainer(string containerName, Logger logger)
         {
             DockerCommandExecute("kill " + containerName, logger);
         }
 
-        public static void PreventDockerContainerRestart(string containerName, NLog.Logger logger)
+        public static void PreventDockerContainerRestart(string containerName, Logger logger)
         {
             DockerCommandExecute("update --restart=no " + containerName, logger);
         }
 
-        public static void StartDockerContainer(string containerName, NLog.Logger logger)
+        public static void StartDockerContainer(string containerName, Logger logger)
         {
             DockerCommandExecute("start " + containerName, logger);
         }
 
-        public static string GetDockerContainerStatus(string containerName, NLog.Logger logger)
+        public static string GetDockerContainerStatus(string containerName, Logger logger)
         {
             var result = DockerCommandExecute("inspect -f '{{.State.Status}}' " + containerName, logger);
             return result;
         }
 
-        public static bool CheckIfDockerContainerIsCreated(string containerName, NLog.Logger logger)
+        public static bool CheckIfDockerContainerIsCreated(string containerName, Logger logger)
         {
             return GetDockerContainerStatus(containerName, logger).Contains("running") ? true : false;
         }
 
-        public static string GetImageName(string containerName, NLog.Logger logger)
+        public static string GetImageName(string containerName, Logger logger)
         {
             var result = DockerCommandExecute("inspect -f '{{.Config.Image}}' " + containerName, logger);
             return result;
@@ -58,7 +57,7 @@ namespace SedgeNodeFuzzer.Helpers
             return result;
         }
 
-        private static string DockerCommandExecute(string command, NLog.Logger logger)
+        private static string DockerCommandExecute(string command, Logger logger)
         {
             var processInfo = new ProcessStartInfo("docker", $"{command}");
             string output = "";

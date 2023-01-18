@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace NethermindNodeTests.Helpers
+namespace NethermindNode.Tests.Helpers
 {
     public static class CommandExecutor
     {

@@ -36,7 +36,7 @@ namespace NethermindNode.Tests.SnapSync
 
             while (stagesToMonitor.Any(x => x.EndTime == null))
             {
-                var currentStages = GetCurrentStage();
+                var currentStages = NodeInfo.GetCurrentStages(Logger);
 
                 //Need to have any check for maximum sync time - if more than MaxWaitTimeForSyncToComplete then something must have gone wrong and we will fail test
                 if (sw.ElapsedMilliseconds > MaxWaitTimeForSyncToComplete)
@@ -156,24 +156,6 @@ namespace NethermindNode.Tests.SnapSync
                     notionHelper.AddRecord(record);
                 }
             }
-        }
-
-        private List<Stages> GetCurrentStage()
-        {
-            List<Stages> result = new List<Stages>();
-            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", Logger);
-            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
-            foreach (string stage in output.Split(','))
-            {
-                bool parsed = Enum.TryParse(stage.Trim(), out Stages parsedStage);
-                if (parsed)
-                {
-                    result.Add(parsedStage);
-                }
-            }
-
-            Logger.Info("Current stage is: " + output);
-            return result;
         }
 
         internal class MetricStage

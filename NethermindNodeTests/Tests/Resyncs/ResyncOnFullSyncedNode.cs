@@ -1,4 +1,5 @@
 ﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Helpers;
 using NethermindNode.Tests.Helpers;
 
 namespace NethermindNode.Tests.Resyncs

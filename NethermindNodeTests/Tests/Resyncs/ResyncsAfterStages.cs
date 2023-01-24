@@ -1,9 +1,9 @@
-﻿using NethermindNodeTests.Enums;
-using NethermindNodeTests.Helpers;
-using Newtonsoft.Json;
-using SedgeNodeFuzzer.Helpers;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Helpers;
+using NethermindNode.Tests.Enums;
+using NethermindNode.Tests.Helpers;
 
-namespace NethermindNodeTests.Tests.Resyncs
+namespace NethermindNode.Tests.Resyncs
 {
     internal class ResyncsAfterStages
     {

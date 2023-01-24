@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NethermindNodeTests.NotionDataStructures
+namespace NethermindNode.NotionDataStructures
 {
     public class NotionDate : DatePropertyValue
     {

@@ -1,5 +1,7 @@
-﻿using NethermindNodeTests.Enums;
-using NethermindNodeTests.Helpers;
+﻿using NethermindNode.Helpers;
+using NethermindNode.Tests.CustomObjects;
+using NethermindNode.Tests.Enums;
+using NethermindNode.Tests.Helpers;
 using Newtonsoft.Json;
 using System.Diagnostics;
 

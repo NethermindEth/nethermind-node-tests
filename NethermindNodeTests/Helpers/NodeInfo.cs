@@ -1,4 +1,5 @@
-﻿using NethermindNode.Core.Helpers;
+﻿using Microsoft.CSharp.RuntimeBinder;
+using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.Enums;
 using Newtonsoft.Json;
 using System;
@@ -34,7 +35,7 @@ namespace NethermindNode.Helpers
             string output;
             try
             {
-                output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+                output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
             }
             catch (RuntimeBinderException e)
             {
@@ -55,11 +56,11 @@ namespace NethermindNode.Helpers
         public static List<Stages> GetCurrentStages(NLog.Logger logger)
         {
             List<Stages> result = new List<Stages>();
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", logger);
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
             string output = "";
             try
             {
-                output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+                output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
             }
             catch (RuntimeBinderException e)
             {

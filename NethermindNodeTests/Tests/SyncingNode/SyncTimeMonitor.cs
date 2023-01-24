@@ -1,9 +1,10 @@
 ﻿using HardwareInformation;
-using NethermindNodeTests.Enums;
-using NethermindNodeTests.Helpers;
-using NethermindNodeTests.NotionDataStructures;
+using NethermindNode.Core.Helpers;
+using NethermindNode.Helpers;
+using NethermindNode.NotionDataStructures;
+using NethermindNode.Tests.Enums;
+using NethermindNode.Tests.Helpers;
 using Notion.Client;
-using SedgeNodeFuzzer.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace NethermindNodeTests.Tests.SyncingNode
+namespace NethermindNode.Tests.SyncingNode
 {
     [TestFixture]
     public class SyncTimeMonitor : BaseTest

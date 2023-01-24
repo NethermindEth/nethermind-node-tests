@@ -40,7 +40,7 @@ namespace NethermindNode.Tests.Resyncs
         private void StopAndResync()
         {
             //Stopping and clearing EL
-            DockerCommands.StopDockerContainer("execution", Logger);
+            DockerCommands.StopDockerContainer("execution-client", Logger);
             while (!DockerCommands.GetDockerContainerStatus("execution-client", Logger).Contains("exited"))
             {
                 Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
@@ -49,7 +49,7 @@ namespace NethermindNode.Tests.Resyncs
             CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
 
             //Restarting Node - freshSync
-            DockerCommands.StartDockerContainer("execution", Logger);
+            DockerCommands.StartDockerContainer("execution-client", Logger);
         }
     }
 }

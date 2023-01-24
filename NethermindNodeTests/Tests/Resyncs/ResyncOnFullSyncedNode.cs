@@ -30,7 +30,7 @@ namespace NethermindNode.Tests.Resyncs
                 }
 
                 //Stopping and clearing EL
-                DockerCommands.StopDockerContainer("execution", Logger);
+                DockerCommands.StopDockerContainer("execution-client", Logger);
                 while (!DockerCommands.GetDockerContainerStatus("execution-client", Logger).Contains("exited"))
                 {
                     Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
@@ -40,8 +40,15 @@ namespace NethermindNode.Tests.Resyncs
 
                 //Restarting Node - freshSync
                 Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
-                DockerCommands.StartDockerContainer("execution", Logger);
+                DockerCommands.StartDockerContainer("execution-client", Logger);
             }
+        }
+
+        private bool IsFullySynced()
+        {
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", Logger);
+            var result = commandResult.Result;
+            return result == null ? false : result.Item1.Contains("false");
         }
     }
 }

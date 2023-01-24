@@ -11,6 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Tests\FastSync\**" />
+    <EmbeddedResource Remove="Tests\FastSync\**" />
+    <None Remove="Tests\FastSync\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HardwareInformation" Version="5.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
     <PackageReference Include="Nethereum.Web3" Version="4.12.0" />

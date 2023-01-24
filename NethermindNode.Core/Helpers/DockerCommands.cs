@@ -1,6 +1,7 @@
 ﻿using NLog;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace NethermindNode.Core.Helpers
 {
@@ -8,12 +9,12 @@ namespace NethermindNode.Core.Helpers
     {
         public static void StopDockerContainer(string containerName, Logger logger)
         {
-            DockerCommandExecute("compose stop " + containerName, logger);
+            DockerCommandExecute("stop " + containerName, logger);
         }
 
         public static void KillDockerContainer(string containerName, Logger logger)
         {
-            DockerCommandExecute("compose kill " + containerName, logger);
+            DockerCommandExecute("kill " + containerName, logger);
         }
 
         public static void PreventDockerContainerRestart(string containerName, Logger logger)
@@ -23,7 +24,7 @@ namespace NethermindNode.Core.Helpers
 
         public static void StartDockerContainer(string containerName, Logger logger)
         {
-            DockerCommandExecute("compose up -d " + containerName, logger);
+            DockerCommandExecute("start " + containerName, logger);
         }
 
         public static string GetDockerContainerStatus(string containerName, Logger logger)
@@ -39,13 +40,20 @@ namespace NethermindNode.Core.Helpers
 
         public static string GetImageName(string containerName, Logger logger)
         {
-            var result = DockerCommandExecute("inspect -f '{{.Config.image}}' " + containerName, logger);
+            var result = DockerCommandExecute("inspect -f '{{.Config.Image}}' " + containerName, logger);
             return result;
         }
 
         public static string GetDockerDetails(string containerName, string dataToFetch, Logger logger)
         {
-            var result = DockerCommandExecute("inspect -f '{{" + dataToFetch + "}}' " + containerName, logger);
+#if DEBUG
+            dataToFetch = dataToFetch.Replace("\"", "\\\"");
+#endif
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                dataToFetch = dataToFetch.Replace("\"", "\\\"");
+            }
+            var result = DockerCommandExecute("inspect -f \"{{" + dataToFetch + "}}\" " + containerName, logger);
             return result;
         }
 
@@ -59,7 +67,6 @@ namespace NethermindNode.Core.Helpers
             processInfo.UseShellExecute = false;
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardError = true;
-            processInfo.WorkingDirectory = "/root";
 
             using (var process = new Process())
             {
@@ -92,7 +99,7 @@ namespace NethermindNode.Core.Helpers
                 }
             }
 
-            return output + "\n" + error;
+            return output;
         }
     }
 }

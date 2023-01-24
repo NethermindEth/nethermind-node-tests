@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace NethermindNode.Tests.Helpers
 {
@@ -6,7 +7,20 @@ namespace NethermindNode.Tests.Helpers
     {
         public static void RemoveDirectory(string absolutePath, NLog.Logger logger)
         {
-            var processInfo = new ProcessStartInfo("rm", $"-r {absolutePath}");
+            ProcessStartInfo processInfo;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                processInfo = new ProcessStartInfo("rm", $"-r {absolutePath}");
+                logger.Info("Removing path: " + absolutePath);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                processInfo = new ProcessStartInfo("rmdir", $"{ConvertFromWslPathToWindowsPath(absolutePath)} /S /Q");
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException();
+            }
 
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
@@ -19,6 +33,24 @@ namespace NethermindNode.Tests.Helpers
 
                 process.Close();
             }
+        }
+
+        public static string ConvertFromWslPathToWindowsPath(string wslPath)
+        {
+            string windowsPath = "";
+
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "wslpath";
+                process.StartInfo.Arguments = "-w " + wslPath;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.Start();
+
+                windowsPath = process.StandardOutput.ReadToEnd().TrimEnd();
+            }
+
+            return windowsPath;
         }
     }
 }

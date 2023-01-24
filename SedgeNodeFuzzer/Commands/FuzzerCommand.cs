@@ -60,19 +60,19 @@ namespace NethermindNode.SedgeFuzzer.Commands
                 if (beforeStopWait % 2 == 0 && !ShouldForceKillCommand)
                 {
                     Logger.Info("Stopping gracefully docker \"execution\"");
-                    DockerCommands.StopDockerContainer("execution", Logger);
+                    DockerCommands.StopDockerContainer("execution-client", Logger);
                 }
                 else
                 {
                     Logger.Info("Killing docker \"execution\"");
                     DockerCommands.PreventDockerContainerRestart("execution-client", Logger);
-                    DockerCommands.KillDockerContainer("execution", Logger);
+                    DockerCommands.KillDockerContainer("execution-client", Logger);
                 }
 
                 int beforeStartWait = rand.Next(Minimum, Maximum) * 1000;
                 Logger.Info("WAITING BEFORE START for: " + beforeStartWait / 1000 + " seconds");
                 Thread.Sleep(beforeStartWait);
-                DockerCommands.StartDockerContainer("execution", Logger);
+                DockerCommands.StartDockerContainer("execution-client", Logger);
                 i++;
             }
         }

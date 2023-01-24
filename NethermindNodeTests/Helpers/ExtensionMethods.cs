@@ -6,5 +6,10 @@
         {
             return String.Join(',', list);
         }
+
+        public static TimeSpan Average(this IEnumerable<TimeSpan?> spans) 
+        { 
+            return TimeSpan.FromSeconds(spans.Select(s => s.Value.TotalSeconds).Average()); 
+        }
     }
 }

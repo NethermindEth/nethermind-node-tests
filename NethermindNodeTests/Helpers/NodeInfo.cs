@@ -33,21 +33,8 @@ namespace NethermindNode.Helpers
         {
             var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
             string output;
-            try
-            {
-                output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
-            }
-            catch (RuntimeBinderException e)
-            {
-                if (e.Message.Contains("Cannot perform runtime binding on a null reference"))
-                {
-                    throw new Exception("Binding exception. Possible module not enabled on JSON RPC.");
-                }
-                else
-                {
-                    throw e;
-                }
-            }
+
+            output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
 
             logger.Info("Current stage is: " + output);
             return output;
@@ -58,21 +45,9 @@ namespace NethermindNode.Helpers
             List<Stages> result = new List<Stages>();
             var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
             string output = "";
-            try
-            {
-                output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
-            }
-            catch (RuntimeBinderException e)
-            {
-                if (e.Message.Contains("Cannot perform runtime binding on a null reference"))
-                {
-                    throw new Exception("Binding exception. Possible module not enabled on JSON RPC.");
-                }
-                else
-                {
-                    throw e;
-                }
-            }
+
+            output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
+
             foreach (string stage in output.Split(','))
             {
                 bool parsed = Enum.TryParse(stage.Trim(), out Stages parsedStage);

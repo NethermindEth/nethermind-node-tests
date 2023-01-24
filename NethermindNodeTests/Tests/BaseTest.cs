@@ -1,13 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
-using NethermindNodeTests.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NethermindNode.Tests.Helpers;
 
-namespace NethermindNodeTests.Tests
+namespace NethermindNode.Tests
 {
     public class BaseTest
     {

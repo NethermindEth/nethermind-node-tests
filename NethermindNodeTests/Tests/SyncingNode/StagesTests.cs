@@ -1,10 +1,12 @@
-﻿using NethermindNodeTests.Enums;
-using NethermindNodeTests.Helpers;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Helpers;
+using NethermindNode.Tests.CustomObjects;
+using NethermindNode.Tests.Enums;
+using NethermindNode.Tests.Helpers;
 using Newtonsoft.Json;
-using SedgeNodeFuzzer.Helpers;
 using System.Diagnostics;
 
-namespace NethermindNodeTests.Tests.SyncingNode
+namespace NethermindNode.Tests.SyncingNode
 {
     [TestFixture]
     [Parallelizable(ParallelScope.All)]
@@ -34,7 +36,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
             Logger.Info("***Starting test: VerfiyCorrectnessOfSnapSyncStages --- syncType: " + syncType.ToString() + "***");
             foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
             {
-                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Waiting stage: " + stage.Stages.ToJoinedString());
+                Logger.Info("Waiting stage: " + stage.Stages.ToJoinedString());
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
@@ -54,7 +56,7 @@ namespace NethermindNodeTests.Tests.SyncingNode
                     currentStage = NodeInfo.GetCurrentStage(Logger);
                 }
                 sw.Stop();
-                Logger.Info(TestContext.CurrentContext.Test.MethodName + " ||| " + "Stage found! " + stage.Stages.ToJoinedString());
+                Logger.Info("Stage found! " + stage.Stages.ToJoinedString());
             }
         }
     }

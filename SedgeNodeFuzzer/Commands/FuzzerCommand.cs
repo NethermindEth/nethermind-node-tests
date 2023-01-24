@@ -1,8 +1,7 @@
 ﻿using CommandLine;
-using SedgeNodeFuzzer.Helpers;
-using System;
+using NethermindNode.Core.Helpers;
 
-namespace SedgeNodeFuzzer.Commands
+namespace NethermindNode.SedgeFuzzer.Commands
 {
     [Verb("fuzzer", HelpText = "Execute fuzzing capability on node in various stages")]
     public class FuzzerCommand : ICommand, IFuzzerCommand
@@ -50,7 +49,7 @@ namespace SedgeNodeFuzzer.Commands
             {
                 WaitForNodeSynced();
             }
-            
+
             int i = 0;
 
             while (Count > 0 ? i < Count : true)
@@ -89,9 +88,9 @@ namespace SedgeNodeFuzzer.Commands
 
         private bool IsFullySynced()
         {
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "http://localhost:8545", Logger);
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", Logger);
             var result = commandResult.Result;
-            return result == null ? false : result.Contains("false");
+            return result == null ? false : result.Item1.Contains("false");
         }
 
         private void VerifyParams()

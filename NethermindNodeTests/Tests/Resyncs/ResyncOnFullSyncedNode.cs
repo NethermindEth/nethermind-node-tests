@@ -1,12 +1,8 @@
-﻿using NethermindNodeTests.Helpers;
-using SedgeNodeFuzzer.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Helpers;
+using NethermindNode.Tests.Helpers;
 
-namespace NethermindNodeTests.Tests.Resyncs
+namespace NethermindNode.Tests.Resyncs
 {
     internal class ResyncOnFullSyncedNode
     {

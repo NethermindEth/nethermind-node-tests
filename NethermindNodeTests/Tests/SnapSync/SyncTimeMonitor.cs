@@ -1,16 +1,12 @@
-﻿using NethermindNodeTests.Enums;
-using NethermindNodeTests.Helpers;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Helpers;
+using NethermindNode.Tests.Enums;
+using NethermindNode.Tests.Helpers;
 using Newtonsoft.Json;
 using Notion.Client;
-using SedgeNodeFuzzer.Helpers;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace NethermindNodeTests.Tests.SnapSync
+namespace NethermindNode.Tests.SnapSync
 {
     [TestFixture]
     public class SyncTimeMonitor : BaseTest

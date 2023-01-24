@@ -1,21 +1,21 @@
-﻿using NethermindNodeTests.Enums;
+﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.Enums;
 using Newtonsoft.Json;
-using SedgeNodeFuzzer.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NethermindNodeTests.Helpers
+namespace NethermindNode.Helpers
 {
     public static class NodeInfo
     {
         public static bool IsFullySynced(NLog.Logger logger)
         {
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "http://localhost:8545", logger);
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", logger);
             var result = commandResult.Result;
-            return result == null ? false : result.Contains("false");
+            return result == null ? false : result.Item1.Contains("false");
         }
 
         public static void WaitForNodeToBeReady(NLog.Logger logger)
@@ -30,7 +30,7 @@ namespace NethermindNodeTests.Helpers
 
         public static string GetCurrentStage(NLog.Logger logger)
         {
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", logger);
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
             string output;
             if (commandResult.Result == null)
             {
@@ -38,7 +38,7 @@ namespace NethermindNodeTests.Helpers
             }
             else
             {
-                var value = JsonConvert.DeserializeObject(commandResult.Result);
+                var value = JsonConvert.DeserializeObject(commandResult.Result.Item1);
                 if (value == null)
                 {
                     output = "WaitingForConnection";
@@ -56,8 +56,8 @@ namespace NethermindNodeTests.Helpers
         public static List<Stages> GetCurrentStages(NLog.Logger logger)
         {
             List<Stages> result = new List<Stages>();
-            var commandResult = CurlExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "http://localhost:8545", logger);
-            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result)).result.currentStage.ToString();
+            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
+            string output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
             foreach (string stage in output.Split(','))
             {
                 bool parsed = Enum.TryParse(stage.Trim(), out Stages parsedStage);

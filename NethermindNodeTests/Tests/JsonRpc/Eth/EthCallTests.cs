@@ -13,7 +13,8 @@ namespace NethermindNode.Tests.JsonRpc.Eth
 
         [TestCase(1, 1, Category = "JsonRpc")]
         [TestCase(10000, 5, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmark")]
-        public async Task EthCall(int repeatCount, int parallelizableLevel)
+        [Description("Scenario from BugBounty program - spamming a node with random addresses.")]
+        public async Task EthCallOutOfGasScenario(int repeatCount, int parallelizableLevel)
         {
             int i = 0;
             double startidx = 300 * Math.Pow(10, 6);   // Randomly chosen starting address, change this for multiple runs
@@ -47,7 +48,7 @@ namespace NethermindNode.Tests.JsonRpc.Eth
         {
             try
             {
-                var w3 = new Web3("http://139.144.31.115:8545");
+                var w3 = new Web3("http://localhost:8545");
 
                 var callInput = new CallInput
                 {

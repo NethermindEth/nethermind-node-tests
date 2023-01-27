@@ -21,14 +21,10 @@ namespace NethermindNode.Tests.SyncingNode
         {
             Logger.Info("***Starting test: ShouldKillNodeOnAllPossibleStages***");
 
-            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
+            NodeOperations.WaitForNodeToBeReady(Logger);
+            while (!NodeOperations.IsFullySynced(Logger))
             {
-                Logger.Info("Waiting for Execution to be started.");
-                Thread.Sleep(5000);
-            }
-            while (!NodeInfo.IsFullySynced(Logger))
-            {
-                var currentStage = NodeInfo.GetCurrentStage(Logger);
+                var currentStage = NodeOperations.GetCurrentStages(Logger).Select(x => x.ToString()).Aggregate((x, y) => x + "," + y);
                 if (!_stagesFound.Contains(currentStage) && currentStage != "WaitingForConnection")
                 {
                     _stagesFound.Add(currentStage);

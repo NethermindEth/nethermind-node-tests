@@ -38,18 +38,13 @@ namespace NethermindNode.Tests.SyncingNode
                 {
                     new MetricStage(){ Stage = Stages.FastHeaders },
                     new MetricStage(){ Stage = Stages.BeaconHeaders },
-                    //new MetricStage(){ Stage = Stages.FastSync },
                     new MetricStage(){ Stage = Stages.SnapSync },
                     new MetricStage(){ Stage = Stages.StateNodes },
                     new MetricStage(){ Stage = Stages.FastBodies },
                     new MetricStage(){ Stage = Stages.FastReceipts }
                 };
 
-                while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
-                {
-                    Logger.Info("Waiting for Execution to be started.");
-                    Thread.Sleep(5000);
-                }
+                NodeOperations.WaitForNodeToBeReady(Logger);
 
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
@@ -59,7 +54,7 @@ namespace NethermindNode.Tests.SyncingNode
 
                 while (stagesToMonitor.Any(x => x.EndTime == null))
                 {
-                    var currentStages = NodeInfo.GetCurrentStages(Logger);
+                    var currentStages = NodeOperations.GetCurrentStages(Logger);
                     if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None))
                     {
                         Thread.Sleep(1000);
@@ -113,12 +108,12 @@ namespace NethermindNode.Tests.SyncingNode
                 results.Add(i, stagesToMonitor);
                 totals.Add(i, sw.Elapsed.TotalSeconds);
 
-                NodeStop();
+                NodeOperations.NodeStop("execution-client" ,Logger);
 
                 AddRecordToNotion(stagesToMonitor);
 
                 if (i + 1 < repeatCount)
-                    NodeResync();
+                    NodeOperations.NodeResync("execution-client", Logger);
 
                 Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
             }
@@ -145,10 +140,6 @@ namespace NethermindNode.Tests.SyncingNode
                         Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.Total)).Average(),
                         StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.StartTime)).Min()
                     },
-                    //new MetricStage(){ 
-                    //    Stage = Stages.FastSync,
-                    //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastSync).Select(y => y.Total)).Average()
-                    //},
                     new MetricStage(){
                         Stage = Stages.SnapSync,
                         Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.Total)).Average(),
@@ -173,7 +164,7 @@ namespace NethermindNode.Tests.SyncingNode
 
             AddRecordToNotion(averagedResult, results.Count);
 
-            NodeStart();
+            NodeOperations.NodeStart("execution-client", Logger);
         }
 
         internal class MetricStage
@@ -182,35 +173,6 @@ namespace NethermindNode.Tests.SyncingNode
             public DateTime? StartTime { get; set; }
             public DateTime? EndTime { get; set; }
             public TimeSpan? Total { get; set; }
-        }
-
-        private void NodeStop()
-        {
-            //Stopping and clearing EL
-            DockerCommands.StopDockerContainer("execution-client", Logger);
-            while (!DockerCommands.GetDockerContainerStatus("execution-client", Logger).Contains("exited"))
-            {
-                Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
-                Thread.Sleep(30000);
-            }
-        }
-
-        private void NodeStart()
-        {
-            DockerCommands.StartDockerContainer("execution-client", Logger);
-        }
-
-        private void NodeResync()
-        {
-#if DEBUG
-            var path = DockerCommands.GetDockerDetails("execution-client", " range .Mounts }}{{ if eq .Destination \"/nethermind/data\" }}{{ .Source }}{{ end }}{{ end ", Logger).Trim();
-            CommandExecutor.RemoveDirectory(path + "/nethermind_db", Logger);
-#else
-            CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
-#endif
-
-            //Restarting Node - freshSync
-            NodeStart();
         }
 
         private void AddRecordToNotion(List<MetricStage> result, int numberOfProbes = 0)
@@ -270,6 +232,5 @@ namespace NethermindNode.Tests.SyncingNode
                 notionHelper.AddRecord(record);
             }
         }
-
     }
 }

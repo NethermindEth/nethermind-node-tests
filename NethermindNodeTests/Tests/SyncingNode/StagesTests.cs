@@ -33,13 +33,16 @@ namespace NethermindNode.Tests.SyncingNode
         public void VerfiyCorrectnessOfSnapSyncStages(SyncTypes syncType)
         {
             Logger.Info("***Starting test: VerfiyCorrectnessOfSnapSyncStages --- syncType: " + syncType.ToString() + "***");
+
+            NodeOperations.WaitForNodeToBeReady(Logger);
+
             foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
             {
                 Logger.Info("Waiting stage: " + stage.Stages.ToJoinedString());
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                var currentStage = NodeInfo.GetCurrentStage(Logger);
+                var currentStage = NodeOperations.GetCurrentStages(Logger).Select(x => x.ToString()).Aggregate((x, y) => x + "," + y);
                 while (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString()))
                 {
                     if (sw.ElapsedMilliseconds > MaxWaitTimeForStageToCompleteInMilliseconds)
@@ -52,7 +55,7 @@ namespace NethermindNode.Tests.SyncingNode
                             );
                     }
                     Thread.Sleep(1000);
-                    currentStage = NodeInfo.GetCurrentStage(Logger);
+                    currentStage = NodeOperations.GetCurrentStages(Logger).Select(x => x.ToString()).Aggregate((x, y) => x + "," + y); ;
                 }
                 sw.Stop();
                 Logger.Info("Stage found! " + stage.Stages.ToJoinedString());

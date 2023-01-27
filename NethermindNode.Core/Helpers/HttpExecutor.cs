@@ -33,16 +33,6 @@ namespace NethermindNode.Core.Helpers
             return response;
         }
 
-        //public async static Task<string?> ExecuteNethermindJsonRpcCommand(string command, string parameters, string url, Logger logger)
-        //{
-        //    if (logger.IsTraceEnabled)
-        //        logger.Trace("Executing command: " + command);
-        //    var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
-        //    var response = await TryPostAsync(url, data, logger);
-        //
-        //    return response?.Content.ReadAsStringAsync().Result;
-        //}
-
         private async static Task<Tuple<string, TimeSpan, bool>> PostHttpWithTimingInfo(string url, StringContent? data, Logger logger)
         {
             var stopWatch = Stopwatch.StartNew();

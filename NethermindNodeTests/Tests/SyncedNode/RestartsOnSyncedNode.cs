@@ -1,4 +1,5 @@
 ﻿using NethermindNode.Core.Helpers;
+using NethermindNode.Helpers;
 using NethermindNode.Tests.Helpers;
 
 namespace NethermindNode.Tests.SyncedNode
@@ -18,11 +19,7 @@ namespace NethermindNode.Tests.SyncedNode
         {
             Logger.Info("***Starting test: ShouldRestartNodeMultipleTimesOnSyncedNode***");
 
-            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
-            {
-                Logger.Info("Waiting for Execution to be started.");
-                Thread.Sleep(5000);
-            }
+            NodeOperations.WaitForNodeToBeReady(Logger);
             
             FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait }, Logger);
         }

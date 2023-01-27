@@ -25,7 +25,7 @@ namespace NethermindNode.Tests.JsonRpc.Trace
                 new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
                 (task, loopState) =>
                 {
-                    var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://45.79.220.73:8545", Logger);
+                    var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://localhost:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<TraceBlock>(result.Result.Item1);
 
@@ -83,7 +83,7 @@ namespace NethermindNode.Tests.JsonRpc.Trace
                 (task, loopState) =>
                 {
                     var batchedIds = Enumerable.Range(task, batchSize).Select(x => $"\"{x}\"").ToList();
-                    var result = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, "http://45.79.220.73:8545", Logger);
+                    var result = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, "http://localhost:8545", Logger);
                     //Test result
                     bool isVerifiedPositively = JsonRpcHelper.DeserializeReponse<List<TraceBlock>>(result.Result.Item1);
 
@@ -125,9 +125,10 @@ namespace NethermindNode.Tests.JsonRpc.Trace
             Console.WriteLine(serializedJson);
         }
 
-        [TestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcComapare")]
-        [TestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmarkComapare")]
-        [TestCase("18.222.197.12", "18.216.213.143", 500, 10, Category = "JsonRpcBenchmarkComapare")]
+        [Description("Compare results from freshly synced node to Archive node.")]
+        [TestCase("45.72.96.2", "localhost", 1, 1, Category = "JsonRpc")]
+        [TestCase("45.72.96.2", "localhost", 40, 10, Category = "JsonRpcBenchmarkCompare")]
+        [TestCase("45.72.96.2", "localhost", 500, 10, Category = "JsonRpcBenchmarkCompare")]
         public void TraceBlockCompare(string sourceNode, string targetNode, int repeatCount, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -151,7 +152,7 @@ namespace NethermindNode.Tests.JsonRpc.Trace
                 });
         }
 
-        [TestCase("18.222.197.12", "18.216.213.143", 500, 5, 10, Category = "JsonRpcBenchmarkComapare")]
+        [TestCase("45.72.96.2", "localhost", 500, 5, 10, Category = "JsonRpcBenchmarkComapare")]
         public void TraceBlockBatchedCompare(string sourceNode, string targetNode, int requestsCount, int step, int parallelizableLevel)
         {
             List<TimeSpan> executionTimes = new List<TimeSpan>();

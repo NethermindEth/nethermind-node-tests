@@ -16,39 +16,21 @@ namespace NethermindNode.Tests.Resyncs
             for (int i = 0; i < repeatCount; i++)
             {
                 //Waiting for proper start of node
-                while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
-                {
-                    Logger.Info("Waiting for Execution to be started.");
-                    Thread.Sleep(30000);
-                }
+                NodeOperations.WaitForNodeToBeReady(Logger);
 
                 //Waiting for Full Sync
-                while (!NodeInfo.IsFullySynced(Logger))
+                while (!NodeOperations.IsFullySynced(Logger))
                 {
                     Logger.Info("Waiting for node to be fully synced.");
                     Thread.Sleep(30000);
                 }
 
                 //Stopping and clearing EL
-                DockerCommands.StopDockerContainer("execution-client", Logger);
-                while (!DockerCommands.GetDockerContainerStatus("execution-client", Logger).Contains("exited"))
-                {
-                    Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
-                    Thread.Sleep(30000);
-                }
-                CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
+                NodeOperations.NodeStop("execution-client", Logger);
+                NodeOperations.NodeResync("execution-client", Logger);
 
-                //Restarting Node - freshSync
                 Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
-                DockerCommands.StartDockerContainer("execution-client", Logger);
             }
-        }
-
-        private bool IsFullySynced()
-        {
-            var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", Logger);
-            var result = commandResult.Result;
-            return result == null ? false : result.Item1.Contains("false");
         }
     }
 }

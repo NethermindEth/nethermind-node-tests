@@ -1,5 +1,7 @@
-﻿namespace NethermindNode.Tests.RpcResponses;
+﻿using NethermindNode.Core.RpcResponses;
 
-public class EthCall
+namespace NethermindNode.Tests.RpcResponses;
+
+public class EthCall : IRpcResponse
 {
 }

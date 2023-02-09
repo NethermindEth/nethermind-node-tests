@@ -1,4 +1,8 @@
-﻿namespace NethermindNode.Tests.RpcResponses;
+﻿using NethermindNode.Core.RpcResponses;
+using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+
+namespace NethermindNode.Tests.RpcResponses;
 
 
 public class Action
@@ -26,7 +30,7 @@ public class Results
     public string Output { get; set; }
 }
 
-public class TraceBlock
+public class TraceBlock : IRpcResponse
 {
     public string Jsonrpc { get; set; }
     public List<Results> Result { get; set; }

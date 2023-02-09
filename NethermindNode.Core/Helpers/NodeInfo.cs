@@ -1,5 +1,7 @@
 ﻿using Microsoft.CSharp.RuntimeBinder;
+using NethermindNode.Core.RpcResponses;
 using NethermindNode.Tests.Enums;
+using NethermindNode.Tests.RpcResponses;
 using Newtonsoft.Json;
 
 namespace NethermindNode.Core.Helpers;
@@ -26,22 +28,18 @@ public static class NodeInfo
     public static string GetCurrentStage(NLog.Logger logger)
     {
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
-        string output;
-        try
+        string output = "";
+
+        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
+        if (!isVerifiedPositively)
         {
-            output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
-        }
-        catch (RuntimeBinderException e)
-        {
-            if (e.Message.Contains("Cannot perform runtime binding on a null reference"))
-            {
-                throw new Exception("Binding exception. Possible module not enabled on JSON RPC.");
-            }
+            if (deserialized is RpcError)
+                throw new Exception(((RpcError)deserialized).Error.Message);
             else
-            {
-                throw e;
-            }
+                output = "WaitingForConnection";
         }
+        if (output == "")
+            output = ((GetSyncStage)deserialized).Result.CurrentStage;
 
         logger.Info("Current stage is: " + output);
         return output;
@@ -52,21 +50,18 @@ public static class NodeInfo
         List<Stages> result = new List<Stages>();
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
         string output = "";
-        try
+
+        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
+        if (!isVerifiedPositively)
         {
-            output = commandResult.Result == null ? "WaitingForConnection" : ((dynamic)JsonConvert.DeserializeObject(commandResult.Result.Item1)).result.currentStage.ToString();
-        }
-        catch (RuntimeBinderException e)
-        {
-            if (e.Message.Contains("Cannot perform runtime binding on a null reference"))
-            {
-                throw new Exception("Binding exception. Possible module not enabled on JSON RPC.");
-            }
+            if (deserialized is RpcError)
+                throw new Exception(((RpcError)deserialized).Error.Message);
             else
-            {
-                throw e;
-            }
+                output = "WaitingForConnection";
         }
+        if (output == "")
+            output = ((GetSyncStage)deserialized).Result.CurrentStage;
+
         foreach (string stage in output.Split(','))
         {
             bool parsed = Enum.TryParse(stage.Trim(), out Stages parsedStage);

@@ -14,11 +14,7 @@ internal class ResyncOnFullSyncedNode
         for (int i = 0; i < repeatCount; i++)
         {
             //Waiting for proper start of node
-            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
-            {
-                Logger.Info("Waiting for Execution to be started.");
-                Thread.Sleep(30000);
-            }
+            NodeInfo.WaitForNodeToBeReady(Logger);
 
             //Waiting for Full Sync
             while (!NodeInfo.IsFullySynced(Logger))

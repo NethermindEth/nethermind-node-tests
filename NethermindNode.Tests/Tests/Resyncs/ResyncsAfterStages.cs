@@ -17,11 +17,7 @@ internal class ResyncsAfterStages
         for (int i = 0; i < repeatCount; i++)
         {
             //Waiting for proper start of node
-            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
-            {
-                Logger.Info("Waiting for Execution to be started.");
-                Thread.Sleep(30000);
-            }
+            NodeInfo.WaitForNodeToBeReady(Logger);
 
             //Waiting for OldBodie (stage after state sync)
             while (!NodeInfo.GetCurrentStage(Logger).Contains(desiredStage))

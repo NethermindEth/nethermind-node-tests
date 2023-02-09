@@ -19,11 +19,8 @@ public class StagesFuzzer : BaseTest
     {
         Logger.Info("***Starting test: ShouldKillNodeOnAllPossibleStages***");
 
-        while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
-        {
-            Logger.Info("Waiting for Execution to be started.");
-            Thread.Sleep(5000);
-        }
+        NodeInfo.WaitForNodeToBeReady(Logger);
+
         while (!NodeInfo.IsFullySynced(Logger))
         {
             var currentStage = NodeInfo.GetCurrentStage(Logger);

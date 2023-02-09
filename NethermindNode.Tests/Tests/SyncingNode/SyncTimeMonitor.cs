@@ -44,11 +44,7 @@ public class SyncTimeMonitor : BaseTest
                 new MetricStage(){ Stage = Stages.FastReceipts }
             };
 
-            while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
-            {
-                Logger.Info("Waiting for Execution to be started.");
-                Thread.Sleep(5000);
-            }
+            NodeInfo.WaitForNodeToBeReady(Logger);
 
             Stopwatch sw = new Stopwatch();
             sw.Start();

@@ -17,12 +17,8 @@ public class RestartsOnSyncedNode : BaseTest
     {
         Logger.Info("***Starting test: ShouldRestartNodeMultipleTimesOnSyncedNode***");
 
-        while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", Logger) == false)
-        {
-            Logger.Info("Waiting for Execution to be started.");
-            Thread.Sleep(5000);
-        }
-        
+        NodeInfo.WaitForNodeToBeReady(Logger);
+
         FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait }, Logger);
     }
 }

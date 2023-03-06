@@ -15,6 +15,7 @@ public class FuzzerCommandOptions : IFuzzerCommand
 {
     public bool IsFullySyncedCheck { get; set; }
     public bool ShouldForceKillCommand { get; set; }
+    public bool ShouldForceGracefullCommand { get; set; }
     public int Count { get; set; } = 1;
     public int Minimum { get; set; } = 0;
     public int Maximum { get; set; } = 0;

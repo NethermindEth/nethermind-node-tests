@@ -14,6 +14,9 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
     [Option("kill", HelpText = "Use 'kill' command when suspending node.")]
     public bool ShouldForceKillCommand { get; set; }
 
+    [Option("gracefull", HelpText = "Use 'stop' command when suspending node.")]
+    public bool ShouldForceGracefullCommand { get; set; }
+
     [Option('c', "count", Required = false, HelpText = "For how long it should work (number of loops). 0 for infinite loop.", Default = 1)]
     public int Count { get; set; }
 
@@ -32,6 +35,7 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
     {
         IsFullySyncedCheck = fuzzerCommandOptions.IsFullySyncedCheck;
         ShouldForceKillCommand = fuzzerCommandOptions.ShouldForceKillCommand;
+        ShouldForceGracefullCommand = fuzzerCommandOptions.ShouldForceGracefullCommand;
         Count = fuzzerCommandOptions.Count;
         Minimum = fuzzerCommandOptions.Minimum;
         Maximum = fuzzerCommandOptions.Maximum;
@@ -54,10 +58,10 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
 
         while (Count > 0 ? i < Count : true)
         {
-            int beforeStopWait = rand.Next(Minimum, Maximum) * 1000;
-            Logger.Info("WAITING BEFORE STOP for: " + beforeStopWait / 1000 + " seconds");
-            Thread.Sleep(beforeStopWait);
-            if (beforeStopWait % 2 == 0 && !ShouldForceKillCommand)
+            int beforeStopWait = rand.Next(Minimum, Maximum);
+            Logger.Info("WAITING BEFORE STOP for: " + beforeStopWait + " seconds");
+            Thread.Sleep(beforeStopWait * 1000);
+            if ((beforeStopWait % 2 == 0 && !ShouldForceKillCommand) || ShouldForceGracefullCommand)
             {
                 Logger.Info("Stopping gracefully docker \"execution\"");
                 DockerCommands.StopDockerContainer("execution-client", Logger);
@@ -94,5 +98,7 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
             throw new ArgumentException("'--max' should be higher or equal to '-min'");
         if (Minimum < 0 || Maximum < 0)
             throw new ArgumentException("Both '--min' and '--max' should be set to 0 or higher");
+        if (ShouldForceGracefullCommand == true && ShouldForceKillCommand == true)
+            throw new ArgumentException("Unable to determine fuzzing behaviour when both '--kill' and '--gracefull' are used.");
     }
 }

@@ -13,6 +13,7 @@ public class RestartsOnSyncedNode : BaseTest
     [Category("FastSync")]
     [Category("FullSync")]
     [Category("ArchiveSync")]
+    [Category("RestartOnFullSync")]
     public void ShouldRestartNodeMultipleTimesOnSyncedNode(int restartCount, int minimumWait, int maximumWait)
     {
         Logger.Info("***Starting test: ShouldRestartNodeMultipleTimesOnSyncedNode***");

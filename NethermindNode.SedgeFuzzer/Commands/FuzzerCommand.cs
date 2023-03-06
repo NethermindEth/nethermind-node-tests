@@ -73,9 +73,9 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
                 DockerCommands.KillDockerContainer("execution-client", Logger);
             }
 
-            int beforeStartWait = rand.Next(Minimum, Maximum) * 1000;
-            Logger.Info("WAITING BEFORE START for: " + beforeStartWait / 1000 + " seconds");
-            Thread.Sleep(beforeStartWait);
+            int beforeStartWait = rand.Next(Minimum, Maximum);
+            Logger.Info("WAITING BEFORE START for: " + beforeStartWait + " seconds");
+            Thread.Sleep(beforeStartWait * 1000);
             DockerCommands.StartDockerContainer("execution-client", Logger);
             i++;
         }

@@ -22,4 +22,15 @@ public class RestartsOnSyncedNode : BaseTest
 
         FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait }, Logger);
     }
+
+    [TestCase(0, 60, 120)]
+    [Category("InfinityRestartGracefullyOnFullSync")]
+    public void ShouldRestartGracefullyNodeForInfinityOnSyncedNode(int restartCount, int minimumWait, int maximumWait)
+    {
+        Logger.Info("***Starting test: ShouldRestartGracefullyNodeForInfinityOnSyncedNode***");
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
+    }
 }

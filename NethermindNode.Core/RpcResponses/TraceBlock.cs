@@ -1,6 +1,4 @@
 ﻿using NethermindNode.Core.RpcResponses;
-using Newtonsoft.Json;
-using System.Text.Json.Serialization;
 
 namespace NethermindNode.Tests.RpcResponses;
 

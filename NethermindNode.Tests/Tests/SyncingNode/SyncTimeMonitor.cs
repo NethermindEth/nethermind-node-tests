@@ -4,14 +4,8 @@ using NethermindNode.NotionDataStructures;
 using NethermindNode.Tests.Enums;
 using NethermindNode.Tests.Helpers;
 using Notion.Client;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace NethermindNode.Tests.SyncingNode;
 
@@ -19,7 +13,6 @@ namespace NethermindNode.Tests.SyncingNode;
 public class SyncTimeMonitor : BaseTest
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-    DateTime startTime = DateTime.MinValue;
 
     int MaxWaitTimeForSyncToComplete = 36 * 60 * 60 * 1000; //1,5day
 
@@ -30,6 +23,7 @@ public class SyncTimeMonitor : BaseTest
         Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
         Dictionary<int, List<MetricStage>> results = new Dictionary<int, List<MetricStage>>();
         Dictionary<int, double> totals = new Dictionary<int, double>();
+        DateTime startTime = DateTime.MinValue;
 
         for (int i = 0; i < repeatCount; i++)
         {
@@ -37,7 +31,6 @@ public class SyncTimeMonitor : BaseTest
             {
                 new MetricStage(){ Stage = Stages.FastHeaders },
                 new MetricStage(){ Stage = Stages.BeaconHeaders },
-                //new MetricStage(){ Stage = Stages.FastSync },
                 new MetricStage(){ Stage = Stages.SnapSync },
                 new MetricStage(){ Stage = Stages.StateNodes },
                 new MetricStage(){ Stage = Stages.FastBodies },
@@ -45,59 +38,8 @@ public class SyncTimeMonitor : BaseTest
             };
 
             NodeInfo.WaitForNodeToBeReady(Logger);
-
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            var startDateTime = DateTime.UtcNow;
-            if (startTime == DateTime.MinValue)
-                startTime = startDateTime;
-
-            while (stagesToMonitor.Any(x => x.EndTime == null))
-            {
-                var currentStages = NodeInfo.GetCurrentStages(Logger);
-                if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None))
-                {
-                    Thread.Sleep(1000);
-                    continue;
-                }
-
-                //Need to have any check for maximum sync time - if more than MaxWaitTimeForSyncToComplete then something must have gone wrong and we will fail test
-                if (sw.ElapsedMilliseconds > MaxWaitTimeForSyncToComplete)
-                {
-                    sw.Stop();
-                    throw new AssertionException("Timout while waiting for sync to complete.");
-                }
-
-                //Process current stages
-                foreach (var stage in currentStages)
-                {
-                    //Set StartTime for stages which appeared for first time
-                    var monitoringStage = stagesToMonitor.FirstOrDefault(x => x.Stage == stage);
-                    if (monitoringStage != null && monitoringStage.StartTime == null)
-                    {
-                        monitoringStage.StartTime = DateTime.UtcNow;
-                    }
-
-                    //If for any reason stage appeared again and have not null EndTime, we should reset EndTime
-                    if (monitoringStage != null && monitoringStage.EndTime != null)
-                    {
-                        monitoringStage.EndTime = null;
-                    }
-                }
-
-                //If any stage dissapeared and have StartTime set, then we can treat it as completed
-                foreach (var monitoringStage in stagesToMonitor.Where(x => x.StartTime != null && x.EndTime == null))
-                {
-                    if (!currentStages.Contains(monitoringStage.Stage))
-                    {
-                        monitoringStage.EndTime = DateTime.UtcNow;
-                    }
-                }
-                Thread.Sleep(1000);
-            }
-            var endDateTime = DateTime.UtcNow;
-            sw.Stop();
-
+            double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
+            
             //Calculate Totals
             foreach (var monitoringStage in stagesToMonitor)
             {
@@ -106,7 +48,7 @@ public class SyncTimeMonitor : BaseTest
 
             //Add values to dictionary
             results.Add(i, stagesToMonitor);
-            totals.Add(i, sw.Elapsed.TotalSeconds);
+            totals.Add(i, totalExecutionTime);
 
             NodeStop();
 
@@ -140,10 +82,6 @@ public class SyncTimeMonitor : BaseTest
                     Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.Total)).Average(),
                     StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.StartTime)).Min()
                 },
-                //new MetricStage(){ 
-                //    Stage = Stages.FastSync,
-                //    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastSync).Select(y => y.Total)).Average()
-                //},
                 new MetricStage(){
                     Stage = Stages.SnapSync,
                     Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.Total)).Average(),
@@ -169,6 +107,70 @@ public class SyncTimeMonitor : BaseTest
         AddRecordToNotion(averagedResult, results.Count);
 
         NodeStart();
+    }
+
+    /// <summary>
+    /// Monitor sync stages and returns total time in seconds of how long Sync Procedure took
+    /// </summary>
+    /// <param name="startTime"></param>
+    /// <param name="stagesToMonitor"></param>
+    /// <returns></returns>
+    /// <exception cref="AssertionException"></exception>
+    private double MonitorStages(DateTime startTime, List<MetricStage> stagesToMonitor)
+    {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        var startDateTime = DateTime.UtcNow;
+        if (startTime == DateTime.MinValue)
+            startTime = startDateTime;
+
+        while (stagesToMonitor.Any(x => x.EndTime == null))
+        {
+            var currentStages = NodeInfo.GetCurrentStages(Logger);
+            if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None))
+            {
+                Thread.Sleep(1000);
+                continue;
+            }
+
+            //Need to have any check for maximum sync time - if more than MaxWaitTimeForSyncToComplete then something must have gone wrong and we will fail test
+            if (sw.ElapsedMilliseconds > MaxWaitTimeForSyncToComplete)
+            {
+                sw.Stop();
+                throw new AssertionException("Timout while waiting for sync to complete.");
+            }
+
+            //Process current stages
+            foreach (var stage in currentStages)
+            {
+                //Set StartTime for stages which appeared for first time
+                var monitoringStage = stagesToMonitor.FirstOrDefault(x => x.Stage == stage);
+                if (monitoringStage != null && monitoringStage.StartTime == null)
+                {
+                    monitoringStage.StartTime = DateTime.UtcNow;
+                }
+
+                //If for any reason stage appeared again and have not null EndTime, we should reset EndTime
+                if (monitoringStage != null && monitoringStage.EndTime != null)
+                {
+                    monitoringStage.EndTime = null;
+                }
+            }
+
+            //If any stage dissapeared and have StartTime set, then we can treat it as completed
+            foreach (var monitoringStage in stagesToMonitor.Where(x => x.StartTime != null && x.EndTime == null))
+            {
+                if (!currentStages.Contains(monitoringStage.Stage))
+                {
+                    monitoringStage.EndTime = DateTime.UtcNow;
+                }
+            }
+            Thread.Sleep(1000);
+        }
+        var endDateTime = DateTime.UtcNow;
+        sw.Stop();
+
+        return sw.Elapsed.TotalSeconds;
     }
 
     internal class MetricStage
@@ -265,5 +267,4 @@ public class SyncTimeMonitor : BaseTest
             notionHelper.AddRecord(record);
         }
     }
-
 }

@@ -1,5 +1,4 @@
 ﻿using NethermindNode.Core.Helpers;
-using Newtonsoft.Json;
 
 namespace NethermindNode.Tests.SyncingNode;
 

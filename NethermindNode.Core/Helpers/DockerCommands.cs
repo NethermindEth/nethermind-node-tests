@@ -82,6 +82,10 @@ public static class DockerCommands
                     logger.Trace("DOCKER inside output \n" + output);
                     logger.Trace("DOCKER inside error \n" + error);
                 }
+
+                logger.Info("DOCKER inside output \n" + output);
+                logger.Info("DOCKER inside error \n" + error);
+
                 if (!process.HasExited)
                 {
                     process.Kill();

@@ -63,6 +63,7 @@ public static class DockerCommands
         string output = "";
         string error = "";
 
+        logger.Info("DOCKER command: " + processInfo.FileName + " " + command);
         processInfo.CreateNoWindow = true;
         processInfo.UseShellExecute = false;
         processInfo.RedirectStandardOutput = true;

@@ -104,6 +104,7 @@ public static class DockerCommands
             }
         }
 
+        logger.Info("Docker output: " + output);
         return output;
     }
 }

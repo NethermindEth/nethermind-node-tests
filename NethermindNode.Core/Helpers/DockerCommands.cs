@@ -78,14 +78,6 @@ public static class DockerCommands
                 process.WaitForExit(30000);
                 output = process.StandardOutput.ReadToEnd();
                 error = process.StandardError.ReadToEnd();
-                if (logger.IsTraceEnabled)
-                {
-                    logger.Trace("DOCKER inside output \n" + output);
-                    logger.Trace("DOCKER inside error \n" + error);
-                }
-
-                logger.Info("DOCKER inside output \n" + output);
-                logger.Info("DOCKER inside error \n" + error);
 
                 if (!process.HasExited)
                 {
@@ -109,6 +101,7 @@ public static class DockerCommands
         }
 
         logger.Info("Docker output: " + output);
+        logger.Info("Docker error: " + error);
         return output;
     }
 }

@@ -29,12 +29,12 @@ public class SyncTimeMonitor : BaseTest
         {
             List<MetricStage> stagesToMonitor = new List<MetricStage>()
             {
-                new MetricStage(){ Stage = Stages.FastHeaders },
+                //new MetricStage(){ Stage = Stages.FastHeaders },
                 new MetricStage(){ Stage = Stages.BeaconHeaders },
-                new MetricStage(){ Stage = Stages.SnapSync },
-                new MetricStage(){ Stage = Stages.StateNodes },
-                new MetricStage(){ Stage = Stages.FastBodies },
-                new MetricStage(){ Stage = Stages.FastReceipts }
+                //new MetricStage(){ Stage = Stages.SnapSync },
+                //new MetricStage(){ Stage = Stages.StateNodes },
+                //new MetricStage(){ Stage = Stages.FastBodies },
+                //new MetricStage(){ Stage = Stages.FastReceipts }
             };
 
             NodeInfo.WaitForNodeToBeReady(Logger);
@@ -105,12 +105,12 @@ public class SyncTimeMonitor : BaseTest
         //    };
 
         var stageMetrics = new List<Stages> {
-            Stages.FastHeaders,
+            //Stages.FastHeaders,
             Stages.BeaconHeaders,
-            Stages.SnapSync,
-            Stages.StateNodes,
-            Stages.FastBodies,
-            Stages.FastReceipts
+            //Stages.SnapSync,
+            //Stages.StateNodes,
+            //Stages.FastBodies,
+            //Stages.FastReceipts
         };
 
         var averagedResult = stageMetrics.Select(stage =>

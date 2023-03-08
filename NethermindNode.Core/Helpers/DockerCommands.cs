@@ -102,6 +102,10 @@ public static class DockerCommands
                     return "";
                 }
             }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
 
         logger.Info("Docker output: " + output);

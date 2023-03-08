@@ -39,7 +39,7 @@ public class SyncTimeMonitor : BaseTest
 
             NodeInfo.WaitForNodeToBeReady(Logger);
             double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
-            
+
             //Calculate Totals
             foreach (var monitoringStage in stagesToMonitor)
             {
@@ -52,7 +52,7 @@ public class SyncTimeMonitor : BaseTest
 
             NodeStop();
 
-            AddRecordToNotion(stagesToMonitor);
+            AddRecordToNotion(stagesToMonitor, startTime);
 
             if (i + 1 < repeatCount)
                 NodeResync();
@@ -70,41 +70,61 @@ public class SyncTimeMonitor : BaseTest
         totals.Remove(maxTotalId);
 
         //Generate averaged result
-        List<MetricStage> averagedResult = new List<MetricStage>()
-            {
-                new MetricStage(){
-                    Stage = Stages.FastHeaders,
-                    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.Total)).Average(),
-                    StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.StartTime)).Min()
-                },
-                new MetricStage(){
-                    Stage = Stages.BeaconHeaders,
-                    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.Total)).Average(),
-                    StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.StartTime)).Min()
-                },
-                new MetricStage(){
-                    Stage = Stages.SnapSync,
-                    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.Total)).Average(),
-                    StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.StartTime)).Min()
-                },
-                new MetricStage(){
-                    Stage = Stages.StateNodes,
-                    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.Total)).Average(),
-                    StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.StartTime)).Min()
-                },
-                new MetricStage(){
-                    Stage = Stages.FastBodies,
-                    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.Total)).Average(),
-                    StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.StartTime)).Min()
-                },
-                new MetricStage(){
-                    Stage = Stages.FastReceipts,
-                    Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastReceipts).Select(y => y.Total)).Average(),
-                    StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastReceipts).Select(y => y.StartTime)).Min()
-                }
-            };
+        //List<MetricStage> averagedResult = new List<MetricStage>()
+        //    {
+        //        new MetricStage(){
+        //            Stage = Stages.FastHeaders,
+        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.Total)).Average(),
+        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.StartTime)).Min()
+        //        },
+        //        new MetricStage(){
+        //            Stage = Stages.BeaconHeaders,
+        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.Total)).Average(),
+        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.StartTime)).Min()
+        //        },
+        //        new MetricStage(){
+        //            Stage = Stages.SnapSync,
+        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.Total)).Average(),
+        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.StartTime)).Min()
+        //        },
+        //        new MetricStage(){
+        //            Stage = Stages.StateNodes,
+        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.Total)).Average(),
+        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.StartTime)).Min()
+        //        },
+        //        new MetricStage(){
+        //            Stage = Stages.FastBodies,
+        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.Total)).Average(),
+        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.StartTime)).Min()
+        //        },
+        //        new MetricStage(){
+        //            Stage = Stages.FastReceipts,
+        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastReceipts).Select(y => y.Total)).Average(),
+        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastReceipts).Select(y => y.StartTime)).Min()
+        //        }
+        //    };
 
-        AddRecordToNotion(averagedResult, results.Count);
+        var stageMetrics = new List<Stages> {
+            Stages.FastHeaders,
+            Stages.BeaconHeaders,
+            Stages.SnapSync,
+            Stages.StateNodes,
+            Stages.FastBodies,
+            Stages.FastReceipts
+        };
+
+        var averagedResult = stageMetrics.Select(stage =>
+        {
+            var stageValues = results.SelectMany(x => x.Value.Where(y => y.Stage == stage));
+            return new MetricStage
+            {
+                Stage = stage,
+                Total = stageValues.Select(x => x.Total).Average(),
+                StartTime = stageValues.Min(x => x.StartTime)
+            };
+        }).ToList();
+
+        AddRecordToNotion(averagedResult, startTime, results.Count);
 
         NodeStart();
     }
@@ -210,7 +230,7 @@ public class SyncTimeMonitor : BaseTest
         NodeStart();
     }
 
-    private void AddRecordToNotion(List<MetricStage> result, int numberOfProbes = 0)
+    private void AddRecordToNotion(List<MetricStage> result, DateTime startTime, int numberOfProbes = 0)
     {
         Regex pattern = new Regex(@"--config=(?<network>\w+)|--Metrics.NodeName=(?<nodeName>\w+)");
 

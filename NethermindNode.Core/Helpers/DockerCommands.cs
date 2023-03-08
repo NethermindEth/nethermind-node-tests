@@ -59,7 +59,7 @@ public static class DockerCommands
 
     private static string DockerCommandExecute(string command, Logger logger)
     {
-        var processInfo = new ProcessStartInfo("docker", $"{command}");
+        var processInfo = new ProcessStartInfo("sudo docker", $"{command}");
         string output = "";
         string error = "";
 

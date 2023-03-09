@@ -46,14 +46,7 @@ public static class DockerCommands
 
     public static string GetDockerDetails(string containerName, string dataToFetch, Logger logger)
     {
-#if DEBUG
-        dataToFetch = dataToFetch.Replace("\"", "\\\"");
-#endif
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            dataToFetch = dataToFetch.Replace("\"", "\\\"");
-        }
-        var result = DockerCommandExecute("inspect -f \"{{" + dataToFetch + "}}\" " + containerName, logger);
+        var result = DockerCommandExecute("inspect -f \"" + dataToFetch + "\" " + containerName, logger);
         return result;
     }
 

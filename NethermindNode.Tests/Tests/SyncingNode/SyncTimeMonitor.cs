@@ -237,7 +237,7 @@ public class SyncTimeMonitor : BaseTest
         //Get data to csv format
         var nethermindImage = DockerCommands.GetImageName("execution-client", Logger).Trim();
         var consensusImage = DockerCommands.GetImageName("consensus-client", Logger).Trim();
-        var executionCmd = DockerCommands.GetDockerDetails("execution-client", ".Config.Cmd", Logger);
+        var executionCmd = DockerCommands.GetDockerDetails("execution-client", "{{.Config.Cmd}}", Logger);
         Match cmdExecutionMatch = pattern.Match(executionCmd);
         var nethermindNodeName = cmdExecutionMatch.Groups["nodeName"].Value.Split(' ').ToList();
         var network = cmdExecutionMatch.Groups["network"].Value;
@@ -245,12 +245,8 @@ public class SyncTimeMonitor : BaseTest
         long oneGb = 1073741824;
         MachineInformation info = MachineInformationGatherer.GatherInformation();
 
-#if DEBUG
-        var path = DockerCommands.GetDockerDetails("execution-client", " range .Mounts }}{{ if eq .Destination \"/nethermind/data\" }}{{ .Source }}{{ end }}{{ end ", Logger).Trim();
+        var path = DockerCommands.GetDockerDetails("execution-client", "{{ range .Mounts }}{{ if eq .Destination \"/nethermind/data\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim();
         DirectoryInfo dirInfo = new DirectoryInfo(path + "/nethermind_db");
-#else
-        DirectoryInfo dirInfo = new DirectoryInfo("/root/execution-data/nethermind_db");
-#endif
         long dirSize = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length) / oneGb;
 
         foreach (var monitoringStage in result)

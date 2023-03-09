@@ -244,7 +244,7 @@ public class SyncTimeMonitor : BaseTest
         var network = cmdExecutionMatch.Groups["network"].Value;
 
         long oneGb = 1073741824;
-        MachineInformation info = MachineInformationGatherer.GatherInformation();
+        //MachineInformation info = MachineInformationGatherer.GatherInformation();
 
         var path = GetExecutionDataPath();
         DirectoryInfo dirInfo = new DirectoryInfo(path + "/nethermind_db");
@@ -266,8 +266,8 @@ public class SyncTimeMonitor : BaseTest
                         { "Stage",                  new NotionText(monitoringStage.Stage.ToString()) },
                         { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
                         { "Network",                new NotionText(network) },
-                        { "CPU",                    new NotionText(info.Cpu.Name.ToString()) },
-                        { "RAM",                    new NotionText("RAMSticks count: " + info.RAMSticks.Count + ", Total Memory: " + info.RAMSticks.Sum(x => (decimal)x.Capacity / oneGb).ToString()) },
+                        //{ "CPU",                    new NotionText(info.Cpu.Name.ToString()) },
+                        //{ "RAM",                    new NotionText("RAMSticks count: " + info.RAMSticks.Count + ", Total Memory: " + info.RAMSticks.Sum(x => (decimal)x.Capacity / oneGb).ToString()) },
                         { "DbSize",                 new NotionText(dirSize.ToString()) },
                         { "Probe count",            new NotionNumber(numberOfProbes) },
                     };

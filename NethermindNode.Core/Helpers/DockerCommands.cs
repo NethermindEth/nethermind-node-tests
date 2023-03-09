@@ -46,7 +46,7 @@ public static class DockerCommands
 
     public static string GetDockerDetails(string containerName, string dataToFetch, Logger logger)
     {
-        var result = DockerCommandExecute("inspect -f \"" + dataToFetch + "\" " + containerName, logger);
+        var result = DockerCommandExecute("inspect -f '" + dataToFetch + "' " + containerName, logger);
         return result;
     }
 

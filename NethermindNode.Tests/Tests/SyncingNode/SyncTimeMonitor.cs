@@ -219,15 +219,16 @@ public class SyncTimeMonitor : BaseTest
 
     private void NodeResync()
     {
-#if DEBUG
-        var path = DockerCommands.GetDockerDetails("execution-client", " range .Mounts }}{{ if eq .Destination \"/nethermind/data\" }}{{ .Source }}{{ end }}{{ end ", Logger).Trim();
+        var path = GetExecutionDataPath();
         CommandExecutor.RemoveDirectory(path + "/nethermind_db", Logger);
-#else
-        CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
-#endif
 
         //Restarting Node - freshSync
         NodeStart();
+    }
+
+    private string GetExecutionDataPath()
+    {
+        return DockerCommands.GetDockerDetails("execution-client", "{{ range .Mounts }}{{ if eq .Destination \"/nethermind/data\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
     }
 
     private void AddRecordToNotion(List<MetricStage> result, DateTime startTime, int numberOfProbes = 0)
@@ -245,7 +246,7 @@ public class SyncTimeMonitor : BaseTest
         long oneGb = 1073741824;
         MachineInformation info = MachineInformationGatherer.GatherInformation();
 
-        var path = DockerCommands.GetDockerDetails("execution-client", "{{ range .Mounts }}{{ if eq .Destination \"/nethermind/data\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim();
+        var path = GetExecutionDataPath();
         DirectoryInfo dirInfo = new DirectoryInfo(path + "/nethermind_db");
         long dirSize = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length) / oneGb;
 

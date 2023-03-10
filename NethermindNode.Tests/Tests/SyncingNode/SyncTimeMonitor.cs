@@ -1,5 +1,4 @@
 ﻿using Hardware.Info;
-using HardwareInformation;
 using NethermindNode.Core.Helpers;
 using NethermindNode.NotionDataStructures;
 using NethermindNode.Tests.Enums;

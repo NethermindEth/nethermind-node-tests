@@ -1,11 +1,9 @@
-﻿using Hardware.Info;
-using NethermindNode.Core.Helpers;
+﻿using NethermindNode.Core.Helpers;
 using NethermindNode.NotionDataStructures;
 using NethermindNode.Tests.Enums;
 using NethermindNode.Tests.Helpers;
 using Notion.Client;
 using System.Diagnostics;
-using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 
 namespace NethermindNode.Tests.SyncingNode;
@@ -17,84 +15,13 @@ public class SyncTimeMonitor : BaseTest
 
     int MaxWaitTimeForSyncToComplete = 36 * 60 * 60 * 1000; //1,5day
 
+    long timeStamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+
     [TestCase(12)]
     [Category("PerfMonitoring")]
     public void MonitorSyncTimesOfStagesInSnapSync(int repeatCount)
     {
-        IHardwareInfo hardwareInfo = new HardwareInfo();
-        hardwareInfo.RefreshAll();
-        Logger.Info(hardwareInfo.OperatingSystem);
-
-        Logger.Info(hardwareInfo.MemoryStatus);
-
-        foreach (var hardware in hardwareInfo.BatteryList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.BiosList)
-            Logger.Info(hardware);
-
-        foreach (var cpu in hardwareInfo.CpuList)
-        {
-            Logger.Info(cpu);
-
-            foreach (var cpuCore in cpu.CpuCoreList)
-                Logger.Info(cpuCore);
-        }
-
-        foreach (var drive in hardwareInfo.DriveList)
-        {
-            Logger.Info(drive);
-
-            foreach (var partition in drive.PartitionList)
-            {
-                Logger.Info(partition);
-
-                foreach (var volume in partition.VolumeList)
-                    Logger.Info(volume);
-            }
-        }
-
-        foreach (var hardware in hardwareInfo.KeyboardList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.MemoryList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.MonitorList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.MotherboardList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.MouseList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.NetworkAdapterList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.PrinterList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.SoundDeviceList)
-            Logger.Info(hardware);
-
-        foreach (var hardware in hardwareInfo.VideoControllerList)
-            Logger.Info(hardware);
-
-        foreach (var address in HardwareInfo.GetLocalIPv4Addresses(NetworkInterfaceType.Ethernet, OperationalStatus.Up))
-            Logger.Info(address);
-
-        foreach (var address in HardwareInfo.GetLocalIPv4Addresses(NetworkInterfaceType.Wireless80211))
-            Logger.Info(address);
-
-        foreach (var address in HardwareInfo.GetLocalIPv4Addresses(OperationalStatus.Up))
-            Logger.Info(address);
-
-        foreach (var address in HardwareInfo.GetLocalIPv4Addresses())
-            Logger.Info(address);
-
-
-    Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
+        Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
         Dictionary<int, List<MetricStage>> results = new Dictionary<int, List<MetricStage>>();
         Dictionary<int, double> totals = new Dictionary<int, double>();
         DateTime startTime = DateTime.MinValue;
@@ -128,7 +55,7 @@ public class SyncTimeMonitor : BaseTest
 
             NodeStop();
 
-            AddRecordToNotion(stagesToMonitor, startTime);
+            AddRecordToNotion(stagesToMonitor, startTime, ConfigurationHelper.Configuration["SyncTimesDetailedDatabaseId"]);
 
             if (i + 1 < repeatCount)
                 NodeResync();
@@ -165,7 +92,7 @@ public class SyncTimeMonitor : BaseTest
             };
         }).ToList();
 
-        AddRecordToNotion(averagedResult, startTime, results.Count);
+        AddRecordToNotion(averagedResult, startTime, ConfigurationHelper.Configuration["SyncTimesSummaryDatabaseId"], results.Count);
 
         NodeStart();
     }
@@ -228,6 +155,57 @@ public class SyncTimeMonitor : BaseTest
         return sw.Elapsed.TotalSeconds;
     }
 
+    private void AddRecordToNotion(List<MetricStage> result, DateTime startTime, string databaseId, int numberOfProbes = 0)
+    {
+        Regex pattern = new Regex(@"--config=(?<network>\w+)|--Metrics.NodeName=(?<nodeName>\w+)");
+
+        //Get data to csv format
+        var nethermindImage = DockerCommands.GetImageName("execution-client", Logger).Trim();
+        var consensusImage = DockerCommands.GetImageName("consensus-client", Logger).Trim();
+        var executionCmd = DockerCommands.GetDockerDetails("execution-client", "{{.Config.Cmd}}", Logger);
+        Match cmdExecutionMatch = pattern.Match(executionCmd);
+        var nethermindNodeName = cmdExecutionMatch.Groups["nodeName"].Value.Split(' ').ToList();
+        var network = cmdExecutionMatch.Groups["network"].Value;
+
+        decimal oneGb = 1073741824;
+
+        var path = GetExecutionDataPath();
+        DirectoryInfo dirInfo = new DirectoryInfo(path + "/nethermind_db");
+        decimal dirSize = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length) / oneGb;
+
+        foreach (var monitoringStage in result)
+        {
+            //Send all data to Notion
+            NotionHelper notionHelper = new NotionHelper(ConfigurationHelper.Configuration["AuthToken"]);
+
+            var date = new NotionDate(startTime);
+
+            var properties = new Dictionary<string, PropertyValue>
+                    {
+                        { "Run Id",                 new NotionTitle(timeStamp.ToString()) },
+                        { "Date Of Execution",      new NotionDate(monitoringStage.StartTime!.Value) },
+                        { "Nethermind Image",       new NotionText(nethermindImage) },
+                        { "Consensus Layer Client", new NotionText(consensusImage) },
+                        { "Stage",                  new NotionText(monitoringStage.Stage.ToString()) },
+                        { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
+                        { "Network",                new NotionText(network) },
+                        { "DbSize",                 new NotionText(dirSize.ToString("0.00")) },
+                        { "Probe count",            new NotionNumber(numberOfProbes) },
+                    };
+
+            PagesCreateParameters record = new PagesCreateParameters()
+            {
+                Properties = properties,
+                Parent = new DatabaseParentInput()
+                {
+                    DatabaseId = databaseId
+                }
+            };
+
+            notionHelper.AddRecord(record);
+        }
+    }
+
     internal class MetricStage
     {
         public Stages Stage { get; set; }
@@ -264,59 +242,5 @@ public class SyncTimeMonitor : BaseTest
     private string GetExecutionDataPath()
     {
         return DockerCommands.GetDockerDetails("execution-client", "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
-    }
-
-    private void AddRecordToNotion(List<MetricStage> result, DateTime startTime, int numberOfProbes = 0)
-    {
-        Regex pattern = new Regex(@"--config=(?<network>\w+)|--Metrics.NodeName=(?<nodeName>\w+)");
-
-        //Get data to csv format
-        var nethermindImage = DockerCommands.GetImageName("execution-client", Logger).Trim();
-        var consensusImage = DockerCommands.GetImageName("consensus-client", Logger).Trim();
-        var executionCmd = DockerCommands.GetDockerDetails("execution-client", "{{.Config.Cmd}}", Logger);
-        Match cmdExecutionMatch = pattern.Match(executionCmd);
-        var nethermindNodeName = cmdExecutionMatch.Groups["nodeName"].Value.Split(' ').ToList();
-        var network = cmdExecutionMatch.Groups["network"].Value;
-
-        long oneGb = 1073741824;
-        //MachineInformation info = MachineInformationGatherer.GatherInformation();
-
-        var path = GetExecutionDataPath();
-        DirectoryInfo dirInfo = new DirectoryInfo(path + "/nethermind_db");
-        long dirSize = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length) / oneGb;
-
-        foreach (var monitoringStage in result)
-        {
-            //Send all data to Notion
-            NotionHelper notionHelper = new NotionHelper(ConfigurationHelper.Configuration["AuthToken"]);
-
-            var date = new NotionDate(startTime);
-
-            var properties = new Dictionary<string, PropertyValue>
-                    {
-                        { "Run Id",                 new NotionTitle(ConfigurationHelper.Configuration["GitHubWorkflowId"]) },
-                        { "Date Of Execution",      new NotionDate(monitoringStage.StartTime!.Value) },
-                        { "Nethermind Image",       new NotionText(nethermindImage) },
-                        { "Consensus Layer Client", new NotionText(consensusImage) },
-                        { "Stage",                  new NotionText(monitoringStage.Stage.ToString()) },
-                        { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
-                        { "Network",                new NotionText(network) },
-                        //{ "CPU",                    new NotionText(info.Cpu.Name.ToString()) },
-                        //{ "RAM",                    new NotionText("RAMSticks count: " + info.RAMSticks.Count + ", Total Memory: " + info.RAMSticks.Sum(x => (decimal)x.Capacity / oneGb).ToString()) },
-                        { "DbSize",                 new NotionText(dirSize.ToString()) },
-                        { "Probe count",            new NotionNumber(numberOfProbes) },
-                    };
-
-            PagesCreateParameters record = new PagesCreateParameters()
-            {
-                Properties = properties,
-                Parent = new DatabaseParentInput()
-                {
-                    DatabaseId = ConfigurationHelper.Configuration["SyncTimesDatabaseId"]
-                }
-            };
-
-            notionHelper.AddRecord(record);
-        }
     }
 }

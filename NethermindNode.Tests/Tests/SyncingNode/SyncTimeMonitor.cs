@@ -1,10 +1,12 @@
-﻿using HardwareInformation;
+﻿using Hardware.Info;
+using HardwareInformation;
 using NethermindNode.Core.Helpers;
 using NethermindNode.NotionDataStructures;
 using NethermindNode.Tests.Enums;
 using NethermindNode.Tests.Helpers;
 using Notion.Client;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 
 namespace NethermindNode.Tests.SyncingNode;
@@ -20,7 +22,80 @@ public class SyncTimeMonitor : BaseTest
     [Category("PerfMonitoring")]
     public void MonitorSyncTimesOfStagesInSnapSync(int repeatCount)
     {
-        Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
+        IHardwareInfo hardwareInfo = new HardwareInfo();
+        hardwareInfo.RefreshAll();
+        Logger.Info(hardwareInfo.OperatingSystem);
+
+        Logger.Info(hardwareInfo.MemoryStatus);
+
+        foreach (var hardware in hardwareInfo.BatteryList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.BiosList)
+            Logger.Info(hardware);
+
+        foreach (var cpu in hardwareInfo.CpuList)
+        {
+            Logger.Info(cpu);
+
+            foreach (var cpuCore in cpu.CpuCoreList)
+                Logger.Info(cpuCore);
+        }
+
+        foreach (var drive in hardwareInfo.DriveList)
+        {
+            Logger.Info(drive);
+
+            foreach (var partition in drive.PartitionList)
+            {
+                Logger.Info(partition);
+
+                foreach (var volume in partition.VolumeList)
+                    Logger.Info(volume);
+            }
+        }
+
+        foreach (var hardware in hardwareInfo.KeyboardList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.MemoryList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.MonitorList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.MotherboardList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.MouseList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.NetworkAdapterList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.PrinterList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.SoundDeviceList)
+            Logger.Info(hardware);
+
+        foreach (var hardware in hardwareInfo.VideoControllerList)
+            Logger.Info(hardware);
+
+        foreach (var address in HardwareInfo.GetLocalIPv4Addresses(NetworkInterfaceType.Ethernet, OperationalStatus.Up))
+            Logger.Info(address);
+
+        foreach (var address in HardwareInfo.GetLocalIPv4Addresses(NetworkInterfaceType.Wireless80211))
+            Logger.Info(address);
+
+        foreach (var address in HardwareInfo.GetLocalIPv4Addresses(OperationalStatus.Up))
+            Logger.Info(address);
+
+        foreach (var address in HardwareInfo.GetLocalIPv4Addresses())
+            Logger.Info(address);
+
+
+    Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
         Dictionary<int, List<MetricStage>> results = new Dictionary<int, List<MetricStage>>();
         Dictionary<int, double> totals = new Dictionary<int, double>();
         DateTime startTime = DateTime.MinValue;
@@ -29,12 +104,12 @@ public class SyncTimeMonitor : BaseTest
         {
             List<MetricStage> stagesToMonitor = new List<MetricStage>()
             {
-                //new MetricStage(){ Stage = Stages.FastHeaders },
+                new MetricStage(){ Stage = Stages.FastHeaders },
                 new MetricStage(){ Stage = Stages.BeaconHeaders },
-                //new MetricStage(){ Stage = Stages.SnapSync },
-                //new MetricStage(){ Stage = Stages.StateNodes },
-                //new MetricStage(){ Stage = Stages.FastBodies },
-                //new MetricStage(){ Stage = Stages.FastReceipts }
+                new MetricStage(){ Stage = Stages.SnapSync },
+                new MetricStage(){ Stage = Stages.StateNodes },
+                new MetricStage(){ Stage = Stages.FastBodies },
+                new MetricStage(){ Stage = Stages.FastReceipts }
             };
 
             NodeInfo.WaitForNodeToBeReady(Logger);
@@ -71,48 +146,13 @@ public class SyncTimeMonitor : BaseTest
         totals.Remove(minTotalId);
         totals.Remove(maxTotalId);
 
-        //Generate averaged result
-        //List<MetricStage> averagedResult = new List<MetricStage>()
-        //    {
-        //        new MetricStage(){
-        //            Stage = Stages.FastHeaders,
-        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.Total)).Average(),
-        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastHeaders).Select(y => y.StartTime)).Min()
-        //        },
-        //        new MetricStage(){
-        //            Stage = Stages.BeaconHeaders,
-        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.Total)).Average(),
-        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.BeaconHeaders).Select(y => y.StartTime)).Min()
-        //        },
-        //        new MetricStage(){
-        //            Stage = Stages.SnapSync,
-        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.Total)).Average(),
-        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.SnapSync).Select(y => y.StartTime)).Min()
-        //        },
-        //        new MetricStage(){
-        //            Stage = Stages.StateNodes,
-        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.Total)).Average(),
-        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.StateNodes).Select(y => y.StartTime)).Min()
-        //        },
-        //        new MetricStage(){
-        //            Stage = Stages.FastBodies,
-        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.Total)).Average(),
-        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastBodies).Select(y => y.StartTime)).Min()
-        //        },
-        //        new MetricStage(){
-        //            Stage = Stages.FastReceipts,
-        //            Total = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastReceipts).Select(y => y.Total)).Average(),
-        //            StartTime = results.SelectMany(x => x.Value.Where(y => y.Stage == Stages.FastReceipts).Select(y => y.StartTime)).Min()
-        //        }
-        //    };
-
         var stageMetrics = new List<Stages> {
-            //Stages.FastHeaders,
+            Stages.FastHeaders,
             Stages.BeaconHeaders,
-            //Stages.SnapSync,
-            //Stages.StateNodes,
-            //Stages.FastBodies,
-            //Stages.FastReceipts
+            Stages.SnapSync,
+            Stages.StateNodes,
+            Stages.FastBodies,
+            Stages.FastReceipts
         };
 
         var averagedResult = stageMetrics.Select(stage =>
@@ -131,13 +171,7 @@ public class SyncTimeMonitor : BaseTest
         NodeStart();
     }
 
-    /// <summary>
-    /// Monitor sync stages and returns total time in seconds of how long Sync Procedure took
-    /// </summary>
-    /// <param name="startTime"></param>
-    /// <param name="stagesToMonitor"></param>
-    /// <returns></returns>
-    /// <exception cref="AssertionException"></exception>
+    //Monitor sync stages and returns total time in seconds of how long Sync Procedure took
     private double MonitorStages(DateTime startTime, List<MetricStage> stagesToMonitor)
     {
         Stopwatch sw = new Stopwatch();

@@ -1,7 +1,6 @@
 ﻿using NLog;
 using System.Diagnostics;
 using System.Net.Sockets;
-using System.Reflection.PortableExecutable;
 using System.Text;
 
 namespace NethermindNode.Core.Helpers;

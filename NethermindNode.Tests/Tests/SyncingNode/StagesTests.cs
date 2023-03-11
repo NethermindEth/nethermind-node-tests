@@ -2,7 +2,6 @@
 using NethermindNode.Tests.CustomObjects;
 using NethermindNode.Tests.Enums;
 using NethermindNode.Tests.Helpers;
-using Newtonsoft.Json;
 using System.Diagnostics;
 
 namespace NethermindNode.Tests.SyncingNode;

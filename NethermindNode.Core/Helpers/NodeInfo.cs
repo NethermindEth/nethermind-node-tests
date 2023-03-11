@@ -1,8 +1,5 @@
-﻿using Microsoft.CSharp.RuntimeBinder;
-using NethermindNode.Core.RpcResponses;
+﻿using NethermindNode.Core.RpcResponses;
 using NethermindNode.Tests.Enums;
-using NethermindNode.Tests.RpcResponses;
-using Newtonsoft.Json;
 
 namespace NethermindNode.Core.Helpers;
 

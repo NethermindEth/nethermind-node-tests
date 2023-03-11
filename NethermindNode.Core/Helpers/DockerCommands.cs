@@ -46,14 +46,7 @@ public static class DockerCommands
 
     public static string GetDockerDetails(string containerName, string dataToFetch, Logger logger)
     {
-#if DEBUG
-        dataToFetch = dataToFetch.Replace("\"", "\\\"");
-#endif
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            dataToFetch = dataToFetch.Replace("\"", "\\\"");
-        }
-        var result = DockerCommandExecute("inspect -f \"{{" + dataToFetch + "}}\" " + containerName, logger);
+        var result = DockerCommandExecute("inspect -f \"" + dataToFetch + "\" " + containerName, logger);
         return result;
     }
 
@@ -63,6 +56,7 @@ public static class DockerCommands
         string output = "";
         string error = "";
 
+        logger.Info("DOCKER command: " + processInfo.FileName + " " + command);
         processInfo.CreateNoWindow = true;
         processInfo.UseShellExecute = false;
         processInfo.RedirectStandardOutput = true;
@@ -77,11 +71,7 @@ public static class DockerCommands
                 process.WaitForExit(30000);
                 output = process.StandardOutput.ReadToEnd();
                 error = process.StandardError.ReadToEnd();
-                if (logger.IsTraceEnabled)
-                {
-                    logger.Trace("DOCKER inside output \n" + output);
-                    logger.Trace("DOCKER inside error \n" + error);
-                }
+
                 if (!process.HasExited)
                 {
                     process.Kill();
@@ -97,8 +87,14 @@ public static class DockerCommands
                     return "";
                 }
             }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
 
+        logger.Info("Docker output: " + output);
+        logger.Info("Docker error: " + error);
         return output;
     }
 }

@@ -24,17 +24,17 @@ internal class ResyncOnFullSyncedNode
             }
 
             //Stopping and clearing EL
-            DockerCommands.StopDockerContainer("execution-client", Logger);
-            while (!DockerCommands.GetDockerContainerStatus("execution-client", Logger).Contains("exited"))
+            DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
+            while (!DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger).Contains("exited"))
             {
-                Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
+                Logger.Info($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
                 Thread.Sleep(30000);
             }
             CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
 
             //Restarting Node - freshSync
             Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
-            DockerCommands.StartDockerContainer("execution-client", Logger);
+            DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
         }
     }
 

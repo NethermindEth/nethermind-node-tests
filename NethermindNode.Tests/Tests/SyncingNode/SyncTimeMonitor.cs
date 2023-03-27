@@ -217,17 +217,17 @@ public class SyncTimeMonitor : BaseTest
     private void NodeStop()
     {
         //Stopping and clearing EL
-        DockerCommands.StopDockerContainer("execution-client", Logger);
-        while (!DockerCommands.GetDockerContainerStatus("execution-client", Logger).Contains("exited"))
+        DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
+        while (!DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger).Contains("exited"))
         {
-            Logger.Info($"Waiting for execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("execution-client", Logger)}");
+            Logger.Info($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
             Thread.Sleep(30000);
         }
     }
 
     private void NodeStart()
     {
-        DockerCommands.StartDockerContainer("execution-client", Logger);
+        DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
     }
 
     private void NodeResync()

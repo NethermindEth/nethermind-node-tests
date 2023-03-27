@@ -64,19 +64,19 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
             if ((beforeStopWait % 2 == 0 && !ShouldForceKillCommand) || ShouldForceGracefullCommand)
             {
                 Logger.Info("Stopping gracefully docker \"execution\"");
-                DockerCommands.StopDockerContainer("execution-client", Logger);
+                DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
             }
             else
             {
                 Logger.Info("Killing docker \"execution\"");
-                DockerCommands.PreventDockerContainerRestart("execution-client", Logger);
-                DockerCommands.KillDockerContainer("execution-client", Logger);
+                DockerCommands.PreventDockerContainerRestart("sedge-execution-client", Logger);
+                DockerCommands.KillDockerContainer("sedge-execution-client", Logger);
             }
 
             int beforeStartWait = rand.Next(Minimum, Maximum);
             Logger.Info("WAITING BEFORE START for: " + beforeStartWait + " seconds");
             Thread.Sleep(beforeStartWait * 1000);
-            DockerCommands.StartDockerContainer("execution-client", Logger);
+            DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
             i++;
         }
     }

@@ -18,7 +18,7 @@ public static class NodeInfo
     public static void WaitForNodeToBeReady(NLog.Logger logger)
     {
         //Waiting for proper start of node
-        while (DockerCommands.CheckIfDockerContainerIsCreated("execution-client", logger) == false)
+        while (DockerCommands.CheckIfDockerContainerIsCreated("sedge-execution-client", logger) == false)
         {
             logger.Info("Waiting for Execution to be started.");
             Thread.Sleep(30000);

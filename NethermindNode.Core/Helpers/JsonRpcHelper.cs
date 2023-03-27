@@ -1,6 +1,5 @@
 ﻿using NethermindNode.Core.RpcResponses;
 using Newtonsoft.Json;
-using System.Collections;
 
 namespace NethermindNode.Core.Helpers;
 

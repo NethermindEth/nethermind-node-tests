@@ -22,7 +22,7 @@ internal class ResyncsAfterStages
             //Waiting for OldBodie (stage after state sync)
             while (!NodeInfo.GetCurrentStage(Logger).Contains(desiredStage))
             {
-                Logger.Info("Waiting for node to be synced until stage :" + desiredStage);
+                Logger.Debug("Waiting for node to be synced until stage :" + desiredStage);
                 Thread.Sleep(30000);
             }
 
@@ -37,7 +37,7 @@ internal class ResyncsAfterStages
         DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
         while (!DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger).Contains("exited"))
         {
-            Logger.Info($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
+            Logger.Debug($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
             Thread.Sleep(30000);
         }
         CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);

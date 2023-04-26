@@ -31,6 +31,7 @@ public class StagesFuzzer : BaseTest
             }
             Thread.Sleep(1000);
         }
-        Logger.Info("Node is synced so test passed correctly");
+
+        Logger.Info("***Test finished: ShouldKillNodeOnAllPossibleStages***");
     }
 }

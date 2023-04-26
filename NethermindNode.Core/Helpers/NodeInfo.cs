@@ -38,7 +38,7 @@ public static class NodeInfo
         if (output == "")
             output = ((GetSyncStage)deserialized).Result.CurrentStage;
 
-        logger.Info("Current stage is: " + output);
+        logger.Debug("Current stage is: " + output);
         return output;
     }
 
@@ -68,7 +68,7 @@ public static class NodeInfo
             }
         }
 
-        logger.Info("Current stage is: " + output);
+        logger.Debug("Current stage is: " + output);
         return result;
     }
 }

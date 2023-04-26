@@ -6,6 +6,7 @@ namespace NethermindNode.SedgeFuzzer.Commands;
 [Verb("fuzzer", HelpText = "Execute fuzzing capability on node in various stages")]
 public class FuzzerCommand : ICommand, IFuzzerCommand
 {
+    [ThreadStatic]
     private static NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     [Option("fullSync", HelpText = "Wait for fully synced node only.")]

@@ -58,9 +58,6 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
 
         while (Count > 0 ? i < Count : true)
         {
-            int beforeStopWait = rand.Next(Minimum, Maximum);
-            Logger.Debug("WAITING BEFORE STOP for: " + beforeStopWait + " seconds");
-            Thread.Sleep(beforeStopWait * 1000);
             if ((beforeStopWait % 2 == 0 && !ShouldForceKillCommand) || ShouldForceGracefullCommand)
             {
                 Logger.Debug("Stopping gracefully docker \"execution\"");
@@ -74,7 +71,7 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
             }
 
             int beforeStartWait = rand.Next(Minimum, Maximum);
-            Logger.Debug("WAITING BEFORE START for: " + beforeStartWait + " seconds");
+            Logger.Debug("Waiting for for: " + beforeStartWait + " seconds before starting node.");
             Thread.Sleep(beforeStartWait * 1000);
             DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
             i++;

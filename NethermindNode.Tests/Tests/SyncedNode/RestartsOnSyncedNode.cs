@@ -8,7 +8,7 @@ public class RestartsOnSyncedNode : BaseTest
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-    [TestCase(20, 60, 900)]
+    [TestCase(20, 60, 3600)]
     [Category("SnapSync")]
     [Category("FastSync")]
     [Category("FullSync")]
@@ -20,7 +20,7 @@ public class RestartsOnSyncedNode : BaseTest
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
     }
 
     [TestCase(0, 60, 120)]

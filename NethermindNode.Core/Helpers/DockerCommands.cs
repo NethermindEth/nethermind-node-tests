@@ -56,7 +56,7 @@ public static class DockerCommands
         string output = "";
         string error = "";
 
-        logger.Info("DOCKER command: " + processInfo.FileName + " " + command);
+        logger.Debug("DOCKER command: " + processInfo.FileName + " " + command);
         processInfo.CreateNoWindow = true;
         processInfo.UseShellExecute = false;
         processInfo.RedirectStandardOutput = true;
@@ -93,8 +93,8 @@ public static class DockerCommands
             }
         }
 
-        logger.Info("Docker output: " + output);
-        logger.Info("Docker error: " + error);
+        logger.Debug("Docker output: " + output);
+        logger.Debug("Docker error: " + error);
         return output;
     }
 }

@@ -59,22 +59,22 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
         while (Count > 0 ? i < Count : true)
         {
             int beforeStopWait = rand.Next(Minimum, Maximum);
-            Logger.Info("WAITING BEFORE STOP for: " + beforeStopWait + " seconds");
+            Logger.Debug("WAITING BEFORE STOP for: " + beforeStopWait + " seconds");
             Thread.Sleep(beforeStopWait * 1000);
             if ((beforeStopWait % 2 == 0 && !ShouldForceKillCommand) || ShouldForceGracefullCommand)
             {
-                Logger.Info("Stopping gracefully docker \"execution\"");
+                Logger.Debug("Stopping gracefully docker \"execution\"");
                 DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
             }
             else
             {
-                Logger.Info("Killing docker \"execution\"");
+                Logger.Debug("Killing docker \"execution\"");
                 DockerCommands.PreventDockerContainerRestart("sedge-execution-client", Logger);
                 DockerCommands.KillDockerContainer("sedge-execution-client", Logger);
             }
 
             int beforeStartWait = rand.Next(Minimum, Maximum);
-            Logger.Info("WAITING BEFORE START for: " + beforeStartWait + " seconds");
+            Logger.Debug("WAITING BEFORE START for: " + beforeStartWait + " seconds");
             Thread.Sleep(beforeStartWait * 1000);
             DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
             i++;
@@ -85,7 +85,7 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
     {
         while (!NodeInfo.IsFullySynced(Logger))
         {
-            Logger.Info("STILL SYNCING");
+            Logger.Debug("STILL SYNCING");
             Thread.Sleep(1000);
         }
     }

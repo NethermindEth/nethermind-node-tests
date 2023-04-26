@@ -39,8 +39,6 @@ public class SyncTimeMonitor : BaseTest
             };
 
             NodeInfo.WaitForNodeToBeReady(Logger);
-            //test log
-            Logger.Info(GetExecutionDataPath());
             double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
 
             //Calculate Totals
@@ -220,7 +218,7 @@ public class SyncTimeMonitor : BaseTest
         DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
         while (!DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger).Contains("exited"))
         {
-            Logger.Info($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
+            Logger.Debug($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
             Thread.Sleep(30000);
         }
     }

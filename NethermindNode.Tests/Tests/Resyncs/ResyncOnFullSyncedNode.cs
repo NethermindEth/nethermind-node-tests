@@ -19,7 +19,7 @@ internal class ResyncOnFullSyncedNode
             //Waiting for Full Sync
             while (!NodeInfo.IsFullySynced(Logger))
             {
-                Logger.Info("Waiting for node to be fully synced.");
+                Logger.Debug("Waiting for node to be fully synced.");
                 Thread.Sleep(30000);
             }
 
@@ -27,7 +27,7 @@ internal class ResyncOnFullSyncedNode
             DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
             while (!DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger).Contains("exited"))
             {
-                Logger.Info($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
+                Logger.Debug($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
                 Thread.Sleep(30000);
             }
             CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
@@ -36,12 +36,5 @@ internal class ResyncOnFullSyncedNode
             Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
             DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
         }
-    }
-
-    private bool IsFullySynced()
-    {
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", Logger);
-        var result = commandResult.Result;
-        return result == null ? false : result.Item1.Contains("false");
     }
 }

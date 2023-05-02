@@ -11,7 +11,7 @@ public static class CommandExecutor
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             processInfo = new ProcessStartInfo("rm", $"-r {absolutePath}");
-            logger.Info("Removing path: " + absolutePath);
+            logger.Debug("Removing path: " + absolutePath);
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {

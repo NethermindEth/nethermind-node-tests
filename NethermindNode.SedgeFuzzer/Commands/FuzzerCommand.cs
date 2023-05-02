@@ -6,6 +6,7 @@ namespace NethermindNode.SedgeFuzzer.Commands;
 [Verb("fuzzer", HelpText = "Execute fuzzing capability on node in various stages")]
 public class FuzzerCommand : ICommand, IFuzzerCommand
 {
+    [ThreadStatic]
     private static NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     [Option("fullSync", HelpText = "Wait for fully synced node only.")]
@@ -59,8 +60,9 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
         while (Count > 0 ? i < Count : true)
         {
             int beforeStopWait = rand.Next(Minimum, Maximum);
-            Logger.Info("WAITING BEFORE STOP for: " + beforeStopWait + " seconds");
+            Logger.Debug("WAITING BEFORE STOP for: " + beforeStopWait + " seconds");
             Thread.Sleep(beforeStopWait * 1000);
+
             if ((beforeStopWait % 2 == 0 && !ShouldForceKillCommand) || ShouldForceGracefullCommand)
             {
                 Logger.Info("Stopping gracefully docker \"execution\"");
@@ -72,9 +74,9 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
                 DockerCommands.PreventDockerContainerRestart("sedge-execution-client", Logger);
                 DockerCommands.KillDockerContainer("sedge-execution-client", Logger);
             }
-
             int beforeStartWait = rand.Next(Minimum, Maximum);
-            Logger.Info("WAITING BEFORE START for: " + beforeStartWait + " seconds");
+
+            Logger.Info("Waiting for for: " + beforeStartWait + " seconds before starting node.");
             Thread.Sleep(beforeStartWait * 1000);
             DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
             i++;
@@ -85,7 +87,7 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
     {
         while (!NodeInfo.IsFullySynced(Logger))
         {
-            Logger.Info("STILL SYNCING");
+            Logger.Debug("STILL SYNCING");
             Thread.Sleep(1000);
         }
     }

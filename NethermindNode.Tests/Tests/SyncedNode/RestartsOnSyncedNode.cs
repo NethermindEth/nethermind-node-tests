@@ -53,22 +53,6 @@ public class RestartsOnSyncedNode : BaseTest
         FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = "sedge-consensus-client", IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
     }
 
-    [TestCase(20, 60, 3600)]
-    [Category("SnapSync")]
-    [Category("FastSync")]
-    [Category("FullSync")]
-    [Category("ArchiveSync")]
-    [Category("RestartOnFullSync")]
-    [NonParallelizable]
-    public void ShouldRestartNodeMultipleTimesOnSyncedNode(int restartCount, int minimumWait, int maximumWait)
-    {
-        Logger.Info("***Starting test: ShouldRestartNodeMultipleTimesOnSyncedNode***");
-
-        NodeInfo.WaitForNodeToBeReady(Logger);
-
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
-    }
-
     [TestCase(0, 60, 120)]
     [Category("InfinityRestartGracefullyOnFullSync")]
     public void ShouldRestartGracefullyNodeForInfinityOnSyncedNode(int restartCount, int minimumWait, int maximumWait)

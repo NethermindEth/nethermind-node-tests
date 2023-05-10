@@ -2,6 +2,7 @@
 
 public interface IFuzzerCommand
 {
+    public string DockerContainerName { get; set; }
     public bool IsFullySyncedCheck { get; set; }
     public bool ShouldForceKillCommand { get; set; }
     public bool ShouldForceGracefullCommand { get; set; }

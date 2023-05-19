@@ -3,19 +3,22 @@ using NethermindNode.Core.Helpers;
 
 namespace NethermindNode.SedgeFuzzer.Commands;
 
-[Verb("fuzzer", HelpText = "Execute fuzzing capability on node in various stages")]
+[Verb("fuzzer", HelpText = "Execute fuzzing capability on docker container.")]
 public class FuzzerCommand : ICommand, IFuzzerCommand
 {
     [ThreadStatic]
     private static NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
+    [Option("dockerContainerName", Required = false, HelpText = "Defines which docker container will be fuzzed.", Default = "sedge-execution-client")]
+    public string DockerContainerName  { get; set; }
+
     [Option("fullSync", HelpText = "Wait for fully synced node only.")]
     public bool IsFullySyncedCheck { get; set; }
 
-    [Option("kill", HelpText = "Use 'kill' command when suspending node.")]
+    [Option("kill", HelpText = "Use 'kill' command when suspending container.")]
     public bool ShouldForceKillCommand { get; set; }
 
-    [Option("gracefull", HelpText = "Use 'stop' command when suspending node.")]
+    [Option("gracefull", HelpText = "Use 'stop' command when suspending container.")]
     public bool ShouldForceGracefullCommand { get; set; }
 
     [Option('c', "count", Required = false, HelpText = "For how long it should work (number of loops). 0 for infinite loop.", Default = 1)]
@@ -34,6 +37,7 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
 
     public FuzzerCommand(IFuzzerCommand fuzzerCommandOptions, NLog.Logger logger)
     {
+        DockerContainerName = fuzzerCommandOptions.DockerContainerName;
         IsFullySyncedCheck = fuzzerCommandOptions.IsFullySyncedCheck;
         ShouldForceKillCommand = fuzzerCommandOptions.ShouldForceKillCommand;
         ShouldForceGracefullCommand = fuzzerCommandOptions.ShouldForceGracefullCommand;
@@ -65,20 +69,20 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
 
             if ((beforeStopWait % 2 == 0 && !ShouldForceKillCommand) || ShouldForceGracefullCommand)
             {
-                Logger.Info("Stopping gracefully docker \"execution\"");
-                DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
+                Logger.Info($"Stopping gracefully docker \"{DockerContainerName}\"");
+                DockerCommands.StopDockerContainer(DockerContainerName, Logger);
             }
             else
             {
-                Logger.Info("Killing docker \"execution\"");
-                DockerCommands.PreventDockerContainerRestart("sedge-execution-client", Logger);
-                DockerCommands.KillDockerContainer("sedge-execution-client", Logger);
+                Logger.Info($"Killing docker \"{DockerContainerName}\"");
+                DockerCommands.PreventDockerContainerRestart(DockerContainerName, Logger);
+                DockerCommands.KillDockerContainer(DockerContainerName, Logger);
             }
             int beforeStartWait = rand.Next(Minimum, Maximum);
 
-            Logger.Info("Waiting for for: " + beforeStartWait + " seconds before starting node.");
+            Logger.Info("Waiting for for: " + beforeStartWait + " seconds before starting docker container.");
             Thread.Sleep(beforeStartWait * 1000);
-            DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
+            DockerCommands.StartDockerContainer(DockerContainerName, Logger);
             i++;
         }
     }

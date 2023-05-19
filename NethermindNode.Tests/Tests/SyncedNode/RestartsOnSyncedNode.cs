@@ -30,7 +30,7 @@ public class RestartsOnSyncedNode : BaseTest
     [TestCaseSource(nameof(DelayForFuzzerTestCases))]
     public void ShouldRestartNethermindClientWithIncreasingDelay(int currentDelay)
     {
-        Logger.Info($"Starting test: ShouldRestartNethermindClientWithIncreasingDelay: {currentDelay} Delay");
+        Logger.Info($"***Starting test: ShouldRestartNethermindClientWithIncreasingDelay: {currentDelay} Delay***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
@@ -46,7 +46,7 @@ public class RestartsOnSyncedNode : BaseTest
     [TestCaseSource(nameof(DelayForFuzzerTestCases))]
     public void ShouldRestartConsensusClientWithIncreasingDelay(int currentDelay)
     {
-        Logger.Info($"Starting test: ShouldRestartConsensusClientWithIncreasingDelay: {currentDelay} Delay");
+        Logger.Info($"***Starting test: ShouldRestartConsensusClientWithIncreasingDelay: {currentDelay} Delay***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 

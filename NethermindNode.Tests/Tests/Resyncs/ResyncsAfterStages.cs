@@ -36,11 +36,11 @@ internal class ResyncsAfterStages
 
     [Test]
     [Category("ResyncsAfterStateNoLimit")]
-    public void ShouldResyncAfterStateSynsNoLimit()
+    public void ShouldResyncAfterStateSyncsNoLimit()
     {
         var desiredStage = Stages.FastBodies.ToString();
 
-        Logger.Info($"***Starting test: ShouldResyncAfterStateSynsNoLimit***");
+        Logger.Info($"***Starting test: ShouldResyncAfterStateSyncsNoLimit***");
         int iterator = 0;
         while (true)
         {

@@ -26,6 +26,9 @@ internal class ResyncsAfterStages
                 Thread.Sleep(30000);
             }
 
+            //Add wait for 60 seconds just to ensure we didn't crashed anything right after sync
+            Thread.Sleep(60000);
+
             StopAndResync();
             Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
         }

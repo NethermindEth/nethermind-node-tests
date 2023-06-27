@@ -34,6 +34,35 @@ internal class ResyncsAfterStages
         }
     }
 
+    [Test]
+    [Category("ResyncsAfterStateNoLimit")]
+    public void ShouldResyncAfterStateSynsNoLimit()
+    {
+        var desiredStage = Stages.FastBodies.ToString();
+
+        Logger.Info($"***Starting test: ShouldResyncAfterStateSynsNoLimit***");
+        int iterator = 0;
+        while (true)
+        {
+            //Waiting for proper start of node
+            NodeInfo.WaitForNodeToBeReady(Logger);
+
+            //Waiting for OldBodie (stage after state sync)
+            while (!NodeInfo.GetCurrentStage(Logger).Contains(desiredStage))
+            {
+                Logger.Debug("Waiting for node to be synced until stage :" + desiredStage);
+                Thread.Sleep(30000);
+            }
+
+            //Add wait for 60 seconds just to ensure we didn't crashed anything right after sync
+            Thread.Sleep(60000);
+
+            StopAndResync();
+            iterator++;
+            Logger.Info($"Starting a FreshSync. Currently synced {iterator} times.");
+        }
+    }
+
     private void StopAndResync()
     {
         //Stopping and clearing EL

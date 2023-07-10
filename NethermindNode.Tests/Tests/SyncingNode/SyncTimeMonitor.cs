@@ -4,6 +4,7 @@ using NethermindNode.Tests.Enums;
 using NethermindNode.Tests.Helpers;
 using Notion.Client;
 using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace NethermindNode.Tests.SyncingNode;
@@ -13,14 +14,74 @@ public class SyncTimeMonitor : BaseTest
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-    int MaxWaitTimeForSyncToComplete = 36 * 60 * 60 * 1000; //1,5day
+    int MaxWaitTimeForSyncToComplete = 72 * 60 * 60 * 1000; //3 days
 
-    long timeStamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+    [Description("Single monitoring of current sync")]
+    [Category("PerfMonitoring"), Category("SnapSync")]
+    public void MonitorSyncTimesOfStagesInSnapSync()
+    {
+        Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
+
+        DateTime startTime = DateTime.MinValue;
+
+        List<MetricStage> stagesToMonitor = new List<MetricStage>()
+        {
+            new MetricStage(){ Stage = Stages.FastHeaders },
+            new MetricStage(){ Stage = Stages.BeaconHeaders },
+            new MetricStage(){ Stage = Stages.SnapSync },
+            new MetricStage(){ Stage = Stages.StateNodes },
+            new MetricStage(){ Stage = Stages.FastBodies },
+            new MetricStage(){ Stage = Stages.FastReceipts }
+        };
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+        double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
+
+        //Calculate Totals
+        foreach (var monitoringStage in stagesToMonitor)
+        {
+            monitoringStage.Total = monitoringStage.EndTime - monitoringStage.StartTime;
+        }
+
+        WriteReportToFile(totalExecutionTime, stagesToMonitor);
+    }
+
+    [Description("Single monitoring of current sync")]
+    [Category("PerfMonitoring"), Category("FastSync")]
+    public void MonitorSyncTimesOfStagesInFastSync()
+    {
+        Logger.Info("***Starting test: MonitorSyncTimesOfStagesInFastSync --- syncType: FastSync***");
+
+        DateTime startTime = DateTime.MinValue;
+
+        List<MetricStage> stagesToMonitor = new List<MetricStage>()
+        {
+            new MetricStage(){ Stage = Stages.FastHeaders },
+            new MetricStage(){ Stage = Stages.BeaconHeaders },
+            new MetricStage(){ Stage = Stages.StateNodes },
+            new MetricStage(){ Stage = Stages.FastBodies },
+            new MetricStage(){ Stage = Stages.FastReceipts }
+        };
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+        double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
+
+        //Calculate Totals
+        foreach (var monitoringStage in stagesToMonitor)
+        {
+            monitoringStage.Total = monitoringStage.EndTime - monitoringStage.StartTime;
+        }
+
+        WriteReportToFile(totalExecutionTime, stagesToMonitor);
+    }
 
     [TestCase(12)]
-    [Category("PerfMonitoring")]
+    [Description("To be used when testing mulitple resyncs + metrics")]
+    [Category("PerfMonitoringWithResync")]
     public void MonitorSyncTimesOfStagesInSnapSync(int repeatCount)
     {
+        long timeStamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+
         Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
         Dictionary<int, List<MetricStage>> results = new Dictionary<int, List<MetricStage>>();
         Dictionary<int, double> totals = new Dictionary<int, double>();
@@ -53,7 +114,7 @@ public class SyncTimeMonitor : BaseTest
 
             NodeStop();
 
-            AddRecordToNotion(stagesToMonitor, startTime, ConfigurationHelper.Configuration["SyncTimesDetailedDatabaseId"]);
+            AddRecordToNotion(timeStamp, stagesToMonitor, startTime, ConfigurationHelper.Configuration["SyncTimesDetailedDatabaseId"]);
 
             if (i + 1 < repeatCount)
                 NodeResync();
@@ -90,7 +151,7 @@ public class SyncTimeMonitor : BaseTest
             };
         }).ToList();
 
-        AddRecordToNotion(averagedResult, startTime, ConfigurationHelper.Configuration["SyncTimesSummaryDatabaseId"], results.Count);
+        AddRecordToNotion(timeStamp, averagedResult, startTime, ConfigurationHelper.Configuration["SyncTimesSummaryDatabaseId"], results.Count);
 
         NodeStart();
     }
@@ -153,7 +214,7 @@ public class SyncTimeMonitor : BaseTest
         return sw.Elapsed.TotalSeconds;
     }
 
-    private void AddRecordToNotion(List<MetricStage> result, DateTime startTime, string databaseId, int numberOfProbes = 0)
+    private void AddRecordToNotion(long startTimeOfRun, List<MetricStage> result, DateTime startTime, string databaseId, int numberOfProbes = 0)
     {
         Regex pattern = new Regex(@"--config=(?<network>\w+)|--Metrics.NodeName=(?<nodeName>\w+)");
 
@@ -180,7 +241,7 @@ public class SyncTimeMonitor : BaseTest
 
             var properties = new Dictionary<string, PropertyValue>
                     {
-                        { "Run Id",                 new NotionTitle(timeStamp.ToString()) },
+                        { "Run Id",                 new NotionTitle(startTimeOfRun.ToString()) },
                         { "Date Of Execution",      new NotionDate(monitoringStage.StartTime!.Value) },
                         { "Nethermind Image",       new NotionText(nethermindImage) },
                         { "Consensus Layer Client", new NotionText(consensusImage) },
@@ -241,4 +302,23 @@ public class SyncTimeMonitor : BaseTest
     {
         return DockerCommands.GetDockerDetails("execution-client", "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
     }
+
+    private void WriteReportToFile(double totalExecutionTime, List<MetricStage> stagesToMonitor)
+    {
+        // Initialize a StringBuilder for our report.
+        StringBuilder reportBuilder = new StringBuilder();
+
+        // Add the total execution time to the report.
+        reportBuilder.AppendLine($"TOTAL SYNC TIME: {totalExecutionTime.ToString(@"hh\:mm\:ss")}");
+
+        // Add the time for each stage to the report.
+        foreach (var stage in stagesToMonitor)
+        {
+            reportBuilder.AppendLine($"{stage.Stage}: {stage.Total?.ToString(@"hh\:mm\:ss")}");
+        }
+
+        // Write the report to a text file.
+        System.IO.File.WriteAllText("syncTimeReport.txt", reportBuilder.ToString());
+    }
+
 }

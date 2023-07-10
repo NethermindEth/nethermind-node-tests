@@ -19,6 +19,7 @@ public class SyncTimeMonitor : BaseTest
     [Description("Single monitoring of current sync")]
     [Category("PerfMonitoring")]
     [Category("SnapSync")]
+    [Test]
     public void MonitorSyncTimesOfStagesInSnapSync()
     {
         Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
@@ -50,6 +51,7 @@ public class SyncTimeMonitor : BaseTest
     [Description("Single monitoring of current sync")]
     [Category("PerfMonitoring")]
     [Category("FastSync")]
+    [Test]
     public void MonitorSyncTimesOfStagesInFastSync()
     {
         Logger.Info("***Starting test: MonitorSyncTimesOfStagesInFastSync --- syncType: FastSync***");

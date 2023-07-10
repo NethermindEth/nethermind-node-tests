@@ -17,7 +17,8 @@ public class SyncTimeMonitor : BaseTest
     int MaxWaitTimeForSyncToComplete = 72 * 60 * 60 * 1000; //3 days
 
     [Description("Single monitoring of current sync")]
-    [Category("PerfMonitoring"), Category("SnapSync")]
+    [Category("PerfMonitoring")]
+    [Category("SnapSync")]
     public void MonitorSyncTimesOfStagesInSnapSync()
     {
         Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
@@ -47,7 +48,8 @@ public class SyncTimeMonitor : BaseTest
     }
 
     [Description("Single monitoring of current sync")]
-    [Category("PerfMonitoring"), Category("FastSync")]
+    [Category("PerfMonitoring")]
+    [Category("FastSync")]
     public void MonitorSyncTimesOfStagesInFastSync()
     {
         Logger.Info("***Starting test: MonitorSyncTimesOfStagesInFastSync --- syncType: FastSync***");

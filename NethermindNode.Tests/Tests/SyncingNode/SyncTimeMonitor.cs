@@ -16,43 +16,28 @@ public class SyncTimeMonitor : BaseTest
 
     int MaxWaitTimeForSyncToComplete = 72 * 60 * 60 * 1000; //3 days
 
-    [Description("Single monitoring of current sync")]
-    [Category("PerfMonitoringSnapSync")]
-    [Test]
-    public void MonitorSyncTimesOfStagesInSnapSync()
+    private bool _isSnapSync;
+    private bool _isNonValidator;
+
+    [SetUp]
+    public void Setup()
     {
-        Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
+        _isSnapSync = TestContext.Parameters.Exists("isSnapSync")
+            ? Convert.ToBoolean(TestContext.Parameters.Get("isSnapSync"))
+            : true; // default value if "isSnapSync" is not provided
 
-        DateTime startTime = DateTime.MinValue;
-
-        List<MetricStage> stagesToMonitor = new List<MetricStage>()
-        {
-            new MetricStage(){ Stage = Stages.FastHeaders },
-            new MetricStage(){ Stage = Stages.BeaconHeaders },
-            new MetricStage(){ Stage = Stages.SnapSync },
-            new MetricStage(){ Stage = Stages.StateNodes },
-            new MetricStage(){ Stage = Stages.FastBodies },
-            new MetricStage(){ Stage = Stages.FastReceipts }
-        };
-
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
-
-        //Calculate Totals
-        foreach (var monitoringStage in stagesToMonitor)
-        {
-            monitoringStage.Total = monitoringStage.EndTime - monitoringStage.StartTime;
-        }
-
-        WriteReportToFile(totalExecutionTime, stagesToMonitor);
+        _isNonValidator = TestContext.Parameters.Exists("isNonValidator")
+            ? Convert.ToBoolean(TestContext.Parameters.Get("isNonValidator"))
+            : false; // default value if "isNonValidator" is not provided
     }
 
+
     [Description("Single monitoring of current sync")]
-    [Category("PerfMonitoringFastSync")]
+    [Category("PerfMonitoring")]
     [Test]
-    public void MonitorSyncTimesOfStagesInFastSync()
+    public void MonitorSyncTimesOfStages()
     {
-        Logger.Info("***Starting test: MonitorSyncTimesOfStagesInFastSync --- syncType: FastSync***");
+        Logger.Info("***Starting test: MonitorSyncTimesOfStages***");
 
         DateTime startTime = DateTime.MinValue;
 
@@ -60,10 +45,11 @@ public class SyncTimeMonitor : BaseTest
         {
             new MetricStage(){ Stage = Stages.FastHeaders },
             new MetricStage(){ Stage = Stages.BeaconHeaders },
+            _isSnapSync ? new MetricStage(){ Stage = Stages.SnapSync } : null,
             new MetricStage(){ Stage = Stages.StateNodes },
-            new MetricStage(){ Stage = Stages.FastBodies },
-            new MetricStage(){ Stage = Stages.FastReceipts }
-        };
+            _isNonValidator ? new MetricStage(){ Stage = Stages.FastBodies } : null,
+            _isNonValidator ? new MetricStage(){ Stage = Stages.FastReceipts } : null
+        }.Where(stage => stage != null).ToList();
 
         NodeInfo.WaitForNodeToBeReady(Logger);
         double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);

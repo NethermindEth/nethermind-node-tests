@@ -22,13 +22,13 @@ public class SyncTimeMonitor : BaseTest
     [SetUp]
     public void Setup()
     {
-        _isSnapSync = TestContext.Parameters.Exists("isSnapSync")
-            ? Convert.ToBoolean(TestContext.Parameters.Get("isSnapSync"))
-            : true; // default value if "isSnapSync" is not provided
+        _isSnapSync = Environment.GetEnvironmentVariable("isSnapSync") != null
+            ? Convert.ToBoolean(Environment.GetEnvironmentVariable("isSnapSync"))
+            : true;
 
-        _isNonValidator = TestContext.Parameters.Exists("isNonValidator")
-            ? Convert.ToBoolean(TestContext.Parameters.Get("isNonValidator"))
-            : false; // default value if "isNonValidator" is not provided
+        _isNonValidator = Environment.GetEnvironmentVariable("isNonValidator") != null
+            ? Convert.ToBoolean(Environment.GetEnvironmentVariable("isNonValidator"))
+            : false;
     }
 
 
@@ -47,8 +47,8 @@ public class SyncTimeMonitor : BaseTest
             new MetricStage(){ Stage = Stages.BeaconHeaders },
             _isSnapSync ? new MetricStage(){ Stage = Stages.SnapSync } : null,
             new MetricStage(){ Stage = Stages.StateNodes },
-            _isNonValidator ? new MetricStage(){ Stage = Stages.FastBodies } : null,
-            _isNonValidator ? new MetricStage(){ Stage = Stages.FastReceipts } : null
+            !_isNonValidator ? new MetricStage(){ Stage = Stages.FastBodies } : null,
+            !_isNonValidator ? new MetricStage(){ Stage = Stages.FastReceipts } : null
         }.Where(stage => stage != null).ToList();
 
         NodeInfo.WaitForNodeToBeReady(Logger);

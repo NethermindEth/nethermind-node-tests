@@ -5,6 +5,9 @@ namespace NethermindNode.Core.Helpers;
 
 public static class NodeInfo
 {
+    private static readonly HttpClient client = new HttpClient();
+    private static readonly string apiBaseUrl = "http://localhost:8545";
+
     public static bool IsFullySynced(NLog.Logger logger)
     {
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", logger);
@@ -14,12 +17,39 @@ public static class NodeInfo
 
     public static void WaitForNodeToBeReady(NLog.Logger logger)
     {
-        //Waiting for proper start of node
-        while (DockerCommands.CheckIfDockerContainerIsCreated("sedge-execution-client", logger) == false)
+        var apiIsAvailable = false;
+
+        while (!apiIsAvailable)
         {
-            logger.Info("Waiting for Execution to be started.");
-            Thread.Sleep(30000);
+            try
+            {
+                var response = client.GetAsync(apiBaseUrl).Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    apiIsAvailable = true;
+                    logger.Info("API is up and running!");
+                }
+                else
+                {
+                    logger.Info("API is not yet ready, waiting for 5 seconds...");
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Info($"Error while checking API availability: {ex.Message}");
+                logger.Info("Retrying in 5 seconds...");
+                Thread.Sleep(TimeSpan.FromSeconds(5));
+            }
         }
+
+        //Waiting for proper start of node
+        //while (DockerCommands.CheckIfDockerContainerIsCreated("sedge-execution-client", logger) == false)
+        //{
+        //    logger.Info("Waiting for Execution to be started.");
+        //    Thread.Sleep(30000);
+        //}
     }
 
     public static string GetCurrentStage(NLog.Logger logger)
@@ -46,7 +76,7 @@ public static class NodeInfo
     {
         List<Stages> result = new List<Stages>();
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
-        string output = "";
+        string output = ""; 
 
         bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
         if (!isVerifiedPositively)

@@ -13,6 +13,7 @@ public class EthCallTests : BaseTest
 
     [TestCase(1, 1, Category = "JsonRpc")]
     [TestCase(10000, 5, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmark")]
+    [TestCase(10000, 500, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmarkStress")]
     public async Task EthCall(int repeatCount, int parallelizableLevel)
     {
         int i = 0;

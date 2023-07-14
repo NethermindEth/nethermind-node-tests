@@ -44,7 +44,7 @@ public class EthCallTests : BaseTest
             });
     }
 
-    [TestCase(10000, 500, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 5000, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int parallelizableLevel)
     {
         Parallel.ForEach(

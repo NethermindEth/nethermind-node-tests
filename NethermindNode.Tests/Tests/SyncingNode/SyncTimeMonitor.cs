@@ -194,6 +194,13 @@ public class SyncTimeMonitor : BaseTest
                     monitoringStage.EndTime = DateTime.UtcNow;
                 }
             }
+
+            // Check if the EndTime of the last item is set - this may mean that for some reason sync ended but some of the stages did not have EndTime
+            if (stagesToMonitor.Last().EndTime != null)
+            {
+                break;
+            }
+
             Thread.Sleep(1000);
         }
         var endDateTime = DateTime.UtcNow;

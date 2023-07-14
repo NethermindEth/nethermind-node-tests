@@ -47,7 +47,7 @@ public class EthCallTests : BaseTest
     {
         try
         {
-            var w3 = new Web3("http://139.144.31.115:8545");
+            var w3 = new Web3("http://localhost:8545");
 
             var callInput = new CallInput
             {

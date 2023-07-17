@@ -98,6 +98,7 @@ public class EthCallTests : BaseTest
     {
         try
         {
+            Console.WriteLine("Sending request with ID: " + id);
             var w3 = new Web3("http://localhost:8545");
 
             var callInput = new CallInput

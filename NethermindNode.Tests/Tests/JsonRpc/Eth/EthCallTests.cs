@@ -58,6 +58,8 @@ public class EthCallTests : BaseTest
             {
                 await Task.Delay(1000);
                 TestContext.Out.WriteLine($"Requests sent in the last second: {counter}");
+                Console.WriteLine($"Requests sent in the last second: {counter}");
+
                 counter = 0; // reset the counter every second
             }
         });

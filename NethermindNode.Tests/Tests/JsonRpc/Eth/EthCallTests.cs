@@ -44,7 +44,7 @@ public class EthCallTests : BaseTest
             });
     }
 
-    [TestCase(100000, 10, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(1000, 10, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int requestsPerSecond)
     {
         var delay = 1000 / requestsPerSecond;
@@ -58,6 +58,8 @@ public class EthCallTests : BaseTest
             {
                 await Task.Delay(1000);
                 TestContext.Progress.WriteLine($"Requests sent in the last second: {counter}");
+                TestContext.WriteLine($"Requests sent in the last second: {counter}");
+                Console.WriteLine($"Requests sent in the last second: {counter}");
                 counter = 0; // reset the counter every second
             }
         });

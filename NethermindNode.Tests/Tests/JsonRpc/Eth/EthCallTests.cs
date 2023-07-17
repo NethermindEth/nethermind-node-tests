@@ -44,12 +44,11 @@ public class EthCallTests : BaseTest
             });
     }
 
-    [TestCase(100000, 200, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    public async Task EthCallGatewayScenario(int repeatCount, int requestsPerSecond)
+    [TestCase(10000, 10, 10, 10, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval)
     {
-        var delay = 1000 / requestsPerSecond;
-
         int counter = 0;
+        int elapsedSeconds = 0;
 
         // Create a separate task to output the counter every second.
         var monitoringTask = Task.Run(async () =>
@@ -57,10 +56,15 @@ public class EthCallTests : BaseTest
             while (true)
             {
                 await Task.Delay(1000);
-                TestContext.Out.WriteLine($"Requests sent in the last second: {counter}");
                 Console.WriteLine($"Requests sent in the last second: {counter}");
-
                 counter = 0; // reset the counter every second
+                elapsedSeconds++; // increase elapsed time
+
+                if (elapsedSeconds % stepInterval == 0)
+                {
+                    initialRequestsPerSecond += rpsStep; // Increase rps every stepInterval seconds
+                    Console.WriteLine($"RPS updated to: {initialRequestsPerSecond}");
+                }
             }
         });
 
@@ -70,6 +74,7 @@ public class EthCallTests : BaseTest
             EthCallGatewayScenario(code, i);
             counter++;
 
+            var delay = 1000 / initialRequestsPerSecond;
             await Task.Delay(delay);
         }
     }

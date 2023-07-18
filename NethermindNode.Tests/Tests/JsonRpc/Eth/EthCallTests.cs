@@ -113,7 +113,6 @@ public class EthCallTests : BaseTest
         Console.WriteLine($"Requests sent in total: {counter}");
         Console.WriteLine($"Succeded requests: {success}");
         Console.WriteLine($"Failed requests: {fail}");
-        Console.WriteLine($"Last reponse: { responseTasks.Last().Result.ToString() }");
     }
 
     void EthCallScenario(string code)

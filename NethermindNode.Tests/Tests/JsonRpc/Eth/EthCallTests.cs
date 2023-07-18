@@ -177,13 +177,13 @@ public class EthCallTests : BaseTest
                     throw innner;
                 }
             }
-            throw e;
+            return Task.FromResult("An error occurred: " + e.Message);
         }
         catch (Exception e)
         {
             Logger.Error(e.Message);
             Logger.Error(e.StackTrace);
-            throw e;
+            return Task.FromResult("An error occurred: " + e.Message);
         }
     }
 }

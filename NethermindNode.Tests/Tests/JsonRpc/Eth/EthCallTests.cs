@@ -167,22 +167,8 @@ public class EthCallTests : BaseTest
             //var parsed = result.Result.ToString();
 
         }
-        catch (AggregateException e)
-        {
-            if (e.InnerException is RpcResponseException)
-            {
-                var innner = (RpcResponseException) e.InnerException;
-                if (innner.RpcError.Data.ToString() != "OutOfGas")
-                {
-                    throw innner;
-                }
-            }
-            return Task.FromResult("An error occurred: " + e.Message);
-        }
         catch (Exception e)
         {
-            Logger.Error(e.Message);
-            Logger.Error(e.StackTrace);
             return Task.FromResult("An error occurred: " + e.Message);
         }
     }

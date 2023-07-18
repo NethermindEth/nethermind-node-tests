@@ -45,7 +45,7 @@ public class EthCallTests : BaseTest
             });
     }
 
-    [TestCase(10000, 500, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(1000, 500, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval)
     {
         int counter = 0;

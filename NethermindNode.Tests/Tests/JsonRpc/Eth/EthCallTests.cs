@@ -95,7 +95,7 @@ public class EthCallTests : BaseTest
                 Data = code
             };
             var result = w3.Eth.Transactions.Call.SendRequestAsync(callInput);
-            var parsed = result.Result.ToString();
+            //var parsed = result.Result.ToString();
 
         }
         catch (AggregateException e)

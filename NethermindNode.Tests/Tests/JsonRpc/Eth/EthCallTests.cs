@@ -86,6 +86,7 @@ public class EthCallTests : BaseTest
                 }
                 else
                 {
+                    Console.WriteLine(response.ToString());
                     success++;
                 }
             }

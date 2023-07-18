@@ -80,7 +80,7 @@ public class EthCallTests : BaseTest
             {
                 var response = await responseTask;
 
-                if (response.Contains("error"))
+                if (response.Contains("error") && response.ToString() != String.Empty)
                 {
                     fail++;
                 }

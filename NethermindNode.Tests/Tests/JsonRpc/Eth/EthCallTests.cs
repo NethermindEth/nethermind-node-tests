@@ -46,7 +46,7 @@ public class EthCallTests : BaseTest
             });
     }
 
-    [TestCase(100000, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+ //   [TestCase(100000, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(100000, 100, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]

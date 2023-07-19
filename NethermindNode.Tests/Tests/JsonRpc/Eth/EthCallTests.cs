@@ -137,6 +137,7 @@ public class EthCallTests : BaseTest
         // Wait for the response handling task to finish processing all items
         await responseHandlingTask;
 
+        Console.WriteLine($"Requests per second: {initialRequestsPerSecond}");
         Console.WriteLine($"Requests sent in total: {counter}");
         Console.WriteLine($"Succeded requests: {success}");
         Console.WriteLine($"Failed requests: {fail}");

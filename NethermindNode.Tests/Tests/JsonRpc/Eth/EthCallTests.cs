@@ -47,13 +47,21 @@ public class EthCallTests : BaseTest
                 EthCallScenario(code);
             });
     }
+    
+    public enum TestingType
+    {
+        EthCallOnly = 0,
+        TraceCallOnly = 1,
+        EthCallAndTraceCall = 2
+    }
+    
 
  //   [TestCase(100000, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(100000, 100, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     // [TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     // [TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0)
+    public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0, TestingType testingType = TestingType.EthCallOnly)
     {
         int counter = 0;
         int success = 0;
@@ -85,7 +93,7 @@ public class EthCallTests : BaseTest
             for (var i = 0; i < repeatCount; i++)
             {
                 string code = TestItems.HugeGatewayCall;
-                var requestTask = TraceCallGatewayScenario(code, i);
+                var requestTask = ExecuteGatewayScenario(testingType, code, i);
                 responseTasks.Add(requestTask); // Add the task to the collection
 
                 counter++;
@@ -103,7 +111,7 @@ public class EthCallTests : BaseTest
             while (sw.Elapsed.TotalSeconds < maxTimeout)
             {
                 string code = TestItems.HugeGatewayCall;
-                var requestTask = TraceCallGatewayScenario(code, iterator);
+                var requestTask = ExecuteGatewayScenario(testingType, code, iterator);
                 responseTasks.Add(requestTask); // Add the task to the collection
 
                 counter++;
@@ -128,7 +136,19 @@ public class EthCallTests : BaseTest
         Console.WriteLine($"Failed requests: {fail}");
     }
 
-    async Task<string>  TraceCallGatewayScenario(string code, int id)
+    private Task<string> ExecuteGatewayScenario(TestingType testingType, string code, int id)
+    {
+        if (testingType == TestingType.EthCallOnly)
+            return EthCallGatewayScenario(code, id);
+        if (testingType == TestingType.TraceCallOnly)
+            return TraceCallGatewayScenario(code, id);
+        
+        if (id % 2 == 0)
+            return EthCallGatewayScenario(code, id);
+        
+        return TraceCallGatewayScenario(code, id);
+    }
+    async Task<string> TraceCallGatewayScenario(string code, int id)
     {
         try
         {

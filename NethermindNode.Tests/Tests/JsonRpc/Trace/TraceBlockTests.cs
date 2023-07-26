@@ -26,7 +26,7 @@ public class TraceBlockTests : BaseTest
             new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
             (task, loopState) =>
             {
-                var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "http://45.79.220.73:8545", Logger);
+                var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", TestItems.RpcAddress, Logger);
                 //Test result
                 bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(result.Result.Item1, out IRpcResponse deserialized);
 
@@ -43,7 +43,7 @@ public class TraceBlockTests : BaseTest
                 }
             });
 
-        Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");
+        Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measure times of execution.");
 
         var average = executionTimes.Average(x => x.TotalMilliseconds);
         var totalRequestsSucceeded = executionTimes.Count();
@@ -84,7 +84,7 @@ public class TraceBlockTests : BaseTest
             (task, loopState) =>
             {
                 var batchedIds = Enumerable.Range(task, batchSize).Select(x => $"\"{x}\"").ToList();
-                var result = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, "http://45.79.220.73:8545", Logger);
+                var result = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, TestItems.RpcAddress, Logger);
                 //Test result
                 bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(result.Result.Item1, out IEnumerable<IRpcResponse> deserialized);
 

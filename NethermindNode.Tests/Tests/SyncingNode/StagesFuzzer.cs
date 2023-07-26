@@ -26,12 +26,38 @@ public class StagesFuzzer : BaseTest
             if (!_stagesFound.Contains(currentStage) && currentStage != "WaitingForConnection")
             {
                 _stagesFound.Add(currentStage);
-                Logger.Info("Fuzzing at stage: " + currentStage);
+                Logger.Info("Killing node at stage: " + currentStage);
                 FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true }, Logger);
             }
             Thread.Sleep(1000);
         }
 
         Logger.Info("***Test finished: ShouldKillNodeOnAllPossibleStages***");
+    }
+
+    [Test]
+    [Category("SnapSync")]
+    [Category("FastSync")]
+    [Category("FullSync")]
+    [Category("ArchiveSync")]
+    public void ShouldStopGracefullyNodeOnAllPossibleStages()
+    {
+        Logger.Info("***Starting test: ShouldStopGracefullyNodeOnAllPossibleStages***");
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+
+        while (!NodeInfo.IsFullySynced(Logger))
+        {
+            var currentStage = NodeInfo.GetCurrentStage(Logger);
+            if (!_stagesFound.Contains(currentStage) && currentStage != "WaitingForConnection")
+            {
+                _stagesFound.Add(currentStage);
+                Logger.Info("Stopping gracefully at stage: " + currentStage);
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceGracefullCommand = true }, Logger);
+            }
+            Thread.Sleep(1000);
+        }
+
+        Logger.Info("***Test finished: ShouldStopGracefullyNodeOnAllPossibleStages***");
     }
 }

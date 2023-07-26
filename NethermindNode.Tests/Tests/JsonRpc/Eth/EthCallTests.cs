@@ -4,6 +4,8 @@ using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using NethermindNode.Core.Helpers;
+using NUnit.Framework.Internal;
 
 namespace NethermindNode.Tests.JsonRpc.Eth;
 
@@ -45,35 +47,27 @@ public class EthCallTests : BaseTest
                 EthCallScenario(code);
             });
     }
+    
+    public enum TestingType
+    {
+        EthCallOnly = 0,
+        TraceCallOnly = 1,
+        EthCallAndTraceCall = 2
+    }
+    
 
- //   [TestCase(100000, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(100000, 100, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0)
+   [TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(100000, 100, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    // [TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    // [TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 150, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0, TestingType testingType = TestingType.EthCallOnly)
     {
         int counter = 0;
         int success = 0;
         int fail = 0;
         int elapsedSeconds = 0;
-
-        // Create a separate task to output the counter every second.
-        //var monitoringTask = Task.Run(async () =>
-        //{
-        //  while (true)
-        //{
-        //  await Task.Delay(1000);
-        //  Console.WriteLine($"Requests sent in the last second: {counter}");
-        //  counter = 0; // reset the counter every second
-        //  elapsedSeconds++; // increase elapsed time
-
-        //  if (elapsedSeconds % stepInterval == 0)
-        //{
-        //  initialRequestsPerSecond += rpsStep; // Increase rps every stepInterval seconds
-        //  Console.WriteLine($"RPS updated to: {initialRequestsPerSecond}");
-        //}
-        //}
-        //});
 
         BlockingCollection<Task<string>> responseTasks = new BlockingCollection<Task<string>>();
 
@@ -100,7 +94,7 @@ public class EthCallTests : BaseTest
             for (var i = 0; i < repeatCount; i++)
             {
                 string code = TestItems.HugeGatewayCall;
-                var requestTask = EthCallGatewayScenario(code, i);
+                var requestTask = ExecuteGatewayScenario(testingType, code, i);
                 responseTasks.Add(requestTask); // Add the task to the collection
 
                 counter++;
@@ -118,7 +112,7 @@ public class EthCallTests : BaseTest
             while (sw.Elapsed.TotalSeconds < maxTimeout)
             {
                 string code = TestItems.HugeGatewayCall;
-                var requestTask = EthCallGatewayScenario(code, iterator);
+                var requestTask = ExecuteGatewayScenario(testingType, code, iterator);
                 responseTasks.Add(requestTask); // Add the task to the collection
 
                 counter++;
@@ -143,11 +137,38 @@ public class EthCallTests : BaseTest
         Console.WriteLine($"Failed requests: {fail}");
     }
 
+    private Task<string> ExecuteGatewayScenario(TestingType testingType, string code, int id)
+    {
+        if (testingType == TestingType.EthCallOnly)
+            return EthCallGatewayScenario(code, id);
+        if (testingType == TestingType.TraceCallOnly)
+            return TraceCallGatewayScenario(code, id);
+        
+        if (id % 2 == 0)
+            return EthCallGatewayScenario(code, id);
+        
+        return TraceCallGatewayScenario(code, id);
+    }
+    async Task<string> TraceCallGatewayScenario(string code, int id)
+    {
+        try
+        {
+            var parameters = $"{{\"from\":null,\"to\":\"{TestItems.TestingAddress}\",\"data\":\"{code}\"}},[\"trace\"], \"latest\"";
+            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_call", parameters, TestItems.RpcAddress, Logger).Result.Item1;
+            return result;
+
+        }
+        catch (Exception e)
+        {
+            return await Task.FromResult("An error occurred: " + e.Message);
+        }
+    }
+
     void EthCallScenario(string code)
     {
         try
         {
-            var w3 = new Web3("http://localhost:8545");
+            var w3 = new Web3(TestItems.RpcAddress);
 
             var callInput = new CallInput
             {
@@ -184,11 +205,11 @@ public class EthCallTests : BaseTest
     {
         try
         {
-            var w3 = new Web3("http://localhost:8545");
+            var w3 = new Web3(TestItems.RpcAddress);
 
             var callInput = new CallInput
             {
-                To = "0xc3da629c518404860c8893a66ce3bb2e16bea6ec",
+                To = TestItems.TestingAddress,
                 Data = code
             };
             var result = await w3.Eth.Transactions.Call.SendRequestAsync(callInput, id);

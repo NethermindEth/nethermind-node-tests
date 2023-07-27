@@ -139,7 +139,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
 
                 var filter = new NewFilterInput
                 {
-                    FromBlock = new BlockParameter(new Nethereum.Hex.HexTypes.HexBigInteger("0x0")),
+                    FromBlock = BlockParameter.CreateEarliest(),
                     ToBlock = BlockParameter.CreateLatest(),
                     Address = new[] { "0xebcede67d7699293ee3228a511c14d6a531307b8" },
                     Topics = new[]

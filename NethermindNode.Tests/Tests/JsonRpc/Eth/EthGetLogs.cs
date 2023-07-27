@@ -63,7 +63,6 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
 
                         }
 
-                    Console.WriteLine(response.ToString());
                     //if (response.Contains("error") && response.ToString() != String.Empty)
                     //{
                     //    fail++;

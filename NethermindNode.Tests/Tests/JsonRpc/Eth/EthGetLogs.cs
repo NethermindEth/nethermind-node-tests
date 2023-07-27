@@ -34,6 +34,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                     Console.WriteLine("New response arrived!");
                     var response = await responseTask;
                     if (response != null)
+                    {
                         foreach (var filterLog in response.ToList())
                         {
                             Console.WriteLine($"Removed: {filterLog.Removed}");
@@ -63,6 +64,11 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                             Console.WriteLine("-----------------------------------------------------");
 
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Response was null");
+                    }
 
                     //if (response.Contains("error") && response.ToString() != String.Empty)
                     //{

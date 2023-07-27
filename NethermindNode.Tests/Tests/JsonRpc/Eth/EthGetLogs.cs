@@ -31,6 +31,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
             {
                 foreach (var responseTask in responseTasks.GetConsumingEnumerable())
                 {
+                    Console.WriteLine("New response arrived!");
                     var response = await responseTask;
                     if (response != null)
                         foreach (var filterLog in response.ToList())
@@ -140,6 +141,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                     }
                 };
                 var result = await w3.Eth.Filters.GetLogs.SendRequestAsync(filter, id);
+                Console.WriteLine($"Request with id: {id} sent.");
                 return result;
 
             }

@@ -35,6 +35,8 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                     var response = await responseTask;
                     if (response != null)
                     {
+                        Console.WriteLine("Response is not null... Proceeding.");
+                        Console.WriteLine(response.Length.ToString());
                         foreach (var filterLog in response)
                         {
                             Console.WriteLine($"Removed: {filterLog.Removed}");

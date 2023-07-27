@@ -145,6 +145,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.ToString());
                 return null;
             }
         }

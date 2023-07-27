@@ -29,19 +29,20 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
             // Create a separate task to handle responses
             var responseHandlingTask = Task.Run(async () =>
             {
-                //foreach (var responseTask in responseTasks.GetConsumingEnumerable())
-                //{
-                //    var response = await responseTask;
-                //
-                //    if (response.Contains("error") && response.ToString() != String.Empty)
-                //    {
-                //        fail++;
-                //    }
-                //    else
-                //    {
-                //        success++;
-                //    }
-                //}
+                foreach (var responseTask in responseTasks.GetConsumingEnumerable())
+                {
+                    var response = await responseTask;
+
+                    Console.WriteLine(response.ToString());
+                    //if (response.Contains("error") && response.ToString() != String.Empty)
+                    //{
+                    //    fail++;
+                    //}
+                    //else
+                    //{
+                    //    success++;
+                    //}
+                }
             });
 
             if (repeatCount != 0)

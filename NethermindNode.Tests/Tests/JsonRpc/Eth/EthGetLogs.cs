@@ -32,6 +32,35 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                 foreach (var responseTask in responseTasks.GetConsumingEnumerable())
                 {
                     var response = await responseTask;
+                    foreach (var filterLog in response.ToList())
+                    {
+                        Console.WriteLine($"Removed: {filterLog.Removed}");
+                        Console.WriteLine($"Type: {filterLog.Type}");
+                        Console.WriteLine($"Log Index: {filterLog.LogIndex?.Value}"); // ?.Value is used to get value from HexBigInteger
+                        Console.WriteLine($"Transaction Hash: {filterLog.TransactionHash}");
+                        Console.WriteLine($"Transaction Index: {filterLog.TransactionIndex?.Value}");
+                        Console.WriteLine($"Block Hash: {filterLog.BlockHash}");
+                        Console.WriteLine($"Block Number: {filterLog.BlockNumber?.Value}");
+                        Console.WriteLine($"Address: {filterLog.Address}");
+                        Console.WriteLine($"Data: {filterLog.Data}");
+
+                        // Print topics
+                        if (filterLog.Topics != null && filterLog.Topics.Length > 0)
+                        {
+                            Console.WriteLine("Topics: ");
+                            foreach (var topic in filterLog.Topics)
+                            {
+                                Console.WriteLine($"- {topic}");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("No topics");
+                        }
+
+                        Console.WriteLine("-----------------------------------------------------");
+
+                    }
 
                     Console.WriteLine(response.ToString());
                     //if (response.Contains("error") && response.ToString() != String.Empty)

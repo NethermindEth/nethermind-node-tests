@@ -32,35 +32,36 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                 foreach (var responseTask in responseTasks.GetConsumingEnumerable())
                 {
                     var response = await responseTask;
-                    foreach (var filterLog in response.ToList())
-                    {
-                        Console.WriteLine($"Removed: {filterLog.Removed}");
-                        Console.WriteLine($"Type: {filterLog.Type}");
-                        Console.WriteLine($"Log Index: {filterLog.LogIndex?.Value}"); // ?.Value is used to get value from HexBigInteger
-                        Console.WriteLine($"Transaction Hash: {filterLog.TransactionHash}");
-                        Console.WriteLine($"Transaction Index: {filterLog.TransactionIndex?.Value}");
-                        Console.WriteLine($"Block Hash: {filterLog.BlockHash}");
-                        Console.WriteLine($"Block Number: {filterLog.BlockNumber?.Value}");
-                        Console.WriteLine($"Address: {filterLog.Address}");
-                        Console.WriteLine($"Data: {filterLog.Data}");
-
-                        // Print topics
-                        if (filterLog.Topics != null && filterLog.Topics.Length > 0)
+                    if (response != null)
+                        foreach (var filterLog in response.ToList())
                         {
-                            Console.WriteLine("Topics: ");
-                            foreach (var topic in filterLog.Topics)
+                            Console.WriteLine($"Removed: {filterLog.Removed}");
+                            Console.WriteLine($"Type: {filterLog.Type}");
+                            Console.WriteLine($"Log Index: {filterLog.LogIndex?.Value}"); // ?.Value is used to get value from HexBigInteger
+                            Console.WriteLine($"Transaction Hash: {filterLog.TransactionHash}");
+                            Console.WriteLine($"Transaction Index: {filterLog.TransactionIndex?.Value}");
+                            Console.WriteLine($"Block Hash: {filterLog.BlockHash}");
+                            Console.WriteLine($"Block Number: {filterLog.BlockNumber?.Value}");
+                            Console.WriteLine($"Address: {filterLog.Address}");
+                            Console.WriteLine($"Data: {filterLog.Data}");
+
+                            // Print topics
+                            if (filterLog.Topics != null && filterLog.Topics.Length > 0)
                             {
-                                Console.WriteLine($"- {topic}");
+                                Console.WriteLine("Topics: ");
+                                foreach (var topic in filterLog.Topics)
+                                {
+                                    Console.WriteLine($"- {topic}");
+                                }
                             }
-                        }
-                        else
-                        {
-                            Console.WriteLine("No topics");
-                        }
+                            else
+                            {
+                                Console.WriteLine("No topics");
+                            }
 
-                        Console.WriteLine("-----------------------------------------------------");
+                            Console.WriteLine("-----------------------------------------------------");
 
-                    }
+                        }
 
                     Console.WriteLine(response.ToString());
                     //if (response.Contains("error") && response.ToString() != String.Empty)
@@ -133,7 +134,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                     FromBlock = new BlockParameter(new Nethereum.Hex.HexTypes.HexBigInteger("0x0")),
                     ToBlock = BlockParameter.CreateLatest(),
                     Address = new[] { "0xebcede67d7699293ee3228a511c14d6a531307b8" },
-                    Topics = new[] 
+                    Topics = new[]
                     {
                         "0x4641df4a962071e12719d8c8c8e5ac7fc4d97b927346a3d7a335b1f7517e133c",
                         "0xaceaac9344b11101e7119e739232774d88d3c6c471a76a950e71c4567abf2af6"

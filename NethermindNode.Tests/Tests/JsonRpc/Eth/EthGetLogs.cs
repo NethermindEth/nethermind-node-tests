@@ -17,7 +17,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-        [TestCase(0, 1, 0, 0, 10, Category = "JsonRpcBenchmark,JsonRpcGatewayEthGetLogsBenchmarkStress")]
+        [TestCase(0, 1, 0, 0, 1, Category = "JsonRpcBenchmark,JsonRpcGatewayEthGetLogsBenchmarkStress")]
         public async Task EthGetLogsGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0)
         {
             int counter = 0;
@@ -35,7 +35,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                     var response = await responseTask;
                     if (response != null)
                     {
-                        foreach (var filterLog in response.ToList())
+                        foreach (var filterLog in response)
                         {
                             Console.WriteLine($"Removed: {filterLog.Removed}");
                             Console.WriteLine($"Type: {filterLog.Type}");

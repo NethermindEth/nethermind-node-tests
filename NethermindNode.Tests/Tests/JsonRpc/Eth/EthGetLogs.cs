@@ -70,7 +70,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
                         Console.WriteLine("Response was null");
                     }
 
-                    if (response.Contains("error") && response.ToString() != String.Empty)
+                    if (response.ToString().Contains("error") && response.ToString() != String.Empty)
                     {
                         fail++;
                     }

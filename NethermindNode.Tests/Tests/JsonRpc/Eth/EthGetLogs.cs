@@ -17,7 +17,7 @@ namespace NethermindNode.Tests.Tests.JsonRpc.Eth
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-        [TestCase(10000, 100, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthGetLogsBenchmarkStress")]
+        [TestCase(10000, 20, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthGetLogsBenchmarkStress")]
         public async Task EthGetLogsGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0)
         {
             int counter = 0;

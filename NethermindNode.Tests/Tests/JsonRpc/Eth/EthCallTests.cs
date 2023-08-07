@@ -86,6 +86,9 @@ public class EthCallTests : BaseTest
         BlockingCollection<Task<string>> responseTasks = new BlockingCollection<Task<string>>();
         HashSet<string> uniqueErrorMessages = new HashSet<string>();
 
+        //Start only if API is ready
+        NodeInfo.WaitForNodeToBeReady(Logger);
+
         // Create a separate task to handle responses
         var responseHandlingTask = Task.Run(async () =>
         {

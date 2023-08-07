@@ -274,7 +274,7 @@ public class EthCallTests : BaseTest
             string serializedCallObject = JsonConvert.SerializeObject(callObject);
 
             // Construct the full parameters for eth_call
-            var fullParams = $"[{serializedCallObject}, \"latest\"]";
+            var fullParams = $"{serializedCallObject}, \"latest\"";
 
             var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", fullParams, TestItems.RpcAddress, Logger).Result.Item1;
 

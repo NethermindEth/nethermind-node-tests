@@ -263,10 +263,22 @@ public class EthCallTests : BaseTest
     {
         try
         {
-            var parameters = $"{{\"from\":null,\"to\":\"{TestItems.TestingAddress}\",\"data\":\"{code}\"}},[\"trace\"], \"latest\"";
-            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", parameters, TestItems.RpcAddress, Logger).Result.Item1;
-            return result;
+            var callParams = new
+            {
+                from = (string)null,
+                to = TestItems.TestingAddress,
+                data = code
+            };
 
+            var traceArray = new[] { "trace" };
+
+            var payload = new object[] { callParams, traceArray, "latest" };
+
+            var serializedPayload = JsonConvert.SerializeObject(payload);
+
+            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", serializedPayload, TestItems.RpcAddress, Logger).Result.Item1;
+
+            return result;
         }
         catch (Exception e)
         {

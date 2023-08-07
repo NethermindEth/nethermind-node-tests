@@ -211,10 +211,22 @@ public class EthCallTests : BaseTest
     {
         try
         {
-            var parameters = $"{{\"from\":null,\"to\":\"{TestItems.TestingAddress}\",\"data\":\"{code}\"}},[\"trace\"], \"latest\"";
-            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_call", parameters, TestItems.RpcAddress, Logger).Result.Item1;
-            return result;
+            var callParams = new
+            {
+                from = (string)null,
+                to = TestItems.TestingAddress,
+                data = code
+            };
 
+            var traceArray = new[] { "trace" };
+
+            var payload = new object[] { callParams, traceArray, "latest" };
+
+            var serializedPayload = JsonConvert.SerializeObject(payload);
+
+            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", serializedPayload, id.ToString(), TestItems.RpcAddress, Logger).Result.Item1;
+
+            return result;
         }
         catch (Exception e)
         {
@@ -222,6 +234,32 @@ public class EthCallTests : BaseTest
         }
     }
 
+    async Task<string> EthCallGatewayScenario(string code, int id)
+    {
+        try
+        {
+            // Constructing the transaction call object
+            var callObject = new
+            {
+                to = TestItems.TestingAddress,
+                data = code
+            };
+
+            // Serialize the call object
+            string serializedCallObject = JsonConvert.SerializeObject(callObject);
+
+            // Construct the full parameters for eth_call
+            var fullParams = $"{serializedCallObject}, \"latest\"";
+
+            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", fullParams, id.ToString(), TestItems.RpcAddress, Logger).Result.Item1;
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            return await Task.FromResult("An error occurred: " + e.Message);
+        }        
+    }
     void EthCallScenario(string code)
     {
         try
@@ -258,53 +296,4 @@ public class EthCallTests : BaseTest
             Logger.Error(e.StackTrace);
         }
     }
-
-    async Task<string> EthCallGatewayScenario(string code, int id)
-    {
-        try
-        {
-            // Constructing the transaction call object
-            var callObject = new
-            {
-                to = TestItems.TestingAddress,
-                data = code
-            };
-
-            // Serialize the call object
-            string serializedCallObject = JsonConvert.SerializeObject(callObject);
-
-            // Construct the full parameters for eth_call
-            var fullParams = $"{serializedCallObject}, \"latest\"";
-
-            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", fullParams, TestItems.RpcAddress, Logger).Result.Item1;
-
-            return result;
-        }
-        catch (Exception e)
-        {
-            return await Task.FromResult("An error occurred: " + e.Message);
-        }
-    }
-
-    //async Task<string> EthCallGatewayScenario(string code, int id)
-    //{
-    //    try
-    //    {
-    //        var w3 = new Web3(TestItems.RpcAddress);
-    //
-    //        var callInput = new CallInput
-    //        {
-    //            To = TestItems.TestingAddress,
-    //            Data = code
-    //        };
-    //        var result = await w3.Eth.Transactions.Call.SendRequestAsync(callInput, id);
-    //        //var parsed = result.Result.ToString();
-    //        return result;
-    //
-    //    }
-    //    catch (Exception e)
-    //    {
-    //        return await Task.FromResult("An error occurred: " + e.Message);
-    //    }
-    //}
 }

@@ -26,7 +26,7 @@ public class TraceBlockTests : BaseTest
             new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
             (task, loopState) =>
             {
-                var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", TestItems.RpcAddress, Logger);
+                var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "1", TestItems.RpcAddress, Logger);
                 //Test result
                 bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(result.Result.Item1, out IRpcResponse deserialized);
 
@@ -139,8 +139,8 @@ public class TraceBlockTests : BaseTest
             new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
             (task, loopState) =>
             {
-                var resultSource = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{sourceNode}:8545", Logger);
-                var resultTarget = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{targetNode}:8545", Logger);
+                var resultSource = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "1", $"http://{sourceNode}:8545", Logger);
+                var resultTarget = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", "1", $"http://{targetNode}:8545", Logger);
                 //Test result
                 bool isVerifiedPositivelySource = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(resultSource.Result.Item1, out IRpcResponse deserializedSource);
                 bool isVerifiedPositivelyTarget = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(resultTarget.Result.Item1, out IRpcResponse deserializedTarget);

@@ -7,9 +7,9 @@ namespace NethermindNode.Core.Helpers;
 
 public static class HttpExecutor
 {
-    public async static Task<Tuple<string, TimeSpan, bool>> ExecuteNethermindJsonRpcCommand(string command, string parameters, string url, Logger logger)
+    public async static Task<Tuple<string, TimeSpan, bool>> ExecuteNethermindJsonRpcCommand(string command, string parameters, string id, string url, Logger logger)
     {
-        var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":1,\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
+        var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":{id},\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
         var response = await PostHttpWithTimingInfo(url, data, logger);
 
         return response;

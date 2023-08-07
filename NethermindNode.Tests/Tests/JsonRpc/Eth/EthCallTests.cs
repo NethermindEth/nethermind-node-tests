@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using NethermindNode.Core.Helpers;
 using NUnit.Framework.Internal;
+using Newtonsoft.Json.Linq;
 
 namespace NethermindNode.Tests.JsonRpc.Eth;
 
@@ -83,6 +84,7 @@ public class EthCallTests : BaseTest
         int elapsedSeconds = 0;
 
         BlockingCollection<Task<string>> responseTasks = new BlockingCollection<Task<string>>();
+        HashSet<string> uniqueErrorMessages = new HashSet<string>();
 
         // Create a separate task to handle responses
         var responseHandlingTask = Task.Run(async () =>
@@ -94,6 +96,12 @@ public class EthCallTests : BaseTest
                 if (response.Contains("error") && response.ToString() != String.Empty)
                 {
                     fail++;
+
+                    var jsonResponse = JObject.Parse(response);
+                    var errorMessage = jsonResponse["error"]["message"].ToString();
+
+                    uniqueErrorMessages.Add(errorMessage);
+
                 }
                 else
                 {
@@ -148,6 +156,11 @@ public class EthCallTests : BaseTest
         Console.WriteLine($"Requests sent in total: {counter}");
         Console.WriteLine($"Succeded requests: {success}");
         Console.WriteLine($"Failed requests: {fail}");
+        Console.WriteLine($"Unique error messages: {uniqueErrorMessages.Count}");
+        foreach (var errorMessage in uniqueErrorMessages)
+        {
+            Console.WriteLine(errorMessage);
+        }
     }
 
     private Task<string> ExecuteGatewayScenario(TestingType testingType, string code, int id)

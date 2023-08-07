@@ -63,6 +63,7 @@ public class EthCallTests : BaseTest
     //[TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(50, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 150, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]

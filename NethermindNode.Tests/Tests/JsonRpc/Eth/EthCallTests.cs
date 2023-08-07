@@ -270,9 +270,8 @@ public class EthCallTests : BaseTest
                 data = code
             };
 
-            var traceArray = new[] { "trace" };
 
-            var payload = new object[] { callParams, traceArray, "latest" };
+            var payload = new object[] { callParams, "latest" };
 
             var serializedPayload = JsonConvert.SerializeObject(payload);
 

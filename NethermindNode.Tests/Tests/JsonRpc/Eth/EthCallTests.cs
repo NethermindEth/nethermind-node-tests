@@ -7,6 +7,7 @@ using System.Diagnostics;
 using NethermindNode.Core.Helpers;
 using NUnit.Framework.Internal;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace NethermindNode.Tests.JsonRpc.Eth;
 
@@ -48,7 +49,7 @@ public class EthCallTests : BaseTest
                 EthCallScenario(code);
             });
     }
-    
+
     public enum TestingType
     {
         EthCallOnly = 0,
@@ -62,13 +63,13 @@ public class EthCallTests : BaseTest
     //[TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50,  0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 150, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50,  0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 50, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 100, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 150, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50,  0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 150, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0, TestingType testingType = TestingType.EthCallOnly)
@@ -92,20 +93,46 @@ public class EthCallTests : BaseTest
         // Create a separate task to handle responses
         var responseHandlingTask = Task.Run(async () =>
         {
+            bool TryParseJson(string jsonString, out JObject jsonObject)
+            {
+                try
+                {
+                    jsonObject = JObject.Parse(jsonString);
+                    return true;
+                }
+                catch (JsonReaderException)
+                {
+                    jsonObject = null;
+                    return false;
+                }
+            }
+
             foreach (var responseTask in responseTasks.GetConsumingEnumerable())
             {
                 var response = await responseTask;
 
-                if (response.Contains("error") && response.ToString() != String.Empty)
+                if ((response.Contains("error") && response.ToString() != String.Empty) || response == null)
                 {
                     fail++;
 
-                    Console.WriteLine(response);
-                    var jsonResponse = JObject.Parse(response);
-                    var errorMessage = jsonResponse["error"]["message"].ToString();
+                    if (response != null)
+                    {
+                        var parsed = TryParseJson(response, out var jsonResponse);
+                        if (parsed)
+                        {
+                            string errorMessage;
+                            if (jsonResponse != null)
+                                errorMessage = jsonResponse["error"]["message"].ToString();
+                            else
+                                errorMessage = "json was null";
 
-                    uniqueErrorMessages.Add(errorMessage);
-
+                            uniqueErrorMessages.Add(errorMessage);
+                        }
+                        else
+                        {
+                            uniqueErrorMessages.Add($"Parsing error - message = {response}");
+                        }
+                    }
                 }
                 else
                 {
@@ -173,10 +200,10 @@ public class EthCallTests : BaseTest
             return EthCallGatewayScenario(code, id);
         if (testingType == TestingType.TraceCallOnly)
             return TraceCallGatewayScenario(code, id);
-        
+
         if (id % 2 == 0)
             return EthCallGatewayScenario(code, id);
-        
+
         return TraceCallGatewayScenario(code, id);
     }
     async Task<string> TraceCallGatewayScenario(string code, int id)

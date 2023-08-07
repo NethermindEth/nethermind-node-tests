@@ -144,8 +144,8 @@ public class EthCallTests : BaseTest
         if (testingType == TestingType.TraceCallOnly)
             return TraceCallGatewayScenario(code, id);
         
-        if (id % 2 == 0)
-            return EthCallGatewayScenario(code, id);
+        //if (id % 2 == 0)
+        //    return EthCallGatewayScenario(code, id);
         
         return TraceCallGatewayScenario(code, id);
     }

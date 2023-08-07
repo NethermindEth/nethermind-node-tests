@@ -263,19 +263,20 @@ public class EthCallTests : BaseTest
     {
         try
         {
-            var callParams = new
+            // Constructing the transaction call object
+            var callObject = new
             {
-                from = (string)null,
                 to = TestItems.TestingAddress,
                 data = code
             };
 
+            // Serialize the call object
+            string serializedCallObject = JsonConvert.SerializeObject(callObject);
 
-            var payload = new object[] { callParams, "latest" };
+            // Construct the full parameters for eth_call
+            var fullParams = $"[{serializedCallObject}, \"latest\"]";
 
-            var serializedPayload = JsonConvert.SerializeObject(payload);
-
-            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", serializedPayload, TestItems.RpcAddress, Logger).Result.Item1;
+            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", fullParams, TestItems.RpcAddress, Logger).Result.Item1;
 
             return result;
         }

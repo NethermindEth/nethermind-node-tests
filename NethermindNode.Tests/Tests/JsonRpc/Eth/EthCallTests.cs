@@ -8,6 +8,7 @@ using NethermindNode.Core.Helpers;
 using NUnit.Framework.Internal;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace NethermindNode.Tests.JsonRpc.Eth;
 
@@ -63,7 +64,8 @@ public class EthCallTests : BaseTest
     //[TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(50, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(0, 5, 5, 5, 600, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(50, 1, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 150, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
@@ -142,10 +144,43 @@ public class EthCallTests : BaseTest
             }
         });
 
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+        // This task will periodically report the achieved RPS.
+        var periodicReportTask = Task.Run(async () =>
+        {
+            Stopwatch reportStopwatch = new Stopwatch();
+            reportStopwatch.Start();
+
+            int previousCounter = 0;
+
+            while (!cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                await Task.Delay(10000); // Wait for 10 seconds.
+
+                int newRequests = counter - previousCounter;
+                double achievedRps = newRequests / reportStopwatch.Elapsed.TotalSeconds;
+
+                Console.WriteLine($"Achieved RPS over the last 10 seconds: {achievedRps}");
+
+                // Reset for the next period.
+                reportStopwatch.Restart();
+                previousCounter = counter;
+            }
+        });
+
+        DateTime startTime = DateTime.UtcNow;
+
         if (repeatCount != 0)
         {
             for (var i = 0; i < repeatCount; i++)
             {
+                if (stepInterval > 0 && (DateTime.UtcNow - startTime).TotalSeconds > stepInterval)
+                {
+                    initialRequestsPerSecond += rpsStep;
+                    startTime = DateTime.UtcNow;
+                }
+
                 string code = TestItems.HugeGatewayCall;
                 var requestTask = ExecuteGatewayScenario(testingType, code, i);
                 responseTasks.Add(requestTask); // Add the task to the collection
@@ -164,6 +199,12 @@ public class EthCallTests : BaseTest
 
             while (sw.Elapsed.TotalSeconds < maxTimeout)
             {
+                if (stepInterval > 0 && (DateTime.UtcNow - startTime).TotalSeconds > stepInterval)
+                {
+                    initialRequestsPerSecond += rpsStep;
+                    startTime = DateTime.UtcNow;
+                }
+
                 string code = TestItems.HugeGatewayCall;
                 var requestTask = ExecuteGatewayScenario(testingType, code, iterator);
                 responseTasks.Add(requestTask); // Add the task to the collection
@@ -177,6 +218,9 @@ public class EthCallTests : BaseTest
 
             sw.Stop();
         }
+
+        cancellationTokenSource.Cancel(); // Signal the reporting task to stop.
+        await periodicReportTask; // Optionally wait for the reporting task to complete.
 
         // Indicate that no more items will be added
         responseTasks.CompleteAdding();

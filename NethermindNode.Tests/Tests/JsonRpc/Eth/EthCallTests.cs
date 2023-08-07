@@ -100,6 +100,7 @@ public class EthCallTests : BaseTest
                 {
                     fail++;
 
+                    Console.WriteLine(response);
                     var jsonResponse = JObject.Parse(response);
                     var errorMessage = jsonResponse["error"]["message"].ToString();
 

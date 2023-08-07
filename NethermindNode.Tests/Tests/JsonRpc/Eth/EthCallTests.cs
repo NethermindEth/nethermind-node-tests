@@ -80,6 +80,8 @@ public class EthCallTests : BaseTest
         Console.WriteLine($"Test Details:");
         Console.WriteLine($"Repeat Count: {repeatCount}");
         Console.WriteLine($"Initial Requests Per Second: {initialRequestsPerSecond}");
+        Console.WriteLine($"RPS Step: {rpsStep}");
+        Console.WriteLine($"Step Interval: {stepInterval}");
         Console.WriteLine($"Max Timeout: {maxTimeout}");
         Console.WriteLine($"Test Type: {testingType.ToString()}");
         int counter = 0;

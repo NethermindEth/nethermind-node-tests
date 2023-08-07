@@ -18,6 +18,7 @@ public static class NodeInfo
     public static void WaitForNodeToBeReady(NLog.Logger logger)
     {
         var apiIsAvailable = false;
+        Console.WriteLine($"Is API available: {apiIsAvailable}");
 
         while (!apiIsAvailable)
         {

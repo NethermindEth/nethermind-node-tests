@@ -263,15 +263,8 @@ public class EthCallTests : BaseTest
     {
         try
         {
-            var w3 = new Web3(TestItems.RpcAddress);
-
-            var callInput = new CallInput
-            {
-                To = TestItems.TestingAddress,
-                Data = code
-            };
-            var result = await w3.Eth.Transactions.Call.SendRequestAsync(callInput, id);
-            //var parsed = result.Result.ToString();
+            var parameters = $"{{\"from\":null,\"to\":\"{TestItems.TestingAddress}\",\"data\":\"{code}\"}},[\"trace\"], \"latest\"";
+            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", parameters, TestItems.RpcAddress, Logger).Result.Item1;
             return result;
 
         }
@@ -280,4 +273,26 @@ public class EthCallTests : BaseTest
             return await Task.FromResult("An error occurred: " + e.Message);
         }
     }
+
+    //async Task<string> EthCallGatewayScenario(string code, int id)
+    //{
+    //    try
+    //    {
+    //        var w3 = new Web3(TestItems.RpcAddress);
+    //
+    //        var callInput = new CallInput
+    //        {
+    //            To = TestItems.TestingAddress,
+    //            Data = code
+    //        };
+    //        var result = await w3.Eth.Transactions.Call.SendRequestAsync(callInput, id);
+    //        //var parsed = result.Result.ToString();
+    //        return result;
+    //
+    //    }
+    //    catch (Exception e)
+    //    {
+    //        return await Task.FromResult("An error occurred: " + e.Message);
+    //    }
+    //}
 }

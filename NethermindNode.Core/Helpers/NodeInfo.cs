@@ -10,7 +10,7 @@ public static class NodeInfo
 
     public static bool IsFullySynced(NLog.Logger logger)
     {
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "1", "http://localhost:8545", logger);
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommandWithTimingInfo("eth_syncing", "", "1", "http://localhost:8545", logger);
         var result = commandResult.Result;
         return result == null ? false : result.Item1.Contains("false");
     }
@@ -55,7 +55,7 @@ public static class NodeInfo
 
     public static string GetCurrentStage(NLog.Logger logger)
     {
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "1", "http://localhost:8545", logger);
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommandWithTimingInfo("debug_getSyncStage", "", "1", "http://localhost:8545", logger);
         string output = "";
 
         bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
@@ -76,7 +76,7 @@ public static class NodeInfo
     public static List<Stages> GetCurrentStages(NLog.Logger logger)
     {
         List<Stages> result = new List<Stages>();
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "1", "http://localhost:8545", logger);
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommandWithTimingInfo("debug_getSyncStage", "", "1", "http://localhost:8545", logger);
         string output = ""; 
 
         bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);

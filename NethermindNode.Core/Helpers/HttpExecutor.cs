@@ -7,7 +7,47 @@ namespace NethermindNode.Core.Helpers;
 
 public static class HttpExecutor
 {
-    public async static Task<Tuple<string, TimeSpan, bool>> ExecuteNethermindJsonRpcCommand(string command, string parameters, string id, string url, Logger logger)
+    public async static Task<string> ExecuteNethermindJsonRpcCommandAsync(string command, string parameters, string id, string url, Logger logger)
+    {
+        var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":{id},\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
+        using (var client = new HttpClient())
+        {
+            var result = await client.PostAsync(url, data);
+            if (!result.IsSuccessStatusCode)
+            {
+                return $"Error {result.StatusCode}: {await result.Content.ReadAsStringAsync()}";
+            }
+
+            return await result.Content.ReadAsStringAsync();
+        }
+    }
+
+    public async static Task<string> ExecuteBatchedNethermindJsonRpcCommandAsync(string command, List<string> parameters, string url, Logger logger)
+    {
+        //generate content
+        List<string> content = new List<string>();
+        int i = 1;
+        foreach (var item in parameters)
+        {
+            content.Add($"{{\"method\":\"{command}\",\"params\":[{item}],\"id\":{i},\"jsonrpc\":\"2.0\"}}");
+            i++;
+        }
+        string contentString = "[" + content.Aggregate((x, y) => x + "," + y) + "]";
+
+        StringContent dataList = new StringContent(contentString, Encoding.UTF8, "application/json");
+        using (var client = new HttpClient())
+        {
+            var result = await client.PostAsync(url, dataList);
+            if (!result.IsSuccessStatusCode)
+            {
+                return $"Error {result.StatusCode}: {await result.Content.ReadAsStringAsync()}";
+            }
+
+            return await result.Content.ReadAsStringAsync();
+        }
+    }
+
+    public async static Task<Tuple<string, TimeSpan, bool>> ExecuteNethermindJsonRpcCommandWithTimingInfo(string command, string parameters, string id, string url, Logger logger)
     {
         var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":{id},\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
         var response = await PostHttpWithTimingInfo(url, data, logger);
@@ -15,7 +55,7 @@ public static class HttpExecutor
         return response;
     }
 
-    public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBatchedNethermindJsonRpcCommand(string command, List<string> parameters, string url, Logger logger)
+    public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBatchedNethermindJsonRpcCommandWithTimingInfo(string command, List<string> parameters, string url, Logger logger)
     {
         //generate content
         List<string> content = new List<string>();
@@ -42,7 +82,7 @@ public static class HttpExecutor
             string responseString = "";
             HttpResponseMessage result = new HttpResponseMessage();
 
-            result = await TryPostAsync(url, data, logger);
+            result = await client.PostAsync(url, data);
 
             if (result != null && result.IsSuccessStatusCode)
             {
@@ -53,53 +93,6 @@ public static class HttpExecutor
                 responseString = responseContent.ReadAsStringAsync().Result;
             }
             return new Tuple<string, TimeSpan, bool>(responseString, stopWatch.Elapsed, isSuccess);
-        }
-    }
-
-    private async static Task<HttpResponseMessage?> TryPostAsync(string url, StringContent? data, Logger logger)
-    {
-        var client = new HttpClient();
-        HttpResponseMessage response;
-        try
-        {
-            response = await client.PostAsync(url, data);
-            return response;
-        }
-        //TODO: some better way to catch those exceptions which are result of not started node (we want to have tests that are able to wait properly until node is deployed)
-        catch (HttpRequestException e)
-        {
-            if (e.InnerException is IOException &&
-                    (
-                    e.InnerException.Message.Contains("Connection reset by peer") ||
-                    e.InnerException.Message.Contains("premature")
-                    )
-                )
-            {
-                if (logger.IsTraceEnabled)
-                {
-                    logger.Trace(e.Message);
-                    logger.Trace(e.StackTrace);
-                }
-                return null;
-            }
-
-            if (e.InnerException is SocketException &&
-                (
-                    e.InnerException.Message.Contains("Connection refused") ||
-                    e.InnerException.Message.Contains("Network is unreachable") ||
-                    e.InnerException.Message.Contains("No connection could be made because the target machine actively refused it.") ||
-                    e.InnerException.Message.Contains("Cannot assign requested address")                    
-                )
-            )
-            {
-                if (logger.IsTraceEnabled)
-                {
-                    logger.Trace(e.Message);
-                    logger.Trace(e.StackTrace);
-                }
-                return null;
-            }
-            throw e;
         }
     }
 }

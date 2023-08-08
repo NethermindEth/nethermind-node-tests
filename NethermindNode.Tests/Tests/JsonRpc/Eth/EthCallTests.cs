@@ -259,7 +259,6 @@ public class EthCallTests : BaseTest
         {
             var callParams = new
             {
-                from = (string)null,
                 to = TestItems.TestingAddress,
                 data = code
             };
@@ -270,7 +269,7 @@ public class EthCallTests : BaseTest
 
             var serializedPayload = JsonConvert.SerializeObject(payload);
 
-            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", serializedPayload, id.ToString(), TestItems.RpcAddress, Logger).Result.Item1;
+            var result = await HttpExecutor.ExecuteNethermindJsonRpcCommandAsync("trace_call", serializedPayload, id.ToString(), TestItems.RpcAddress, Logger);
 
             return result;
         }
@@ -297,7 +296,7 @@ public class EthCallTests : BaseTest
             // Construct the full parameters for eth_call
             var fullParams = $"{serializedCallObject}, \"latest\"";
 
-            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_call", fullParams, id.ToString(), TestItems.RpcAddress, Logger).Result.Item1;
+            var result = await HttpExecutor.ExecuteNethermindJsonRpcCommandAsync("eth_call", fullParams, id.ToString(), TestItems.RpcAddress, Logger);
 
             return result;
         }

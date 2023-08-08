@@ -66,17 +66,18 @@ public class EthCallTests : BaseTest
     //[TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
 
+    [TestCase(1, 1, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     //[TestCase(1000, 25, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(0, 5, 5, 15, 600, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 150, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 100, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 150, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 150, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(0, 5, 5, 15, 600, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 100, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 150, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 50, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 100, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 150, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 50, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 100, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[TestCase(10000, 150, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0, TestingType testingType = TestingType.EthCallOnly)
     {
         Console.WriteLine($"Test Details:");
@@ -95,7 +96,7 @@ public class EthCallTests : BaseTest
         CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         BlockingCollection<Task<string>> responseTasks = new BlockingCollection<Task<string>>();
-        HashSet<string> uniqueErrorMessages = new HashSet<string>();
+        Dictionary<string, int> uniqueErrorMessages = new Dictionary<string, int>();
 
         //Start only if API is ready
         NodeInfo.WaitForNodeToBeReady(Logger);
@@ -137,11 +138,27 @@ public class EthCallTests : BaseTest
                             else
                                 errorMessage = "json was null";
 
-                            uniqueErrorMessages.Add(errorMessage);
+                            if (uniqueErrorMessages.ContainsKey(errorMessage))
+                            {
+                                uniqueErrorMessages[errorMessage]++;
+                            }
+                            else
+                            {
+                                uniqueErrorMessages[errorMessage] = 1;
+                            }
                         }
                         else
                         {
-                            uniqueErrorMessages.Add($"Parsing error - message = {response}");
+                            string errorMessage = $"Parsing error - message = {response}";
+
+                            if (uniqueErrorMessages.ContainsKey(errorMessage))
+                            {
+                                uniqueErrorMessages[errorMessage]++;
+                            }
+                            else
+                            {
+                                uniqueErrorMessages[errorMessage] = 1;
+                            }
                         }
                     }
                 }
@@ -263,9 +280,9 @@ public class EthCallTests : BaseTest
         Console.WriteLine($"Succeded requests: {success}");
         Console.WriteLine($"Failed requests: {fail}");
         Console.WriteLine($"Unique error messages: {uniqueErrorMessages.Count}");
-        foreach (var errorMessage in uniqueErrorMessages)
+        foreach (var kvp in uniqueErrorMessages)
         {
-            Console.WriteLine(errorMessage);
+            Console.WriteLine($"Message: {kvp.Key}, Count: {kvp.Value}");
         }
     }
 

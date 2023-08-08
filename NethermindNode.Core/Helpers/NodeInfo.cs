@@ -35,7 +35,6 @@ public static class NodeInfo
     public static void WaitForNodeToBeReady(NLog.Logger logger)
     {
         var apiIsAvailable = false;
-        Console.WriteLine($"Is API available: {apiIsAvailable}");
 
         while (!apiIsAvailable)
         {
@@ -61,13 +60,6 @@ public static class NodeInfo
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
         }
-
-        //Waiting for proper start of node
-        //while (DockerCommands.CheckIfDockerContainerIsCreated("sedge-execution-client", logger) == false)
-        //{
-        //    logger.Info("Waiting for Execution to be started.");
-        //    Thread.Sleep(30000);
-        //}
     }
 
     public static string GetCurrentStage(NLog.Logger logger)

@@ -59,13 +59,16 @@ public class EthCallTests : BaseTest
         EthCallAndTraceCall = 2
     }
 
-    [TestCase(1000, 25, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 100, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 30, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 80, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 10, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 30, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 50, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 80, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 30, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 50, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(100000, 80, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0, TestingType testingType = TestingType.EthCallOnly)
     {
         Console.WriteLine($"Test Details:");
@@ -137,7 +140,7 @@ public class EthCallTests : BaseTest
                         }
                         else
                         {
-                            string errorMessage = $"Parsing error - message = {response}";
+                            string errorMessage = $"API ERROR = {response}";
 
                             if (uniqueErrorMessages.ContainsKey(errorMessage))
                             {
@@ -157,26 +160,26 @@ public class EthCallTests : BaseTest
             }
         });
 
-        var apiMonitoringTask = Task.Run(async () =>
-        {
-            while (!cancellationTokenSource.Token.IsCancellationRequested)
-            {
-                bool isAlive = NodeInfo.IsApiAlive(TestItems.RpcAddress);
-
-                if (!isAlive)
-                {
-                    // Handle the situation when the API is down.
-                    // This can be logging an error, stopping the current test, etc.
-                    Console.WriteLine("API is down!");
-
-                    // Optionally, stop the main test by setting some shared flag or directly using a CancellationToken.
-                    cancellationTokenSource.Cancel();
-                    break;
-                }
-
-                await Task.Delay(TimeSpan.FromSeconds(10));  // Check every 10 seconds.
-            }
-        });
+        //var apiMonitoringTask = Task.Run(async () =>
+        //{
+        //    while (!cancellationTokenSource.Token.IsCancellationRequested)
+        //    {
+        //        bool isAlive = NodeInfo.IsApiAlive(TestItems.RpcAddress);
+        //
+        //        if (!isAlive)
+        //        {
+        //            // Handle the situation when the API is down.
+        //            // This can be logging an error, stopping the current test, etc.
+        //            Console.WriteLine("API is down!");
+        //
+        //            // Optionally, stop the main test by setting some shared flag or directly using a CancellationToken.
+        //            cancellationTokenSource.Cancel();
+        //            break;
+        //        }
+        //
+        //        await Task.Delay(TimeSpan.FromSeconds(10));  // Check every 10 seconds.
+        //    }
+        //});
 
 
         // This task will periodically report the achieved RPS.
@@ -255,7 +258,7 @@ public class EthCallTests : BaseTest
 
         cancellationTokenSource.Cancel();
         await periodicReportTask;
-        await apiMonitoringTask;
+        //await apiMonitoringTask;
 
         // Indicate that no more items will be added
         responseTasks.CompleteAdding();

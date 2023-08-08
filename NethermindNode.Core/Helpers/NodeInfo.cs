@@ -15,6 +15,23 @@ public static class NodeInfo
         return result == null ? false : result.Item1.Contains("false");
     }
 
+    public static bool IsApiAlive(string apiUrl)
+    {
+        try
+        {
+            using (var client = new HttpClient())
+            {
+                var response = client.GetAsync(apiUrl).Result;
+                return response.IsSuccessStatusCode;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+
     public static void WaitForNodeToBeReady(NLog.Logger logger)
     {
         var apiIsAvailable = false;

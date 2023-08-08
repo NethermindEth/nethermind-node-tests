@@ -91,11 +91,15 @@ public class EthCallTests : BaseTest
         int fail = 0;
         int elapsedSeconds = 0;
 
+        // Define the cancellation token source
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
         BlockingCollection<Task<string>> responseTasks = new BlockingCollection<Task<string>>();
         HashSet<string> uniqueErrorMessages = new HashSet<string>();
 
         //Start only if API is ready
         NodeInfo.WaitForNodeToBeReady(Logger);
+
 
         // Create a separate task to handle responses
         var responseHandlingTask = Task.Run(async () =>
@@ -148,7 +152,27 @@ public class EthCallTests : BaseTest
             }
         });
 
-        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        var apiMonitoringTask = Task.Run(async () =>
+        {
+            while (!cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                bool isAlive = NodeInfo.IsApiAlive(TestItems.RpcAddress);
+
+                if (!isAlive)
+                {
+                    // Handle the situation when the API is down.
+                    // This can be logging an error, stopping the current test, etc.
+                    Console.WriteLine("API is down!");
+
+                    // Optionally, stop the main test by setting some shared flag or directly using a CancellationToken.
+                    cancellationTokenSource.Cancel();
+                    break;
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(10));  // Check every 10 seconds.
+            }
+        });
+
 
         // This task will periodically report the achieved RPS.
         var periodicReportTask = Task.Run(async () =>
@@ -177,7 +201,7 @@ public class EthCallTests : BaseTest
 
         if (repeatCount != 0)
         {
-            for (var i = 0; i < repeatCount; i++)
+            for (var i = 0; i < repeatCount && !cancellationTokenSource.Token.IsCancellationRequested; i++)
             {
                 if (stepInterval > 0 && (DateTime.UtcNow - startTime).TotalSeconds > stepInterval)
                 {
@@ -202,7 +226,7 @@ public class EthCallTests : BaseTest
             sw.Start();
             int iterator = 0;
 
-            while (sw.Elapsed.TotalSeconds < maxTimeout)
+            while (sw.Elapsed.TotalSeconds < maxTimeout && !cancellationTokenSource.Token.IsCancellationRequested)
             {
                 if (stepInterval > 0 && (DateTime.UtcNow - startTime).TotalSeconds > stepInterval)
                 {
@@ -224,8 +248,9 @@ public class EthCallTests : BaseTest
             sw.Stop();
         }
 
-        cancellationTokenSource.Cancel(); // Signal the reporting task to stop.
-        await periodicReportTask; // Optionally wait for the reporting task to complete.
+        cancellationTokenSource.Cancel();
+        await periodicReportTask;
+        await apiMonitoringTask; 
 
         // Indicate that no more items will be added
         responseTasks.CompleteAdding();

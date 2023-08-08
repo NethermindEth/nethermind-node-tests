@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Newtonsoft.Json.Linq;
+using NLog;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
@@ -15,7 +16,7 @@ public static class HttpExecutor
             var result = await client.PostAsync(url, data);
             if (!result.IsSuccessStatusCode)
             {
-                return $"Error {result.StatusCode}: {await result.Content.ReadAsStringAsync()}";
+                return $"Error {result.StatusCode}: {ExtractErrorMessage(await result.Content.ReadAsStringAsync())}";
             }
 
             return await result.Content.ReadAsStringAsync();
@@ -40,7 +41,7 @@ public static class HttpExecutor
             var result = await client.PostAsync(url, dataList);
             if (!result.IsSuccessStatusCode)
             {
-                return $"Error {result.StatusCode}: {await result.Content.ReadAsStringAsync()}";
+                return $"Error {result.StatusCode}: {ExtractErrorMessage(await result.Content.ReadAsStringAsync())}";
             }
 
             return await result.Content.ReadAsStringAsync();
@@ -93,6 +94,22 @@ public static class HttpExecutor
                 responseString = responseContent.ReadAsStringAsync().Result;
             }
             return new Tuple<string, TimeSpan, bool>(responseString, stopWatch.Elapsed, isSuccess);
+        }
+    }
+
+    private static string ExtractErrorMessage(string jsonString)
+    {
+        try
+        {
+            var jsonObject = JObject.Parse(jsonString);
+            var errorMessage = jsonObject["error"]["message"].ToString();
+            var errorData = jsonObject["error"]["data"].ToString();
+
+            return $"{errorMessage}: {errorData}";
+        }
+        catch
+        {
+            return jsonString; // if not parsable, just return the original string
         }
     }
 }

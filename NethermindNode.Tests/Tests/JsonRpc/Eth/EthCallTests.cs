@@ -67,7 +67,7 @@ public class EthCallTests : BaseTest
     //[TestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
 
     //[TestCase(1000, 25, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(0, 5, 5, 5, 600, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(0, 5, 5, 15, 600, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     [TestCase(10000, 150, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
@@ -181,13 +181,14 @@ public class EthCallTests : BaseTest
             {
                 if (stepInterval > 0 && (DateTime.UtcNow - startTime).TotalSeconds > stepInterval)
                 {
+                    Console.WriteLine($"Increasing RPS to: {initialRequestsPerSecond + rpsStep}");
                     initialRequestsPerSecond += rpsStep;
                     startTime = DateTime.UtcNow;
                 }
 
                 string code = TestItems.HugeGatewayCall;
                 var requestTask = ExecuteGatewayScenario(testingType, code, i);
-                responseTasks.Add(requestTask); // Add the task to the collection
+                responseTasks.Add(requestTask);
 
                 counter++;
 
@@ -211,7 +212,7 @@ public class EthCallTests : BaseTest
 
                 string code = TestItems.HugeGatewayCall;
                 var requestTask = ExecuteGatewayScenario(testingType, code, iterator);
-                responseTasks.Add(requestTask); // Add the task to the collection
+                responseTasks.Add(requestTask);
 
                 counter++;
                 iterator++;

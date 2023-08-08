@@ -14,10 +14,10 @@ public static class HttpExecutor
         using (var client = new HttpClient())
         {
             var result = await client.PostAsync(url, data);
-            if (!result.IsSuccessStatusCode)
-            {
-                return $"Error {result.StatusCode}: {ExtractErrorMessage(await result.Content.ReadAsStringAsync())}";
-            }
+            //if (!result.IsSuccessStatusCode)
+            //{
+            //    return $"Error {result.StatusCode}: {ExtractErrorMessage(await result.Content.ReadAsStringAsync())}";
+            //}
 
             return await result.Content.ReadAsStringAsync();
         }

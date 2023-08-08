@@ -327,9 +327,9 @@ public class EthCallTests : BaseTest
 
             var payload = new object[] { callObject, "latest" };
 
-            string serializedCallObject = JsonConvert.SerializeObject(callObject);
+            string serializedPayload = JsonConvert.SerializeObject(payload);
 
-            var result = await HttpExecutor.ExecuteNethermindJsonRpcCommandAsync("eth_call", serializedCallObject, id.ToString(), TestItems.RpcAddress, Logger);
+            var result = await HttpExecutor.ExecuteNethermindJsonRpcCommandAsync("eth_call", serializedPayload, id.ToString(), TestItems.RpcAddress, Logger);
 
             return result;
         }

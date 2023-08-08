@@ -59,16 +59,13 @@ public class EthCallTests : BaseTest
         EthCallAndTraceCall = 2
     }
 
-    [TestCase(1, 1, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(1, 1, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(1000, 25, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(0, 5, 5, 15, 600, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(10000, 80, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(10000, 50, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(10000, 80, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(10000, 50, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(10000, 80, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(1000, 25, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 50, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 100, 0, 0, 0, TestingType.TraceCallOnly, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 50, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [TestCase(10000, 100, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0, TestingType testingType = TestingType.EthCallOnly)
     {
         Console.WriteLine($"Test Details:");
@@ -123,19 +120,19 @@ public class EthCallTests : BaseTest
                         var parsed = TryParseJson(response, out var jsonResponse);
                         if (parsed)
                         {
-                            string errorMessage;
-                            if (jsonResponse != null)
-                                errorMessage = jsonResponse["error"]["message"].ToString();
-                            else
-                                errorMessage = "json was null";
+                            string errorMessage, errorData;
+                            errorMessage = jsonResponse["error"]["message"].ToString();
+                            errorData = jsonResponse["error"]["data"].ToString();
 
-                            if (uniqueErrorMessages.ContainsKey(errorMessage))
+                            string parsedResponse = $"{errorMessage} : {errorData}";
+
+                            if (uniqueErrorMessages.ContainsKey(parsedResponse))
                             {
-                                uniqueErrorMessages[errorMessage]++;
+                                uniqueErrorMessages[parsedResponse]++;
                             }
                             else
                             {
-                                uniqueErrorMessages[errorMessage] = 1;
+                                uniqueErrorMessages[parsedResponse] = 1;
                             }
                         }
                         else
@@ -258,7 +255,7 @@ public class EthCallTests : BaseTest
 
         cancellationTokenSource.Cancel();
         await periodicReportTask;
-        await apiMonitoringTask; 
+        await apiMonitoringTask;
 
         // Indicate that no more items will be added
         responseTasks.CompleteAdding();
@@ -336,7 +333,7 @@ public class EthCallTests : BaseTest
         catch (Exception e)
         {
             return await Task.FromResult("An error occurred: " + e.Message);
-        }        
+        }
     }
     void EthCallScenario(string code)
     {

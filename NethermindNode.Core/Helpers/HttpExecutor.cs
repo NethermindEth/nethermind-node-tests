@@ -10,15 +10,11 @@ public static class HttpExecutor
 {
     public async static Task<string> ExecuteNethermindJsonRpcCommandAsync(string command, string parameters, string id, string url, Logger logger)
     {
-        var data = new StringContent($"{{\"method\":\"{command}\",\"params\":[{parameters}],\"id\":{id},\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
+        var data = new StringContent($"{{\"method\":\"{command}\",\"params\":{parameters},\"id\":{id},\"jsonrpc\":\"2.0\"}}", Encoding.UTF8, "application/json");
         Console.WriteLine(data.ReadAsStringAsync().Result);
         using (var client = new HttpClient())
         {
             var result = await client.PostAsync(url, data);
-            //if (!result.IsSuccessStatusCode)
-            //{
-            //    return $"Error {result.StatusCode}: {ExtractErrorMessage(await result.Content.ReadAsStringAsync())}";
-            //}
 
             return await result.Content.ReadAsStringAsync();
         }

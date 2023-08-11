@@ -63,6 +63,7 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
 
         while (Count > 0 ? i < Count : true)
         {
+            //TODO: This should not be needed to wait before stop?
             int beforeStopWait = rand.Next(Minimum, Maximum);
             Logger.Debug("WAITING BEFORE STOP for: " + beforeStopWait + " seconds");
             Thread.Sleep(beforeStopWait * 1000);

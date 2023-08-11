@@ -17,7 +17,7 @@ public class RestartsOnSyncedNode : BaseTest
         for (int i = 1; i <= restartCount; i++)
         {
             int currentDelay = (int)(60 * Math.Pow(1.5, i));
-            yield return new TestCaseData(currentDelay).SetName($"ShouldRestartNodeWith{currentDelay}sDelay");
+            yield return new TestCaseData(currentDelay);
         }
     }
 
@@ -28,6 +28,7 @@ public class RestartsOnSyncedNode : BaseTest
     [Category("RestartOnFullSync")]
     [NonParallelizable]
     [TestCaseSource(nameof(DelayForFuzzerTestCases))]
+    [Order(0)]
     public void ShouldRestartNethermindClientWithIncreasingDelay(int currentDelay)
     {
         Logger.Info($"***Starting test: ShouldRestartNethermindClientWithIncreasingDelay: {currentDelay} Delay***");
@@ -44,6 +45,7 @@ public class RestartsOnSyncedNode : BaseTest
     [Category("RestartOnFullSync")]
     [NonParallelizable]
     [TestCaseSource(nameof(DelayForFuzzerTestCases))]
+    [Order(1)]
     public void ShouldRestartConsensusClientWithIncreasingDelay(int currentDelay)
     {
         Logger.Info($"***Starting test: ShouldRestartConsensusClientWithIncreasingDelay: {currentDelay} Delay***");

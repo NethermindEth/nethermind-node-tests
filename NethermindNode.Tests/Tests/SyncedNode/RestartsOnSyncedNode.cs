@@ -12,7 +12,7 @@ public class RestartsOnSyncedNode : BaseTest
 
     public static IEnumerable<TestCaseData> DelayForFuzzerTestCases()
     {
-        int restartCount = 10;
+        int restartCount = 6; //Reducing slightly to fit more tests
 
         for (int i = 1; i <= restartCount; i++)
         {
@@ -53,6 +53,40 @@ public class RestartsOnSyncedNode : BaseTest
         NodeInfo.WaitForNodeToBeReady(Logger);
 
         FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = "sedge-consensus-client", IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
+    }
+
+    [Category("SnapSync")]
+    [Category("FastSync")]
+    [Category("FullSync")]
+    [Category("ArchiveSync")]
+    [Category("RestartOnFullSync")]
+    [NonParallelizable]
+    [TestCaseSource(nameof(DelayForFuzzerTestCases))]
+    [Order(0)]
+    public void ShouldKillNethermindClientWithIncreasingDelay(int currentDelay)
+    {
+        Logger.Info($"***Starting test: ShouldKillNethermindClientWithIncreasingDelay: {currentDelay} Delay***");
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
+    }
+
+    [Category("SnapSync")]
+    [Category("FastSync")]
+    [Category("FullSync")]
+    [Category("ArchiveSync")]
+    [Category("RestartOnFullSync")]
+    [NonParallelizable]
+    [TestCaseSource(nameof(DelayForFuzzerTestCases))]
+    [Order(1)]
+    public void ShouldKillConsensusClientWithIncreasingDelay(int currentDelay)
+    {
+        Logger.Info($"***Starting test: ShouldKillConsensusClientWithIncreasingDelay: {currentDelay} Delay***");
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = "sedge-consensus-client", IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
     }
 
     [TestCase(0, 60, 120)]

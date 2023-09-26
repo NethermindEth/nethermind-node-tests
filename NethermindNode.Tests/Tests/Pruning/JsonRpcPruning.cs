@@ -18,6 +18,7 @@ namespace NethermindNode.Tests.Tests.Pruning
         [Timeout(172800000)] //48 hours
         [Category("RpcPruning")]
         [Test]
+        // Requires adding a "JsonRpc.EnabledModules=[Eth,Subscribe,Trace,TxPool,Web3,Personal,Proof,Net,Parity,Health,Rpc,Debug,Admin]" for Nethermind
         public void ShouldPruneDbUsingAdminRpc()
         {
             Logger.Info($"***Starting test: ShouldPruneDbUsingAdminRpc***");

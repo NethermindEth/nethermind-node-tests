@@ -50,6 +50,45 @@ public static class DockerCommands
         return result;
     }
 
+    public static string GetExecutionDataPath(Logger logger)
+    {
+        return GetDockerDetails("sedge-execution-client", "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", logger).Trim();
+    }
+
+    public static IEnumerable<string> GetDockerLogs(string containerIdOrName, string logFilter = null, bool followLogs = false, CancellationToken? cancellationToken = null)
+    {
+        string followFlag = followLogs ? "-f" : "";
+        string grepCommand = string.IsNullOrEmpty(logFilter) ? "" : $"| grep \"{logFilter}\"";
+
+        ProcessStartInfo psi = new ProcessStartInfo
+        {
+            FileName = "bash",
+            Arguments = $"-c \"docker logs {followFlag} {containerIdOrName} {grepCommand}\"",
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+
+        using (Process process = new Process { StartInfo = psi })
+        {
+            process.Start();
+
+            while (!process.StandardOutput.EndOfStream)
+            {
+                if (followLogs && cancellationToken.HasValue)
+                {
+                    cancellationToken.Value.ThrowIfCancellationRequested();
+                }
+
+                string line = process.StandardOutput.ReadLine();
+                if (line != null)
+                {
+                    yield return line;
+                }
+            }
+        }
+    }
+
     private static string DockerCommandExecute(string command, Logger logger)
     {
         var processInfo = new ProcessStartInfo("docker", $"{command}");

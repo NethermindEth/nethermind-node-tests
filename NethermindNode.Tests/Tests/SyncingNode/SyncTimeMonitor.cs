@@ -295,7 +295,7 @@ public class SyncTimeMonitor : BaseTest
 
     private string GetExecutionDataPath()
     {
-        return DockerCommands.GetDockerDetails("execution-client", "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
+        return DockerCommands.GetDockerDetails("sedge-execution-client", "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
     }
 
     private void WriteReportToFile(double totalExecutionTime, List<MetricStage> stagesToMonitor)

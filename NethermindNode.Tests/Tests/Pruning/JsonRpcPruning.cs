@@ -73,15 +73,13 @@ namespace NethermindNode.Tests.Tests.Pruning
             {
                 foreach (var line in DockerCommands.GetDockerLogs("sedge-execution-client", "Full Pruning", true, cts.Token))
                 {
-                    Console.WriteLine(line);  // For visibility during testing
+                    Console.WriteLine(line);
 
-                    // If current line contains the expected log substring
                     if (line.Contains(expectedLogs[expectedLogIndex]))
                     {
                         expectedLogIndex++;
                     }
 
-                    // If we've found all expected log substrings
                     if (expectedLogIndex >= expectedLogs.Length)
                     {
                         break;
@@ -90,10 +88,9 @@ namespace NethermindNode.Tests.Tests.Pruning
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Operation was canceled.");  // This can be omitted or replaced with some assertion based on your test needs
+                Console.WriteLine("Operation was canceled."); 
             }
 
-            // Assert that we found all expected log substrings in order
             Assert.That(expectedLogIndex, Is.EqualTo(expectedLogs.Length), "Not all expected log substrings were found in order.");
         }
     }    

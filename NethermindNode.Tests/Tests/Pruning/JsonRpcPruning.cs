@@ -22,7 +22,7 @@ namespace NethermindNode.Tests.Tests.Pruning
         {
             Logger.Info($"***Starting test: ShouldPruneDbUsingAdminRpc***");
 
-            NodeInfo.WaitForNodeToBeReady(Logger);
+            NodeInfo.WaitForNodeToBeSynced(Logger);
 
             string dataPath = DockerCommands.GetExecutionDataPath(Logger);
             string nethermindDbPath = Path.Combine(dataPath, "nethermind_db");
@@ -34,7 +34,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             // Check if only one state 
             var stateDirectories = Directory.GetDirectories(statePath);
             Assert.IsTrue(stateDirectories.Length == 1, "Pruning not yet active so there should be only one state directory.");
-            Assert.IsTrue(Path.GetFileName(stateDirectories[0]) == "0", "Invalid name of first state directory.");
+            Assert.IsTrue(stateDirectories[0].Split('/').Last() == "0", "Invalid name of first state directory.");
 
             // Execute Prune Command
             var parameters = $"";
@@ -48,8 +48,8 @@ namespace NethermindNode.Tests.Tests.Pruning
             // Verify if second state dir is created
             stateDirectories = Directory.GetDirectories(statePath);
             Assert.IsTrue(stateDirectories.Length == 2, "Pruning active - backup state directory should be created.");
-            Assert.IsTrue(Path.GetFileName(stateDirectories[0]) == "0", "Invalid name of first state directory.");
-            Assert.IsTrue(Path.GetFileName(stateDirectories[1]) == "1", "Invalid name of second state directory.");
+            Assert.IsTrue(stateDirectories[0].Split('/').Last() == "0", "Invalid name of first state directory.");
+            Assert.IsTrue(stateDirectories[1].Split('/').Last() == "1", "Invalid name of second state directory.");
 
             // Verify Logs
             CancellationTokenSource cts = new CancellationTokenSource();

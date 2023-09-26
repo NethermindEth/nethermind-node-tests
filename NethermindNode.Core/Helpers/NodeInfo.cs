@@ -1,5 +1,6 @@
 ﻿using NethermindNode.Core.RpcResponses;
 using NethermindNode.Tests.Enums;
+using NLog;
 
 namespace NethermindNode.Core.Helpers;
 
@@ -76,7 +77,7 @@ public static class NodeInfo
     {
         List<Stages> result = new List<Stages>();
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
-        string output = ""; 
+        string output = "";
 
         bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
         if (!isVerifiedPositively)
@@ -100,5 +101,14 @@ public static class NodeInfo
 
         logger.Debug("Current stage is: " + output);
         return result;
+    }
+
+    public static void WaitForNodeToBeSynced(Logger logger)
+    {
+        while (!NodeInfo.IsFullySynced(logger))
+        {
+            logger.Debug("Waiting for node to be fully synced...");
+            Thread.Sleep(10000);
+        }
     }
 }

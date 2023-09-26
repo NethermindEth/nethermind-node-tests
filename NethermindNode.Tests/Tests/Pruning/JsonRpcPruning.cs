@@ -17,9 +17,9 @@ namespace NethermindNode.Tests.Tests.Pruning
 
         [Timeout(172800000)] //48 hours
         [Category("RpcPruning")]
-        public void ShoudlPruneDbUsingAdminRpc()
+        public void ShouldPruneDbUsingAdminRpc()
         {
-            Logger.Info($"***Starting test: ShoudlPruneDbUsingAdminRpc***");
+            Logger.Info($"***Starting test: ShouldPruneDbUsingAdminRpc***");
 
             NodeInfo.WaitForNodeToBeReady(Logger);
 

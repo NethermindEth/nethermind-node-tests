@@ -80,7 +80,7 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             try
             {
-                foreach (var line in DockerCommands.GetDockerLogs("sedge-execution-client", "Full Pruning", true, cts.Token, "--tail 0"))
+                foreach (var line in DockerCommands.GetDockerLogs("sedge-execution-client", "Full Pruning", true, cts.Token, "--since 2m"))
                 {
                     Console.WriteLine(line); // For visibility during testing
 
@@ -90,13 +90,13 @@ namespace NethermindNode.Tests.Tests.Pruning
                         {
                             Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
                             missingLogs.Remove(expectedLog);
-                        }
-                    }
 
-                    if (missingLogs.Count == 0)
-                    {
-                        cts.Cancel();
-                        break;
+                            if (expectedLog == expectedLogs.Last())
+                            {
+                                cts.Cancel();
+                                break;
+                            }
+                        }
                     }
                 }
             }

@@ -41,7 +41,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             var parameters = $"";
             var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("admin_prune", parameters, TestItems.RpcAddress, Logger).Result.Item1;
 
-            Assert.IsTrue(result.Contains("Starting"));
+            Assert.IsTrue(result.Contains("Starting"), $"Result should contains \"Starting\" but it doesn't. Result content: {result}");
 
             // Wait for 10 seconds for pruning to be properly started
             Thread.Sleep(10000);

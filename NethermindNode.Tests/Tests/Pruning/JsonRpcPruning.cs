@@ -113,6 +113,9 @@ namespace NethermindNode.Tests.Tests.Pruning
             }
 
             Assert.That(missingLogs.Count, Is.EqualTo(0), $"Not all expected log substrings were found. Missing logs: {string.Join(", ", missingLogs)}");
+            
+            stateDirectories = Directory.GetDirectories(statePath);
+            Assert.That(stateDirectories.Length, Is.EqualTo(1), "After Pruning directories length should be back on 1.");
         }
     }    
 }

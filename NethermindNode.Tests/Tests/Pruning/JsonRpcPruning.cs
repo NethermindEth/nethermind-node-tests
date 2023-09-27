@@ -91,18 +91,20 @@ namespace NethermindNode.Tests.Tests.Pruning
 
                     if (line.Contains(expectedLogs[expectedLogIndex]))
                     {
+                        Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLogs[expectedLogIndex]}");
                         expectedLogIndex++;
                     }
 
                     if (expectedLogIndex >= expectedLogs.Length)
                     {
+                        cts.Cancel();
                         break;
                     }
                 }
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Operation was canceled."); 
+                Logger.Info("Operation was canceled."); 
             }
 
             Assert.That(expectedLogIndex, Is.EqualTo(expectedLogs.Length), "Not all expected log substrings were found in order.");

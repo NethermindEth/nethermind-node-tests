@@ -80,7 +80,7 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             try
             {
-                foreach (var line in DockerCommands.GetDockerLogs("sedge-execution-client", "Full Pruning", true, cts.Token, "--since 2m"))
+                foreach (var line in DockerCommands.GetDockerLogs("sedge-execution-client", "Full Pruning", true, cts.Token, "--since 2m")) //since to ensure that we will get only recent logs but including all from beggining of test
                 {
                     Console.WriteLine(line); // For visibility during testing
 
@@ -93,6 +93,7 @@ namespace NethermindNode.Tests.Tests.Pruning
 
                             if (expectedLog == expectedLogs.Last())
                             {
+                                // End becuase Pruning itself may work but for some reason some logs may not be found - so better this way than waiting for all
                                 cts.Cancel();
                                 break;
                             }
@@ -107,11 +108,11 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             if (missingLogs.Count > 0)
             {
+                // In case some of the logs were not displayed log Warning
                 Logger.Warn($"Missing logs: {string.Join(", ", missingLogs)}");
             }
 
-            Assert.That(missingLogs.Count, Is.EqualTo(0), "Not all expected log substrings were found in order.");
-
+            Assert.That(missingLogs.Count, Is.EqualTo(0), "Not all expected log substrings were found.");
         }
     }    
 }

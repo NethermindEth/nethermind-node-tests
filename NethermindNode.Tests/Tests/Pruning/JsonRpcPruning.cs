@@ -34,8 +34,8 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             // Check if only one state 
             var stateDirectories = Directory.GetDirectories(statePath);
-            Assert.IsTrue(stateDirectories.Length == 1, "Pruning not yet active so there should be only one state directory.");
-            Assert.IsTrue(stateDirectories[0].Split('/').Last() == "0", "Invalid name of first state directory.");
+            Assert.That(stateDirectories.Length, Is.EqualTo(1), "Pruning not yet active so there should be only one state directory.");
+            Assert.That(stateDirectories[0].Split('/').Last(), Is.EqualTo("0"), "Invalid name of first state directory.");
 
             // Execute Prune Command
             var parameters = $"";

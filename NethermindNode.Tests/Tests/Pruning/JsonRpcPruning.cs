@@ -3,6 +3,7 @@ using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.JsonRpc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -43,8 +44,17 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             Assert.IsTrue(result.Contains("Starting"), $"Result should contains \"Starting\" but it doesn't. Result content: {result}");
 
-            // Wait for 10 seconds for pruning to be properly started
-            Thread.Sleep(10000);
+            // Wait for maximum 60 seconds for pruning to be properly started
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            while (stateDirectories.Length != 2 && stopwatch.Elapsed < TimeSpan.FromSeconds(60))
+            {
+                System.Threading.Thread.Sleep(500);
+                stateDirectories = Directory.GetDirectories(statePath);
+            }
+
+            stopwatch.Stop();
 
             // Verify if second state dir is created
             stateDirectories = Directory.GetDirectories(statePath);

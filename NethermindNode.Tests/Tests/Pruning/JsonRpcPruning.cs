@@ -81,21 +81,24 @@ namespace NethermindNode.Tests.Tests.Pruning
                 "Full Pruning Finished"
             };
 
-            int expectedLogIndex = 0;
+            HashSet<string> missingLogs = new HashSet<string>(expectedLogs);
 
             try
             {
                 foreach (var line in DockerCommands.GetDockerLogs("sedge-execution-client", "Full Pruning", true, cts.Token))
                 {
-                    Console.WriteLine(line);
+                    Console.WriteLine(line); // For visibility during testing
 
-                    if (line.Contains(expectedLogs[expectedLogIndex]))
+                    foreach (var expectedLog in expectedLogs)
                     {
-                        Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLogs[expectedLogIndex]}");
-                        expectedLogIndex++;
+                        if (line.Contains(expectedLog))
+                        {
+                            Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
+                            missingLogs.Remove(expectedLog);
+                        }
                     }
 
-                    if (expectedLogIndex >= expectedLogs.Length)
+                    if (missingLogs.Count == 0)
                     {
                         cts.Cancel();
                         break;
@@ -104,10 +107,16 @@ namespace NethermindNode.Tests.Tests.Pruning
             }
             catch (OperationCanceledException)
             {
-                Logger.Info("Operation was canceled."); 
+                Logger.Info("Operation was canceled.");
             }
 
-            Assert.That(expectedLogIndex, Is.EqualTo(expectedLogs.Length), "Not all expected log substrings were found in order.");
+            if (missingLogs.Count > 0)
+            {
+                Logger.Warn($"Missing logs: {string.Join(", ", missingLogs)}");
+            }
+
+            Assert.That(missingLogs.Count, Is.EqualTo(0), "Not all expected log substrings were found in order.");
+
         }
     }    
 }

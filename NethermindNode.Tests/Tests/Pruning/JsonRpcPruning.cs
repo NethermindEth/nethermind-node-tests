@@ -112,7 +112,7 @@ namespace NethermindNode.Tests.Tests.Pruning
                 Logger.Warn($"Missing logs: {string.Join(", ", missingLogs)}");
             }
 
-            Assert.That(missingLogs.Count, Is.EqualTo(0), "Not all expected log substrings were found.");
+            Assert.That(missingLogs.Count, Is.EqualTo(0), $"Not all expected log substrings were found. Missing logs: {string.Join(", ", missingLogs)}");
         }
     }    
 }

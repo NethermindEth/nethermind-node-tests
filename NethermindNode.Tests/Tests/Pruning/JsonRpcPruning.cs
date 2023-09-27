@@ -59,8 +59,8 @@ namespace NethermindNode.Tests.Tests.Pruning
             // Verify if second state dir is created
             stateDirectories = Directory.GetDirectories(statePath);
             Assert.IsTrue(stateDirectories.Length == 2, "Pruning active - backup state directory should be created.");
-            Assert.IsTrue(stateDirectories[0].Split('/').Last() == "0", "Invalid name of first state directory.");
-            Assert.IsTrue(stateDirectories[1].Split('/').Last() == "1", "Invalid name of second state directory.");
+            Assert.IsTrue(stateDirectories[0].Split('/').Last() == "0", $"Invalid name of first state directory. Should be \"0\" but is {stateDirectories[0].Split('/').Last()}");
+            Assert.IsTrue(stateDirectories[1].Split('/').Last() == "1", $"Invalid name of second state directory. Should be \"1\" but is {stateDirectories[1].Split('/').Last()}");
 
             // Verify Logs
             CancellationTokenSource cts = new CancellationTokenSource();

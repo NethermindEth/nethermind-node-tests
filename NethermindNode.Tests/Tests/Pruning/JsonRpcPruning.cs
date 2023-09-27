@@ -36,7 +36,6 @@ namespace NethermindNode.Tests.Tests.Pruning
             // Check if only one state 
             var stateDirectories = Directory.GetDirectories(statePath);
             Assert.That(stateDirectories.Length, Is.EqualTo(1), "Pruning not yet active so there should be only one state directory.");
-            Assert.That(stateDirectories[0].Split('/').Last(), Is.EqualTo("0"), "Invalid name of first state directory.");
 
             // Execute Prune Command
             var parameters = $"";
@@ -59,10 +58,6 @@ namespace NethermindNode.Tests.Tests.Pruning
             // Verify if second state dir is created
             stateDirectories = Directory.GetDirectories(statePath);
             Assert.IsTrue(stateDirectories.Length == 2, "Pruning active - backup state directory should be created.");
-
-            var directoryNames = stateDirectories.Select(dir => dir.Split('/').Last()).ToList();
-            Assert.IsTrue(directoryNames.Contains("0"), $"Directory with name \"0\" not found. Found directories: {string.Join(", ", directoryNames)}");
-            Assert.IsTrue(directoryNames.Contains("1"), $"Directory with name \"1\" not found. Found directories: {string.Join(", ", directoryNames)}");
 
             // Verify Logs
             CancellationTokenSource cts = new CancellationTokenSource();

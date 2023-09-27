@@ -86,17 +86,19 @@ namespace NethermindNode.Tests.Tests.Pruning
 
                     foreach (var expectedLog in missingLogs)
                     {
-                        if (line.Contains(expectedLog))
+                        if (!line.Contains(expectedLog))
                         {
-                            Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
-                            missingLogs.Remove(expectedLog);
+                            continue;
+                        }
 
-                            if (expectedLog == expectedLogs.Last())
-                            {
-                                // End becuase Pruning itself may work but for some reason some logs may not be found - so better this way than waiting for all
-                                cts.Cancel();
-                                break;
-                            }
+                        Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
+                        missingLogs.Remove(expectedLog);
+
+                        if (expectedLog == expectedLogs.Last())
+                        {
+                            // End because Pruning itself may work but for some reason some logs may not be found - so better this way than waiting for all
+                            cts.Cancel();
+                            break;
                         }
                     }
                 }

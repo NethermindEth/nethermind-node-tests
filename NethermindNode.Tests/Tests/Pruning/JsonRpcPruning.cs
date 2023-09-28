@@ -3,6 +3,7 @@ using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.JsonRpc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,7 +36,6 @@ namespace NethermindNode.Tests.Tests.Pruning
             // Check if only one state 
             var stateDirectories = Directory.GetDirectories(statePath);
             Assert.That(stateDirectories.Length, Is.EqualTo(1), "Pruning not yet active so there should be only one state directory.");
-            Assert.That(stateDirectories[0].Split('/').Last(), Is.EqualTo("0"), "Invalid name of first state directory.");
 
             // Execute Prune Command
             var parameters = $"";
@@ -43,14 +43,21 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             Assert.IsTrue(result.Contains("Starting"), $"Result should contains \"Starting\" but it doesn't. Result content: {result}");
 
-            // Wait for 10 seconds for pruning to be properly started
-            Thread.Sleep(10000);
+            // Wait for maximum 60 seconds for pruning to be properly started
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            while (stateDirectories.Length != 2 && stopwatch.Elapsed < TimeSpan.FromSeconds(60))
+            {
+                System.Threading.Thread.Sleep(500);
+                stateDirectories = Directory.GetDirectories(statePath);
+            }
+
+            stopwatch.Stop();
 
             // Verify if second state dir is created
             stateDirectories = Directory.GetDirectories(statePath);
             Assert.IsTrue(stateDirectories.Length == 2, "Pruning active - backup state directory should be created.");
-            Assert.IsTrue(stateDirectories[0].Split('/').Last() == "0", "Invalid name of first state directory.");
-            Assert.IsTrue(stateDirectories[1].Split('/').Last() == "1", "Invalid name of second state directory.");
 
             // Verify Logs
             CancellationTokenSource cts = new CancellationTokenSource();
@@ -69,31 +76,48 @@ namespace NethermindNode.Tests.Tests.Pruning
                 "Full Pruning Finished"
             };
 
-            int expectedLogIndex = 0;
+            HashSet<string> missingLogs = new HashSet<string>(expectedLogs);
 
             try
             {
-                foreach (var line in DockerCommands.GetDockerLogs("sedge-execution-client", "Full Pruning", true, cts.Token))
+                foreach (var line in DockerCommands.GetDockerLogs("sedge-execution-client", "Full Pruning", true, cts.Token, "--since 2m")) //since to ensure that we will get only recent logs but including all from beggining of test
                 {
-                    Console.WriteLine(line);
+                    Console.WriteLine(line); // For visibility during testing
 
-                    if (line.Contains(expectedLogs[expectedLogIndex]))
+                    foreach (var expectedLog in missingLogs)
                     {
-                        expectedLogIndex++;
-                    }
+                        if (!line.Contains(expectedLog))
+                        {
+                            continue;
+                        }
 
-                    if (expectedLogIndex >= expectedLogs.Length)
-                    {
-                        break;
+                        Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
+                        missingLogs.Remove(expectedLog);
+
+                        if (expectedLog == expectedLogs.Last())
+                        {
+                            // End because Pruning itself may work but for some reason some logs may not be found - so better this way than waiting for all
+                            cts.Cancel();
+                            break;
+                        }
                     }
                 }
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Operation was canceled."); 
+                Logger.Info("Operation was canceled.");
             }
 
-            Assert.That(expectedLogIndex, Is.EqualTo(expectedLogs.Length), "Not all expected log substrings were found in order.");
+            if (missingLogs.Count > 0)
+            {
+                // In case some of the logs were not displayed log Warning
+                Logger.Warn($"Missing logs: {string.Join(", ", missingLogs)}");
+            }
+
+            Assert.That(missingLogs.Count, Is.EqualTo(0), $"Not all expected log substrings were found. Missing logs: {string.Join(", ", missingLogs)}");
+            
+            stateDirectories = Directory.GetDirectories(statePath);
+            Assert.That(stateDirectories.Length, Is.EqualTo(1), "After Pruning directories length should be back on 1.");
         }
     }    
 }

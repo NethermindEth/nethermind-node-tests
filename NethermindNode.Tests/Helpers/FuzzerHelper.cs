@@ -13,7 +13,7 @@ public static class FuzzerHelper
 
 public class FuzzerCommandOptions : IFuzzerCommand
 {
-    public string DockerContainerName { get; set; } = "sedge-execution-client";
+    public string DockerContainerName { get; set; } = ConfigurationHelper.Instance["execution-container-name"];
     public bool IsFullySyncedCheck { get; set; }
     public bool ShouldForceKillCommand { get; set; }
     public bool ShouldForceGracefullCommand { get; set; }

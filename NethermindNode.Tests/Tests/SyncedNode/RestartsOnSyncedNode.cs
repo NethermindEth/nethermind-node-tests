@@ -52,7 +52,7 @@ public class RestartsOnSyncedNode : BaseTest
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = "sedge-consensus-client", IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["consensus-container-name"], IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
     }
 
     [Category("SnapSync")]
@@ -86,7 +86,7 @@ public class RestartsOnSyncedNode : BaseTest
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = "sedge-consensus-client", IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["consensus-container-name"], IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
     }
 
     [TestCase(0, 60, 120)]

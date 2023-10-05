@@ -18,7 +18,7 @@ namespace NethermindNode.Core.Helpers
 
         private ConfigurationHelper()
         {
-            string configPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\nethermind-node-tests"));
+            string configPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"../../../nethermind-node-tests"));
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(configPath)

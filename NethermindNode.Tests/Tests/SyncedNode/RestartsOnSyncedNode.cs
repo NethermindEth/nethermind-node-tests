@@ -35,7 +35,7 @@ public class RestartsOnSyncedNode : BaseTest
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
     }
 
     [Category("SnapSync")]
@@ -69,7 +69,7 @@ public class RestartsOnSyncedNode : BaseTest
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
     }
 
     [Category("SnapSync")]
@@ -97,6 +97,6 @@ public class RestartsOnSyncedNode : BaseTest
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
     }
 }

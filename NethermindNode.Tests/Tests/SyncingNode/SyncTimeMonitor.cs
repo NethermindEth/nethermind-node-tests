@@ -102,8 +102,6 @@ public class SyncTimeMonitor : BaseTest
 
             NodeStop();
 
-            AddRecordToNotion(timeStamp, stagesToMonitor, startTime, ConfigurationHelper.Configuration["SyncTimesDetailedDatabaseId"]);
-
             if (i + 1 < repeatCount)
                 NodeResync();
 
@@ -138,8 +136,6 @@ public class SyncTimeMonitor : BaseTest
                 StartTime = stageValues.Min(x => x.StartTime)
             };
         }).ToList();
-
-        AddRecordToNotion(timeStamp, averagedResult, startTime, ConfigurationHelper.Configuration["SyncTimesSummaryDatabaseId"], results.Count);
 
         NodeStart();
     }
@@ -209,57 +205,6 @@ public class SyncTimeMonitor : BaseTest
         return sw.Elapsed.TotalSeconds;
     }
 
-    private void AddRecordToNotion(long startTimeOfRun, List<MetricStage> result, DateTime startTime, string databaseId, int numberOfProbes = 0)
-    {
-        Regex pattern = new Regex(@"--config=(?<network>\w+)|--Metrics.NodeName=(?<nodeName>\w+)");
-
-        //Get data to csv format
-        var nethermindImage = DockerCommands.GetImageName("execution-client", Logger).Trim();
-        var consensusImage = DockerCommands.GetImageName("consensus-client", Logger).Trim();
-        var executionCmd = DockerCommands.GetDockerDetails("execution-client", "{{.Config.Cmd}}", Logger);
-        Match cmdExecutionMatch = pattern.Match(executionCmd);
-        var nethermindNodeName = cmdExecutionMatch.Groups["nodeName"].Value.Split(' ').ToList();
-        var network = cmdExecutionMatch.Groups["network"].Value;
-
-        decimal oneGb = 1073741824;
-
-        var path = GetExecutionDataPath();
-        DirectoryInfo dirInfo = new DirectoryInfo(path + "/nethermind_db");
-        decimal dirSize = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length) / oneGb;
-
-        foreach (var monitoringStage in result)
-        {
-            //Send all data to Notion
-            NotionHelper notionHelper = new NotionHelper(ConfigurationHelper.Configuration["AuthToken"]);
-
-            var date = new NotionDate(startTime);
-
-            var properties = new Dictionary<string, PropertyValue>
-                    {
-                        { "Run Id",                 new NotionTitle(startTimeOfRun.ToString()) },
-                        { "Date Of Execution",      new NotionDate(monitoringStage.StartTime!.Value) },
-                        { "Nethermind Image",       new NotionText(nethermindImage) },
-                        { "Consensus Layer Client", new NotionText(consensusImage) },
-                        { "Stage",                  new NotionText(monitoringStage.Stage.ToString()) },
-                        { "Total Time",             new NotionNumber(monitoringStage.Total?.TotalSeconds / 60) },
-                        { "Network",                new NotionText(network) },
-                        { "DbSize",                 new NotionText(dirSize.ToString("0.00")) },
-                        { "Probe count",            new NotionNumber(numberOfProbes) },
-                    };
-
-            PagesCreateParameters record = new PagesCreateParameters()
-            {
-                Properties = properties,
-                Parent = new DatabaseParentInput()
-                {
-                    DatabaseId = databaseId
-                }
-            };
-
-            notionHelper.AddRecord(record);
-        }
-    }
-
     internal class MetricStage
     {
         public Stages Stage { get; set; }
@@ -271,17 +216,17 @@ public class SyncTimeMonitor : BaseTest
     private void NodeStop()
     {
         //Stopping and clearing EL
-        DockerCommands.StopDockerContainer("sedge-execution-client", Logger);
-        while (!DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger).Contains("exited"))
+        DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+        while (!DockerCommands.GetDockerContainerStatus(ConfigurationHelper.Instance["execution-container-name"], Logger).Contains("exited"))
         {
-            Logger.Debug($"Waiting for sedge-execution-client docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus("sedge-execution-client", Logger)}");
+            Logger.Debug($"Waiting for {ConfigurationHelper.Instance["execution-container-name"]} docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus(ConfigurationHelper.Instance["execution-container-name"], Logger)}");
             Thread.Sleep(30000);
         }
     }
 
     private void NodeStart()
     {
-        DockerCommands.StartDockerContainer("sedge-execution-client", Logger);
+        DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
     }
 
     private void NodeResync()
@@ -295,7 +240,7 @@ public class SyncTimeMonitor : BaseTest
 
     private string GetExecutionDataPath()
     {
-        return DockerCommands.GetDockerDetails("sedge-execution-client", "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
+        return DockerCommands.GetDockerDetails(ConfigurationHelper.Instance["execution-container-name"], "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
     }
 
     private void WriteReportToFile(double totalExecutionTime, List<MetricStage> stagesToMonitor)

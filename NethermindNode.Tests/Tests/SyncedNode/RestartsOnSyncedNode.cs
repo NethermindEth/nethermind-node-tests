@@ -34,8 +34,9 @@ public class RestartsOnSyncedNode : BaseTest
         Logger.Info($"***Starting test: ShouldRestartNethermindClientWithIncreasingDelay: {currentDelay} Delay***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeSynced(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
     }
 
     [Category("SnapSync")]
@@ -51,8 +52,9 @@ public class RestartsOnSyncedNode : BaseTest
         Logger.Info($"***Starting test: ShouldRestartConsensusClientWithIncreasingDelay: {currentDelay} Delay***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeSynced(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = "sedge-consensus-client", IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["consensus-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
     }
 
     [Category("SnapSync")]
@@ -68,8 +70,9 @@ public class RestartsOnSyncedNode : BaseTest
         Logger.Info($"***Starting test: ShouldKillNethermindClientWithIncreasingDelay: {currentDelay} Delay***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeSynced(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
     }
 
     [Category("SnapSync")]
@@ -85,8 +88,9 @@ public class RestartsOnSyncedNode : BaseTest
         Logger.Info($"***Starting test: ShouldKillConsensusClientWithIncreasingDelay: {currentDelay} Delay***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeSynced(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = "sedge-consensus-client", IsFullySyncedCheck = true, Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["consensus-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
     }
 
     [TestCase(0, 60, 120)]
@@ -96,7 +100,8 @@ public class RestartsOnSyncedNode : BaseTest
         Logger.Info("***Starting test: ShouldRestartGracefullyNodeForInfinityOnSyncedNode***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeSynced(Logger);
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { IsFullySyncedCheck = true, Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
     }
 }

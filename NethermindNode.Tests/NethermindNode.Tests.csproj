@@ -36,6 +36,7 @@
     </PackageReference>
     <PackageReference Include="NunitXml.TestLogger" Version="3.0.131" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
+	<None Include="..\config.json" Link="config.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,9 +44,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

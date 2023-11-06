@@ -1,0 +1,4 @@
+{
+    "execution-container-name": "sedge-execution-client",
+    "consensus-container-name": "sedge-consensus-client"
+}

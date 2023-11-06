@@ -27,7 +27,7 @@ public class StagesFuzzer : BaseTest
             {
                 _stagesFound.Add(currentStage);
                 Logger.Info("Killing node at stage: " + currentStage);
-                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true }, Logger);
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true, DockerContainerName = ConfigurationHelper.Instance["execution-container-name"] }, Logger);
             }
             Thread.Sleep(1000);
         }
@@ -53,7 +53,7 @@ public class StagesFuzzer : BaseTest
             {
                 _stagesFound.Add(currentStage);
                 Logger.Info("Stopping gracefully at stage: " + currentStage);
-                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceGracefullCommand = true }, Logger);
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceGracefullCommand = true, DockerContainerName = ConfigurationHelper.Instance["execution-container-name"] }, Logger);
             }
             Thread.Sleep(1000);
         }

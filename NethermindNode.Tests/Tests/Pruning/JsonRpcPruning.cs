@@ -27,6 +27,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             NodeInfo.WaitForNodeToBeSynced(Logger);
 
             string dataPath = DockerCommands.GetExecutionDataPath(Logger);
+            Logger.Info($"DockerCommands.GetExecutionDataPath(Logger) - {dataPath}");
             string nethermindDbPath = Path.Combine(dataPath, "nethermind_db");
             string network = Directory.GetDirectories(nethermindDbPath).FirstOrDefault();
             Assert.IsNotNull(network, "There is no network directory.");

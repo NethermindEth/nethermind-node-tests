@@ -37,6 +37,9 @@ namespace NethermindNode.Tests.Tests.Pruning
             var stateDirectories = Directory.GetDirectories(statePath);
             Assert.That(stateDirectories.Length, Is.EqualTo(1), "Pruning not yet active so there should be only one state directory.");
 
+            // Wait for Pruning Cache to grow 
+            Thread.Sleep(TimeSpan.FromMinutes(45));
+
             // Execute Prune Command
             var parameters = $"";
             var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("admin_prune", parameters, TestItems.RpcAddress, Logger).Result.Item1;

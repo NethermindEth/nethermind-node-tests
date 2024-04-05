@@ -117,7 +117,7 @@ public class RestartsOnSyncedNode : BaseTest
 
         string expectedLog = "Executed memory prune";
 
-        foreach (var line in DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "", true, cts.Token, "--since 2m")) //since to ensure that we will get only recent logs but including all from beggining of test
+        foreach (var line in DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "", true, null, "--since 2m")) //since to ensure that we will get only recent logs but including all from beggining of test
         {
             Console.WriteLine(line);
 

@@ -105,6 +105,18 @@ public class RestartsOnSyncedNode : BaseTest
         FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
     }
 
+    [TestCase(0, 60, 120)]
+    [Category("InfinityKillOnFullSync")]
+    public void ShouldKillNodeForInfinityOnSyncedNode(int restartCount, int minimumWait, int maximumWait)
+    {
+        Logger.Info("***Starting test: ShouldKillNodeForInfinityOnSyncedNode***");
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeSynced(Logger);
+
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceKillCommand = true }, Logger);
+    }
+
     [Repeat(10)]
     [Category("InMemoryFastKill")]
     [Test]

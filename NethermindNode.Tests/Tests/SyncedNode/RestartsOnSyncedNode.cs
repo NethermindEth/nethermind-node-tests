@@ -104,4 +104,33 @@ public class RestartsOnSyncedNode : BaseTest
 
         FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
     }
+
+    [Repeat(10)]
+    [Category("InMemoryKill")]
+    [Test]
+    public void ShouldKillNethermindClientAfterMemoryPruning()
+    {
+        Logger.Info($"***Starting test: ShouldKillNethermindClientAfterMemoryPruning***");
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeSynced(Logger);
+
+        string expectedLog = "Executed memory prune";
+
+        foreach (var line in DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "", true, cts.Token, "--since 2m")) //since to ensure that we will get only recent logs but including all from beggining of test
+        {
+            Console.WriteLine(line);
+
+            if (!line.Contains(expectedLog))
+            {
+                continue;
+            }
+
+            Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
+
+            break;
+        }
+
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceKillCommand = true }, Logger);
+    }
 }

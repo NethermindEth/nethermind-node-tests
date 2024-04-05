@@ -106,7 +106,7 @@ public class RestartsOnSyncedNode : BaseTest
     }
 
     [Repeat(10)]
-    [Category("InMemoryKill")]
+    [Category("InMemoryFastKill")]
     [Test]
     public void ShouldKillNethermindClientAfterMemoryPruning()
     {
@@ -132,5 +132,46 @@ public class RestartsOnSyncedNode : BaseTest
         }
 
         FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceKillCommand = true }, Logger);
+    }
+
+    [Repeat(10)]
+    [Category("InMemorySaveKill")]
+    [TestCase(1, 1)]
+    public void ShouldKillNethermindClientAfterMemoryPruningSavedReorgBoundary(int amountOfGracefullShutdowns, int amountOfKills)
+    {
+        Logger.Info($"***Starting test: ShouldKillNethermindClientAfterMemoryPruningSavedReorgBoundary***");
+
+        NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeSynced(Logger);
+
+        string expectedLog = "Saving reorg boundary";
+
+        int executedGracefull = 0;
+        int executedKills = 0;
+
+        foreach (var line in DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "", true, null, "--since 2m")) //since to ensure that we will get only recent logs but including all from beggining of test
+        {
+            Console.WriteLine(line);
+
+            if (!line.Contains(expectedLog))
+            {
+                continue;
+            }
+
+            if (executedGracefull < amountOfGracefullShutdowns)
+            {
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceGracefullCommand = true }, Logger);
+                executedGracefull++;
+            }
+            else if (executedKills < amountOfKills)
+            {
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceKillCommand = true }, Logger);
+                executedKills++;
+            }
+
+            Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
+
+            break;
+        }
     }
 }

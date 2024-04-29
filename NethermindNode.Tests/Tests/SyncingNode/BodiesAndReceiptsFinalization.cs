@@ -48,12 +48,12 @@ namespace NethermindNode.Tests.SyncingNode
                 "--Sync.DownloadReceiptsInFastSync=false"
             };
 
-            var dockerCompose = DockerComposeHelper.ReadDockerCompose(@"C:\Users\kamil\Downloads\docker-compose.yml");
+            var dockerCompose = DockerComposeHelper.ReadDockerCompose(GetExecutionDataPath() + "/..");
             foreach (var flag in flagsToRemove)
             {
                 DockerComposeHelper.RemoveCommandFlag(dockerCompose, "execution", flag);
             }
-            DockerComposeHelper.WriteDockerCompose(dockerCompose, @"C:\Users\kamil\Downloads\docker-compose.yml");
+            DockerComposeHelper.WriteDockerCompose(dockerCompose, GetExecutionDataPath() + "/..");
             DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
 
             // 5-6-7

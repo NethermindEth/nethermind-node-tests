@@ -70,6 +70,12 @@ namespace NethermindNode.Tests.SyncingNode
 
                 Assert.IsTrue(bodiesLine.Count() > 0, "Bodies log line missing - verify with getBlockByNumber.");
                 Assert.IsTrue(receiptsLine.Count() > 0, "Receipts log line missing - verify with getReceipt");
+
+                DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+
+                CommandExecutor.BackupDirectory(execPath + "/nethermind_db_backup", execPath + "/nethermind_db", Logger);
+
+                DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
             }
         }
 

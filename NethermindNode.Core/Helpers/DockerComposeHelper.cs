@@ -26,6 +26,7 @@ namespace NethermindNode.Core.Helpers
 
             var yaml = serializer.Serialize(compose);
             using var writer = new StreamWriter(filePath);
+            Console.WriteLine("Writing at path: " + filePath);
             writer.Write(yaml);
         }
 

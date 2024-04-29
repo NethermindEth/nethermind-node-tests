@@ -30,6 +30,8 @@ namespace NethermindNode.Tests.SyncingNode
         {
             Logger.Info("***Starting test: ShouldResyncBodiesAndReceiptsAfterNonValidator***");
 
+            var execPath = GetExecutionDataPath();
+
             // 1
             NodeInfo.WaitForNodeToBeReady(Logger);
             NodeInfo.WaitForNodeToBeSynced(Logger);
@@ -38,7 +40,7 @@ namespace NethermindNode.Tests.SyncingNode
             DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
 
             // 3
-            CommandExecutor.BackupDirectory(GetExecutionDataPath() + "/nethermind_db", GetExecutionDataPath() + "/nethermind_db_backup" , Logger);
+            CommandExecutor.BackupDirectory(execPath + "/nethermind_db", execPath + "/nethermind_db_backup" , Logger);
 
             // 4
             string[] flagsToRemove =
@@ -48,12 +50,13 @@ namespace NethermindNode.Tests.SyncingNode
                 "--Sync.DownloadReceiptsInFastSync=false"
             };
 
-            var dockerCompose = DockerComposeHelper.ReadDockerCompose(GetExecutionDataPath() + "/..");
+            var dockerCompose = DockerComposeHelper.ReadDockerCompose(execPath + "/..");
             foreach (var flag in flagsToRemove)
             {
+                Console.WriteLine("Removing: " + flag);
                 DockerComposeHelper.RemoveCommandFlag(dockerCompose, "execution", flag);
             }
-            DockerComposeHelper.WriteDockerCompose(dockerCompose, GetExecutionDataPath() + "/..");
+            DockerComposeHelper.WriteDockerCompose(dockerCompose, execPath + "/..");
             DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
 
             // 5-6-7

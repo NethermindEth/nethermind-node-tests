@@ -50,6 +50,7 @@ namespace NethermindNode.Tests.SyncingNode
                 "--Sync.DownloadReceiptsInFastSync=false"
             };
 
+            Logger.Info("Reading docker compose file at path: " + execPath + "/..");
             var dockerCompose = DockerComposeHelper.ReadDockerCompose(execPath + "/..");
             foreach (var flag in flagsToRemove)
             {

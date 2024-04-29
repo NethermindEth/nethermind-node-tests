@@ -63,6 +63,7 @@ namespace NethermindNode.Tests.SyncingNode
             // 5-6-7
             for (int i = 0; i < repeatCount; i++)
             {
+                NodeInfo.WaitForNodeToBeReady(Logger);
                 NodeInfo.WaitForNodeToBeSynced(Logger);
                 var bodiesLine = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Fast blocks bodies task completed.");
                 var receiptsLine = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Fast blocks receipts task completed.");

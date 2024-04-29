@@ -11,7 +11,6 @@ public static class CommandExecutor
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             processInfo = new ProcessStartInfo("rm", $"-r {absolutePath}");
-            logger.Debug("Removing path: " + absolutePath);
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -21,6 +20,7 @@ public static class CommandExecutor
         {
             throw new ArgumentOutOfRangeException();
         }
+        logger.Debug("Removing path: " + absolutePath);
 
         processInfo.CreateNoWindow = true;
         processInfo.UseShellExecute = false;
@@ -30,6 +30,37 @@ public static class CommandExecutor
             process.StartInfo = processInfo;
             process.Start();
             process.WaitForExit(30000);
+
+            process.Close();
+        }
+    }
+
+    public static void BackupDirectory(string absolutePath, string backupPath, NLog.Logger logger)
+    {
+        ProcessStartInfo processInfo;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            processInfo = new ProcessStartInfo("cp", $"-a {absolutePath} {backupPath}");
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            processInfo = new ProcessStartInfo("xcopy", $"{ConvertFromWslPathToWindowsPath(absolutePath)} {ConvertFromWslPathToWindowsPath(backupPath)} /E /H /K /O /X");
+        }
+        else
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        logger.Debug("Creating a backup of: " + absolutePath + " in a path: " + backupPath);
+
+        processInfo.CreateNoWindow = true;
+        processInfo.UseShellExecute = false;
+
+        using (var process = new Process())
+        {
+            process.StartInfo = processInfo;
+            process.Start();
+            // long as it may be huge backup
+            process.WaitForExit(3000000);
 
             process.Close();
         }

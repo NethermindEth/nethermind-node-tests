@@ -51,13 +51,13 @@ namespace NethermindNode.Tests.SyncingNode
             };
 
             Logger.Info("Reading docker compose file at path: " + execPath + "/../docker-compose.yml");
-            var dockerCompose = DockerComposeHelper.ReadDockerCompose(execPath + "/../docker-compose.yml"));
+            var dockerCompose = DockerComposeHelper.ReadDockerCompose(execPath + "/../docker-compose.yml");
             foreach (var flag in flagsToRemove)
             {
                 Console.WriteLine("Removing: " + flag);
                 DockerComposeHelper.RemoveCommandFlag(dockerCompose, "execution", flag);
             }
-            DockerComposeHelper.WriteDockerCompose(dockerCompose, execPath + "/../docker-compose.yml"));
+            DockerComposeHelper.WriteDockerCompose(dockerCompose, execPath + "/../docker-compose.yml");
             DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
 
             // 5-6-7

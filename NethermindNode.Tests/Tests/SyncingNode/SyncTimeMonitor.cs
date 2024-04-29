@@ -249,7 +249,7 @@ public class SyncTimeMonitor : BaseTest
         StringBuilder reportBuilder = new StringBuilder();
 
         // Add the total execution time to the report.
-        reportBuilder.AppendLine($"TOTAL SYNC TIME: {TimeSpan.FromSeconds(totalExecutionTime).ToString(@"d\.hh\:mm\:ss")}");
+        reportBuilder.AppendLine($"TotalSyncTime: {TimeSpan.FromSeconds(totalExecutionTime).ToString(@"d\.hh\:mm\:ss")}");
 
         // Add the time for each stage to the report.
         foreach (var stage in stagesToMonitor)

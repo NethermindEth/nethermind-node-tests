@@ -52,7 +52,7 @@ public static class DockerCommands
 
     public static void RecreateDockerCompose(string containerName, string dockerComposePath, Logger logger)
     {
-        DockerCommandExecute("compose create -f " + dockerComposePath + " --force-recreate " + containerName, logger);
+        DockerCommandExecute("compose -f " + dockerComposePath + " create  --force-recreate " + containerName, logger);
     }
 
     public static string GetExecutionDataPath(Logger logger)

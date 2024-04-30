@@ -77,6 +77,16 @@ namespace NethermindNode.Tests.SyncingNode
 
                 DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
             }
+
+            // Restore to previous state
+            foreach (var flag in flagsToRemove)
+            {
+                Console.WriteLine("Adding: " + flag);
+                DockerComposeHelper.AddCommandFlag(dockerCompose, "execution", flag);
+            }
+            DockerComposeHelper.WriteDockerCompose(dockerCompose, execPath + "/../docker-compose.yml");
+            DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+            DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
         }
 
         private string GetExecutionDataPath()

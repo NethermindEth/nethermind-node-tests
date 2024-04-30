@@ -40,5 +40,16 @@ namespace NethermindNode.Core.Helpers
                 command.Remove(flagToRemove);
             }
         }
+
+        public static void AddCommandFlag(Dictionary<string, object> dockerCompose, string serviceName, string flagToAdd)
+        {
+            var services = (Dictionary<object, object>)dockerCompose["services"];
+            if (services.ContainsKey(serviceName))
+            {
+                var service = (Dictionary<object, object>)services[serviceName];
+                var command = (List<object>)service["command"];
+                command.Add(flagToAdd);
+            }
+        }
     }
 }

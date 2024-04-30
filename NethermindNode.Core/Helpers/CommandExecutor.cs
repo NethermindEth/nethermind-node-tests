@@ -40,7 +40,7 @@ public static class CommandExecutor
         ProcessStartInfo processInfo;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            processInfo = new ProcessStartInfo("cp", $"-a {absolutePath} {backupPath}");
+            processInfo = new ProcessStartInfo("cp", $"-r {absolutePath} {backupPath}");
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {

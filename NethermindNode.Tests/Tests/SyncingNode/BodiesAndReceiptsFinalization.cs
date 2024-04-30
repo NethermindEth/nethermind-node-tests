@@ -38,7 +38,7 @@ namespace NethermindNode.Tests.SyncingNode
             var delay = Backoff.ConstantBackoff(TimeSpan.FromSeconds(3), retryCount: 100);
 
             var retryPolicy = Policy
-            .HandleResult<string>(s => s != "SnapSync" && s != "StateNodes")
+            .HandleResult<string>(s => !s.Contains("SnapSync") && !s.Contains("StateNodes"))
             .WaitAndRetry(delay);
 
             string result = retryPolicy.Execute(() => NodeInfo.GetCurrentStage(Logger));

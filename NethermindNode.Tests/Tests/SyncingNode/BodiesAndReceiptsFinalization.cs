@@ -1,4 +1,6 @@
 ﻿using NethermindNode.Core.Helpers;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
 
 namespace NethermindNode.Tests.SyncingNode
 {
@@ -32,6 +34,15 @@ namespace NethermindNode.Tests.SyncingNode
 
             // 1
             NodeInfo.WaitForNodeToBeReady(Logger);
+
+            var delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(3), retryCount: 100);
+
+            var retryPolicy = Policy
+            .HandleResult<string>(s => s == "SnapSync" || s == "StateNodes")
+            .WaitAndRetry(delay);
+
+            string result = retryPolicy.Execute(() => NodeInfo.GetCurrentStage(Logger));
+
             NodeInfo.WaitForNodeToBeSynced(Logger);
 
             // 2

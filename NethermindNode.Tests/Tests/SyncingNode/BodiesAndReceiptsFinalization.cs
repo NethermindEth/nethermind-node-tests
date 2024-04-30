@@ -58,6 +58,7 @@ namespace NethermindNode.Tests.SyncingNode
                 DockerComposeHelper.RemoveCommandFlag(dockerCompose, "execution", flag);
             }
             DockerComposeHelper.WriteDockerCompose(dockerCompose, execPath + "/../docker-compose.yml");
+            DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", Logger);
             DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
 
             // 5-6-7
@@ -85,6 +86,7 @@ namespace NethermindNode.Tests.SyncingNode
                 DockerComposeHelper.AddCommandFlag(dockerCompose, "execution", flag);
             }
             DockerComposeHelper.WriteDockerCompose(dockerCompose, execPath + "/../docker-compose.yml");
+            DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", Logger);
             DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
             DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
         }

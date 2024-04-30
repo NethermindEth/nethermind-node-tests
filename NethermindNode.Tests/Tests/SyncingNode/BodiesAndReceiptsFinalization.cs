@@ -86,6 +86,9 @@ namespace NethermindNode.Tests.SyncingNode
 
                 CommandExecutor.BackupDirectory(execPath + "/nethermind_db_backup", execPath + "/nethermind_db", Logger);
 
+                // For logs cleanup purpose only
+                DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", Logger);
+
                 DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
             }
 

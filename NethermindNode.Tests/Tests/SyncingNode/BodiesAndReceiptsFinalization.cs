@@ -84,6 +84,7 @@ namespace NethermindNode.Tests.SyncingNode
 
                 DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
 
+                CommandExecutor.RemoveDirectory(execPath + "/nethermind_db", Logger);
                 CommandExecutor.BackupDirectory(execPath + "/nethermind_db_backup", execPath + "/nethermind_db", Logger);
 
                 // For logs cleanup purpose only

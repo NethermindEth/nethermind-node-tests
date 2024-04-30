@@ -30,8 +30,6 @@ namespace NethermindNode.Tests.SyncingNode
         {
             Logger.Info("***Starting test: ShouldResyncBodiesAndReceiptsAfterNonValidator***");
 
-            var execPath = GetExecutionDataPath();
-
             // 1
             NodeInfo.WaitForNodeToBeReady(Logger);
             NodeInfo.WaitForNodeToBeSynced(Logger);
@@ -40,6 +38,7 @@ namespace NethermindNode.Tests.SyncingNode
             DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
 
             // 3
+            var execPath = DockerCommands.GetExecutionDataPath(Logger);
             CommandExecutor.BackupDirectory(execPath + "/nethermind_db", execPath + "/nethermind_db_backup" , Logger);
 
             // 4
@@ -89,11 +88,6 @@ namespace NethermindNode.Tests.SyncingNode
             DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", Logger);
             DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
             DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
-        }
-
-        private string GetExecutionDataPath()
-        {
-            return DockerCommands.GetDockerDetails(ConfigurationHelper.Instance["execution-container-name"], "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
         }
     }
 }

@@ -35,7 +35,7 @@ namespace NethermindNode.Tests.SyncingNode
             // 1
             NodeInfo.WaitForNodeToBeReady(Logger);
 
-            var delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(3), retryCount: 100);
+            var delay = Backoff.ConstantBackoff(TimeSpan.FromSeconds(3), retryCount: 100);
 
             var retryPolicy = Policy
             .HandleResult<string>(s => s != "SnapSync" && s != "StateNodes")

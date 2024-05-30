@@ -71,13 +71,13 @@ public class EthCallTests : BaseTest
     [TestCase(100000, 80, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0, TestingType testingType = TestingType.EthCallOnly)
     {
-        Console.WriteLine($"Test Details:");
-        Console.WriteLine($"Repeat Count: {repeatCount}");
-        Console.WriteLine($"Initial Requests Per Second: {initialRequestsPerSecond}");
-        Console.WriteLine($"RPS Step: {rpsStep}");
-        Console.WriteLine($"Step Interval: {stepInterval}");
-        Console.WriteLine($"Max Timeout: {maxTimeout}");
-        Console.WriteLine($"Test Type: {testingType.ToString()}");
+        Logger.Info($"Test Details:");
+        Logger.Info($"Repeat Count: {repeatCount}");
+        Logger.Info($"Initial Requests Per Second: {initialRequestsPerSecond}");
+        Logger.Info($"RPS Step: {rpsStep}");
+        Logger.Info($"Step Interval: {stepInterval}");
+        Logger.Info($"Max Timeout: {maxTimeout}");
+        Logger.Info($"Test Type: {testingType.ToString()}");
         int counter = 0;
         int success = 0;
         int fail = 0;
@@ -266,14 +266,14 @@ public class EthCallTests : BaseTest
         // Wait for the response handling task to finish processing all items
         await responseHandlingTask;
 
-        Console.WriteLine($"Requests per second: {initialRequestsPerSecond}");
-        Console.WriteLine($"Requests sent in total: {counter}");
-        Console.WriteLine($"Succeded requests: {success}");
-        Console.WriteLine($"Failed requests: {fail}");
-        Console.WriteLine($"Unique error messages: {uniqueErrorMessages.Count}");
+        Logger.Info($"Requests per second: {initialRequestsPerSecond}");
+        Logger.Info($"Requests sent in total: {counter}");
+        Logger.Info($"Succeded requests: {success}");
+        Logger.Info($"Failed requests: {fail}");
+        Logger.Info($"Unique error messages: {uniqueErrorMessages.Count}");
         foreach (var kvp in uniqueErrorMessages)
         {
-            Console.WriteLine($"Message: {kvp.Key}, Count: {kvp.Value}");
+            Logger.Info($"Message: {kvp.Key}, Count: {kvp.Value}");
         }
     }
 

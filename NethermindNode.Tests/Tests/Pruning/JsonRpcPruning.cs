@@ -42,7 +42,7 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             // Execute Prune Command
             var parameters = $"";
-            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("admin_prune", parameters, TestItems.RpcAddress, Logger).Result.Item1;
+            var result = HttpExecutor.ExecuteNethermindJsonRpcCommandWithTimingInfo("admin_prune", parameters, "1",  TestItems.RpcAddress, Logger).Result.Item1;
 
             Assert.IsTrue(result.ToLowerInvariant().Contains("starting"), $"Result should contains \"starting\" but it doesn't. Result content: {result}");
 

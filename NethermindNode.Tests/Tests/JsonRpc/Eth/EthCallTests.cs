@@ -16,7 +16,6 @@ namespace NethermindNode.Tests.JsonRpc.Eth;
 [Parallelizable(ParallelScope.None)]
 public class EthCallTests : BaseTest
 {
-    [ThreadStatic]
     private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
     [TestCase(1, 1, Category = "JsonRpc")]

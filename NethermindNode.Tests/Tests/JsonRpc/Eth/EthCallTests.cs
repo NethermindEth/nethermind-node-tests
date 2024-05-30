@@ -160,27 +160,6 @@ public class EthCallTests : BaseTest
             }
         });
 
-        //var apiMonitoringTask = Task.Run(async () =>
-        //{
-        //    while (!cancellationTokenSource.Token.IsCancellationRequested)
-        //    {
-        //        bool isAlive = NodeInfo.IsApiAlive(TestItems.RpcAddress);
-        //
-        //        if (!isAlive)
-        //        {
-        //            // Handle the situation when the API is down.
-        //            // This can be logging an error, stopping the current test, etc.
-        //            Console.WriteLine("API is down!");
-        //
-        //            // Optionally, stop the main test by setting some shared flag or directly using a CancellationToken.
-        //            cancellationTokenSource.Cancel();
-        //            break;
-        //        }
-        //
-        //        await Task.Delay(TimeSpan.FromSeconds(10));  // Check every 10 seconds.
-        //    }
-        //});
-
 
         // This task will periodically report the achieved RPS.
         var periodicReportTask = Task.Run(async () =>
@@ -197,7 +176,7 @@ public class EthCallTests : BaseTest
                 int newRequests = counter - previousCounter;
                 double achievedRps = newRequests / reportStopwatch.Elapsed.TotalSeconds;
 
-                Console.WriteLine($"Achieved RPS over the last 10 seconds: {achievedRps}");
+                Logger.Info($"Achieved RPS over the last 10 seconds: {achievedRps}");
 
                 // Reset for the next period.
                 reportStopwatch.Restart();
@@ -213,7 +192,7 @@ public class EthCallTests : BaseTest
             {
                 if (stepInterval > 0 && (DateTime.UtcNow - startTime).TotalSeconds > stepInterval)
                 {
-                    Console.WriteLine($"Increasing RPS to: {initialRequestsPerSecond + rpsStep}");
+                    Logger.Info($"Increasing RPS to: {initialRequestsPerSecond + rpsStep}");
                     initialRequestsPerSecond += rpsStep;
                     startTime = DateTime.UtcNow;
                 }
@@ -223,6 +202,7 @@ public class EthCallTests : BaseTest
                 responseTasks.Add(requestTask);
 
                 counter++;
+                Logger.Trace("Requests executed: " + counter);
 
                 var delay = 1000 / initialRequestsPerSecond;
                 await Task.Delay(delay);

@@ -1,5 +1,6 @@
 ﻿using NethermindNode.Core.RpcResponses;
 using NethermindNode.Tests.Enums;
+using NLog;
 
 namespace NethermindNode.Core.Helpers;
 
@@ -110,5 +111,14 @@ public static class NodeInfo
 
         logger.Debug("Current stage is: " + output);
         return result;
+    }
+
+    public static void WaitForNodeToBeSynced(Logger logger)
+    {
+        while (!NodeInfo.IsFullySynced(logger))
+        {
+            logger.Debug("Waiting for node to be fully synced...");
+            Thread.Sleep(10000);
+        }
     }
 }

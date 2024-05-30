@@ -19,6 +19,7 @@ public class StagesFuzzer : BaseTest
     [Category("FastSync")]
     [Category("FullSync")]
     [Category("ArchiveSync")]
+    [Category("StageFuzzerKiller")]
     public void ShouldKillNodeOnAllPossibleStages()
     {
         Logger.Info("***Starting test: ShouldKillNodeOnAllPossibleStages***");

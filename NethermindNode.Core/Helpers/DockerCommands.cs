@@ -50,6 +50,11 @@ public static class DockerCommands
         return result;
     }
 
+    public static void RecreateDockerCompose(string containerName, string dockerComposePath, Logger logger)
+    {
+        DockerCommandExecute("compose -f " + dockerComposePath + " create  --force-recreate " + containerName, logger);
+    }
+
     public static string GetExecutionDataPath(Logger logger)
     {
         return GetDockerDetails(ConfigurationHelper.Instance["execution-container-name"], "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", logger).Trim();

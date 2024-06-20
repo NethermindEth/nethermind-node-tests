@@ -35,16 +35,16 @@ class ReceiptsVerification
   // public Queue<Block> blocks = new Queue<Block>();
 
 
-  [Test]
-  [Category("Receipts")]
+  // [Test]
+  // [Category("Receipts")]
   public void ShouldVerifyHeadReceipts()
   {
-    Console.WriteLine("ShouldVerifyHeadReceipts");
+    TestContext.WriteLine("ShouldVerifyHeadReceipts");
 
     Logger.Info($"***Starting test: ShouldVerifyHeadReceipts ***");
     var w3 = new Web3(RpcAddress);
     var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
-    Console.WriteLine($"Current block number: {blockNumber}");
+    TestContext.WriteLine($"Current block number: {blockNumber}");
   }
 
 
@@ -76,18 +76,18 @@ class ReceiptsVerification
   public void SubscriptionHandler(object sender, StreamingEventArgs<Block> e)
   {
     var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
-    Console.WriteLine($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
+    TestContext.WriteLine($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
     var block = e.Response;
-    Console.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
+    TestContext.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
     CompareHeadReceipts(block);
   }
 
 
-  // [Test]
-  // [Category("Receipts")]
+  [Test]
+  [Category("Receipts")]
   public async Task NewBlockHeader_With_Subscription()
   {
-    Console.WriteLine("NewBlockHeader_With_Subscription");
+    TestContext.WriteLine("NewBlockHeader_With_Subscription");
     var client = new StreamingWebSocketClient(WsAddress);
     // create a subscription 
     // it won't do anything just yet though
@@ -103,7 +103,7 @@ class ReceiptsVerification
     subscription.UnsubscribeResponse += (object sender, StreamingEventArgs<bool> success) =>
     {
       subscribed = false;
-      Console.WriteLine($"Unsubscribed: {success.Response}");
+      TestContext.WriteLine($"Unsubscribed: {success.Response}");
     };
 
     // open the web socket connection

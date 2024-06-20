@@ -62,6 +62,7 @@ class ReceiptsVerification
   public void ShouldVerifyHeadReceipts()
   {
     TestContext.WriteLine("ShouldVerifyHeadReceipts");
+    Logger.Info("ShouldVerifyHeadReceipts");
 
     Logger.Info($"***Starting test: ShouldVerifyHeadReceipts ***");
     var w3 = new Web3(RpcAddress);
@@ -99,8 +100,10 @@ class ReceiptsVerification
   {
     var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
     TestContext.WriteLine($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
+    Logger.Info($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
     var block = e.Response;
     TestContext.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
+    Logger.Info($"Block: {JsonConvert.SerializeObject(block)}");
     CompareHeadReceipts(block);
   }
 
@@ -126,6 +129,7 @@ class ReceiptsVerification
     {
       subscribed = false;
       TestContext.WriteLine($"Unsubscribed: {success.Response}");
+      Logger.Info($"Unsubscribed: {success.Response}");
     };
 
     // open the web socket connection
@@ -146,6 +150,7 @@ class ReceiptsVerification
     // await subscription.UnsubscribeAsync();
 
     TestContext.Write("Waiting for new blocks: ");
+    Logger.Info("Waiting for new blocks: ");
 
     var sw = new Stopwatch();
     sw.Start();
@@ -154,6 +159,7 @@ class ReceiptsVerification
     {
       Task.Delay(1000).Wait();
       TestContext.Write(".");
+      Logger.Info(".");
       if (sw.Elapsed.Seconds > 120)
       {
         break;

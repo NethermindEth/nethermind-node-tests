@@ -26,27 +26,25 @@ class ReceiptsHelper
     {
       Logger.Info($"Converting {JsonConvert.SerializeObject(receipts[i])}");
       // var entry = JsonConvert.DeserializeObject<LogEntry>(JsonConvert.SerializeObject(receipts[i].Logs[0]));
-      var rcp = new TxReceipt
-      {
-        // rcp.Logs = receipts[i].Logs.Select(l => new LogEntry(new Address(l.Address), l.Data.ToBytes(), l.Topics.Select(t => new Hash256(t)).ToArray())).ToArray(),
-        Bloom = new Bloom(receipts[i].LogsBloom.ToBytes()),
+      var rcp = new TxReceipt();
+      // rcp.Logs = receipts[i].Logs.Select(l => new LogEntry(new Address(l.Address), l.Data.ToBytes(), l.Topics.Select(t => new Hash256(t)).ToArray())).ToArray(),
+      rcp.Bloom = new Bloom(receipts[i].LogsBloom.ToBytes());
 
-        // ??? not sure it's the right field
-        PostTransactionState = new Hash256(receipts[i].Root),
-        ReturnValue = receipts[i].Status.HexValue.ToBytes(),
+      // ??? not sure it's the right field
+      rcp.PostTransactionState = new Hash256(receipts[i].Root);
+      rcp.ReturnValue = receipts[i].Status.HexValue.ToBytes();
 
-        Recipient = new Address(receipts[i].To),
-        ContractAddress = receipts[i].ContractAddress != null ? new Address(receipts[i].ContractAddress) : null,
-        Sender = new Address(receipts[i].From),
-        GasUsedTotal = (long)receipts[i].CumulativeGasUsed.Value,
-        GasUsed = (long)receipts[i].GasUsed.Value,
-        Index = (int)receipts[i].TransactionIndex.Value,
-        TxHash = new Hash256(receipts[i].TransactionHash),
-        BlockHash = new Hash256(receipts[i].BlockHash),
-        BlockNumber = (long)receipts[i].BlockNumber.Value,
-        StatusCode = receipts[i].Status.HexValue.ToBytes()[0],
-        TxType = (TxType)(byte)receipts[i].Type.Value
-      };
+      rcp.Recipient = new Address(receipts[i].To);
+      rcp.ContractAddress = receipts[i].ContractAddress != null ? new Address(receipts[i].ContractAddress) : null;
+      rcp.Sender = new Address(receipts[i].From);
+      rcp.GasUsedTotal = (long)receipts[i].CumulativeGasUsed.Value;
+      rcp.GasUsed = (long)receipts[i].GasUsed.Value;
+      rcp.Index = (int)receipts[i].TransactionIndex.Value;
+      rcp.TxHash = new Hash256(receipts[i].TransactionHash);
+      rcp.BlockHash = new Hash256(receipts[i].BlockHash);
+      rcp.BlockNumber = (long)receipts[i].BlockNumber.Value;
+      rcp.StatusCode = receipts[i].Status.HexValue.ToBytes()[0];
+      rcp.TxType = (TxType)(byte)receipts[i].Type.Value;
 
       for (int j = 0; j < receipts[i].Logs.Count; j++)
       {

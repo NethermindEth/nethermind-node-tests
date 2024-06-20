@@ -108,11 +108,6 @@ class ReceiptsVerification
     var block = e.Response;
     TestContext.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
     Logger.Info($"Block: {JsonConvert.SerializeObject(block)}");
-    // var calculatedRoot = CompareHeadReceipts(block);
-    // var receiptsRoot = block.ReceiptsRoot;
-
-    // Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
-
     blocks.Enqueue(block);
   }
 
@@ -174,6 +169,7 @@ class ReceiptsVerification
         var calculatedRoot = CompareHeadReceipts(block);
         var receiptsRoot = block.ReceiptsRoot;
         Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+        Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
       }
       // if (sw.Elapsed.Seconds % 10 == 0)
       // {

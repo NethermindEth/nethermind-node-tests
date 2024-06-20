@@ -46,6 +46,7 @@ class ReceiptsHelper
       rcp.StatusCode = receipts[i].Status.HexValue.ToBytes()[0];
       rcp.TxType = (TxType)(byte)receipts[i].Type.Value;
 
+      rcp.Logs = new LogEntry[receipts[i].Logs.Count];
       for (int j = 0; j < receipts[i].Logs.Count; j++)
       {
         // var entry = JsonConvert.DeserializeObject<LogEntry>(receipts[i].Logs[j]);

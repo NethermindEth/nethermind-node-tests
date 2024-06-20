@@ -25,14 +25,10 @@ class ReceiptsHelper
     for (int i = 0; i < receipts.Length; i++)
     {
       Logger.Info($"Converting {JsonConvert.SerializeObject(receipts[i])}");
+      // var entry = JsonConvert.DeserializeObject<LogEntry>(JsonConvert.SerializeObject(receipts[i].Logs[0]));
       var rcp = new TxReceipt
       {
-        // rcp.Logs = receipts[i].Logs.Select(l => new LogEntry()
-        // {
-        //   address = new Address(l.Address),
-        //   data = l.Data.ToBytes(),
-        //   topics = l.Topics.Select(t => new Hash256(t)).ToArray()
-        // }).ToArray();
+        // rcp.Logs = receipts[i].Logs.Select(l => new LogEntry(new Address(l.Address), l.Data.ToBytes(), l.Topics.Select(t => new Hash256(t)).ToArray())).ToArray(),
         Bloom = new Bloom(receipts[i].LogsBloom.ToBytes()),
 
         // ??? not sure it's the right field
@@ -40,7 +36,7 @@ class ReceiptsHelper
         ReturnValue = receipts[i].Status.HexValue.ToBytes(),
 
         Recipient = new Address(receipts[i].To),
-        ContractAddress = new Address(receipts[i].ContractAddress),
+        ContractAddress = receipts[i].ContractAddress != null ? new Address(receipts[i].ContractAddress) : null,
         Sender = new Address(receipts[i].From),
         GasUsedTotal = (long)receipts[i].CumulativeGasUsed.Value,
         GasUsed = (long)receipts[i].GasUsed.Value,
@@ -51,6 +47,15 @@ class ReceiptsHelper
         StatusCode = receipts[i].Status.HexValue.ToBytes()[0],
         TxType = (TxType)(byte)receipts[i].Type.Value
       };
+
+      for (int j = 0; j < receipts[i].Logs.Count; j++)
+      {
+        var entry = JsonConvert.DeserializeObject<LogEntry>(JsonConvert.SerializeObject(receipts[i].Logs[j]));
+        Logger.Info($"Log: {JsonConvert.SerializeObject(entry)}");
+
+        rcp.Logs[j] = entry;
+        // rcp.Logs[j] = new LogEntry(new Address(receipts[i].Logs[j].Address), receipts[i].Logs[j].Data.ToBytes(), receipts[i].Logs[j].Topics.Select(t => new Hash256(t)).ToArray());
+      }
 
       txReceipts[i] = rcp;
       Logger.Info($"Converted: {i}");

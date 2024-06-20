@@ -147,11 +147,17 @@ class ReceiptsVerification
 
     TestContext.Write("Waiting for new blocks: ");
 
+    var sw = new Stopwatch();
+    sw.Start();
     //allow time to unsubscribe
     while (subscribed)
     {
       Task.Delay(1000).Wait();
       TestContext.Write(".");
+      if (sw.Elapsed.Seconds > 120)
+      {
+        break;
+      }
     }
 
     // the connection closing will end the subscription

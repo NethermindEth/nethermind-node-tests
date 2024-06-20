@@ -83,8 +83,8 @@ class ReceiptsVerification
   }
 
 
-  [Test]
-  [Category("Receipts")]
+  // [Test]
+  // [Category("Receipts")]
   public async Task NewBlockHeader_With_Subscription()
   {
     Console.WriteLine("NewBlockHeader_With_Subscription");

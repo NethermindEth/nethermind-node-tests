@@ -23,6 +23,28 @@ using System.Numerics;
 using System.Threading.Tasks;
 namespace NethermindNode.Tests.Receipts;
 
+public static class DBG
+{
+  public static Task WriteLineA(string message)
+  {
+    return Task.Run(() => Console.WriteLine(message));
+  }
+
+  public static Task WriteA(string message)
+  {
+    return Task.Run(() => Console.Write(message));
+  }
+  public static void WriteLine(string message)
+  {
+    Console.WriteLine(message);
+  }
+
+  public static void Write(string message)
+  {
+    Console.Write(message);
+  }
+}
+
 class ReceiptsVerification
 {
   private const string RpcAddress = "http://localhost:8545";
@@ -85,7 +107,7 @@ class ReceiptsVerification
 
   [Test]
   [Category("Receipts")]
-  public async Task NewBlockHeader_With_Subscription()
+  public void NewBlockHeader_With_Subscription()
   {
     TestContext.WriteLine("NewBlockHeader_With_Subscription");
     var client = new StreamingWebSocketClient(WsAddress);
@@ -107,12 +129,12 @@ class ReceiptsVerification
     };
 
     // open the web socket connection
-    await client.StartAsync();
+    client.StartAsync().Wait();
 
     // subscribe to new block headers
     // blocks will be received on another thread
     // therefore this doesn't block the current thread
-    await subscription.SubscribeAsync();
+    subscription.SubscribeAsync().Wait();
 
     //allow some time before we close the connection and end the subscription
     // await Task.Delay(TimeSpan.FromMinutes(1));
@@ -123,8 +145,14 @@ class ReceiptsVerification
     // // unsubscribe
     // await subscription.UnsubscribeAsync();
 
+    TestContext.Write("Waiting for new blocks: ");
+
     //allow time to unsubscribe
-    while (subscribed) await Task.Delay(TimeSpan.FromSeconds(1));
+    while (subscribed)
+    {
+      Task.Delay(1000).Wait();
+      TestContext.Write(".");
+    }
 
     // the connection closing will end the subscription
   }

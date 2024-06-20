@@ -9,6 +9,7 @@ using Nethermind.Evm.Tracing.GethStyle.Custom.JavaScript;
 using Nethermind.Serialization.Rlp;
 using Nethermind.Specs;
 using Nethermind.State.Proofs;
+using Newtonsoft.Json;
 
 class ReceiptsHelper
 {
@@ -23,34 +24,33 @@ class ReceiptsHelper
     TxReceipt[] txReceipts = new TxReceipt[receipts.Length];
     for (int i = 0; i < receipts.Length; i++)
     {
-      var rcp = new TxReceipt();
-      rcp.BlockHash = new Hash256(receipts[i].BlockHash);
-      rcp.BlockNumber = (long)receipts[i].BlockNumber.Value;
-      rcp.ContractAddress = new Address(receipts[i].ContractAddress);
+      Logger.Info($"Converting {JsonConvert.SerializeObject(receipts[i])}");
+      var rcp = new TxReceipt
+      {
+        // rcp.Logs = receipts[i].Logs.Select(l => new LogEntry()
+        // {
+        //   address = new Address(l.Address),
+        //   data = l.Data.ToBytes(),
+        //   topics = l.Topics.Select(t => new Hash256(t)).ToArray()
+        // }).ToArray();
+        Bloom = new Bloom(receipts[i].LogsBloom.ToBytes()),
 
-      // rcp.Logs = receipts[i].Logs.Select(l => new LogEntry()
-      // {
-      //   address = new Address(l.Address),
-      //   data = l.Data.ToBytes(),
-      //   topics = l.Topics.Select(t => new Hash256(t)).ToArray()
-      // }).ToArray();
-      rcp.Bloom = new Bloom(receipts[i].LogsBloom.ToBytes());
+        // ??? not sure it's the right field
+        PostTransactionState = new Hash256(receipts[i].Root),
+        ReturnValue = receipts[i].Status.HexValue.ToBytes(),
 
-      // ??? not sure it's the right field
-      rcp.PostTransactionState = new Hash256(receipts[i].Root);
-      rcp.ReturnValue = receipts[i].Status.HexValue.ToBytes();
-
-      rcp.Recipient = new Address(receipts[i].To);
-      rcp.ContractAddress = new Address(receipts[i].ContractAddress);
-      rcp.Sender = new Address(receipts[i].From);
-      rcp.GasUsedTotal = (long)receipts[i].CumulativeGasUsed.Value;
-      rcp.GasUsed = (long)receipts[i].GasUsed.Value;
-      rcp.Index = (int)receipts[i].TransactionIndex.Value;
-      rcp.TxHash = new Hash256(receipts[i].TransactionHash);
-      rcp.BlockHash = new Hash256(receipts[i].BlockHash);
-      rcp.BlockNumber = (long)receipts[i].BlockNumber.Value;
-      rcp.StatusCode = receipts[i].Status.HexValue.ToBytes()[0];
-      rcp.TxType = (TxType)(byte)receipts[i].Type.Value;
+        Recipient = new Address(receipts[i].To),
+        ContractAddress = new Address(receipts[i].ContractAddress),
+        Sender = new Address(receipts[i].From),
+        GasUsedTotal = (long)receipts[i].CumulativeGasUsed.Value,
+        GasUsed = (long)receipts[i].GasUsed.Value,
+        Index = (int)receipts[i].TransactionIndex.Value,
+        TxHash = new Hash256(receipts[i].TransactionHash),
+        BlockHash = new Hash256(receipts[i].BlockHash),
+        BlockNumber = (long)receipts[i].BlockNumber.Value,
+        StatusCode = receipts[i].Status.HexValue.ToBytes()[0],
+        TxType = (TxType)(byte)receipts[i].Type.Value
+      };
 
       txReceipts[i] = rcp;
       Logger.Info($"Converted: {i}");

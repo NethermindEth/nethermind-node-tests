@@ -81,8 +81,10 @@ class ReceiptsVerification
 
     var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(number)).Result;
 
-    ReceiptsHelper.CalculateRoot(receipts);
+    var calulatedRoot = ReceiptsHelper.CalculateRoot(receipts);
 
+    // assert that calculatedRoot is equal to receiptsRoot
+    Assert.That(calulatedRoot, Is.EqualTo(receiptsRoot));
 
     /*
     1. On synced node subscribe to new blocks using eth_subscribe with newHeads topic
@@ -157,9 +159,10 @@ class ReceiptsVerification
     //allow time to unsubscribe
     while (subscribed)
     {
-      Task.Delay(1000).Wait();
+      Task.Delay(100).Wait();
       TestContext.Write(".");
-      Logger.Info(".");
+      TestContext.Out.Write("Message to write to log");
+      Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
       if (sw.Elapsed.Seconds > 120)
       {
         break;

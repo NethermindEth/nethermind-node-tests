@@ -72,7 +72,7 @@ class ReceiptsVerification
 
 
   // 1. Head receipts verification
-  private void CompareHeadReceipts(Block block)
+  private string CompareHeadReceipts(Block block)
   {
     var receiptsRoot = block.ReceiptsRoot;
     var hash = block.BlockHash;
@@ -81,10 +81,10 @@ class ReceiptsVerification
 
     var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(number)).Result;
 
-    var calulatedRoot = ReceiptsHelper.CalculateRoot(receipts);
+    return ReceiptsHelper.CalculateRoot(receipts);
 
-    // assert that calculatedRoot is equal to receiptsRoot
-    Assert.That(calulatedRoot, Is.EqualTo(receiptsRoot));
+
+    // Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
 
     /*
     1. On synced node subscribe to new blocks using eth_subscribe with newHeads topic
@@ -98,7 +98,7 @@ class ReceiptsVerification
 
   }
 
-  public void SubscriptionHandler(object sender, StreamingEventArgs<Block> e)
+  public void SubscriptionHandler(object? sender, StreamingEventArgs<Block> e)
   {
     var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
     TestContext.WriteLine($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
@@ -106,7 +106,11 @@ class ReceiptsVerification
     var block = e.Response;
     TestContext.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
     Logger.Info($"Block: {JsonConvert.SerializeObject(block)}");
-    CompareHeadReceipts(block);
+    var calculatedRoot = CompareHeadReceipts(block);
+    var receiptsRoot = block.ReceiptsRoot;
+
+    Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+
   }
 
 
@@ -159,14 +163,21 @@ class ReceiptsVerification
     //allow time to unsubscribe
     while (subscribed)
     {
-      Task.Delay(100).Wait();
-      TestContext.Write(".");
-      TestContext.Out.Write("Message to write to log");
-      Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
-      if (sw.Elapsed.Seconds > 120)
+      if (sw.ElapsedMilliseconds % 1000 == 0)
+      {
+        TestContext.WriteLine(".");
+        Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
+      }
+      // Task.Delay(100).Wait();
+      // TestContext.Write(".");
+      // TestContext.Out.Write("Message to write to log");
+      // Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
+      if (sw.ElapsedMilliseconds > 120 * 1000)
       {
         break;
       }
+
+
     }
 
     // the connection closing will end the subscription

@@ -31,7 +31,7 @@ class ReceiptsHelper
       rcp.PostTransactionState = receipts[i].Root == null ? null : new Hash256(receipts[i].Root);
       rcp.ReturnValue = receipts[i].Status.HexValue.ToBytes();
 
-      rcp.Recipient = new Address(receipts[i].To);
+      rcp.Recipient = receipts[i].To == null ? null : new Address(receipts[i].To);
       rcp.ContractAddress = receipts[i].ContractAddress == null ? null : new Address(receipts[i].ContractAddress);
       rcp.Sender = new Address(receipts[i].From);
       rcp.GasUsedTotal = (long)receipts[i].CumulativeGasUsed.Value;

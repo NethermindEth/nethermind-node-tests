@@ -162,15 +162,6 @@ class ReceiptsVerification
         Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
         Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
       }
-      // if (sw.Elapsed.Seconds % 10 == 0)
-      // {
-      //   TestContext.WriteLine(".");
-      //   Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
-      // }
-      // Task.Delay(100).Wait();
-      // TestContext.Write(".");
-      // TestContext.Out.Write("Message to write to log");
-      // Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
       if (sw.ElapsedMilliseconds > 10 * 60 * 1000)
       {
         break;

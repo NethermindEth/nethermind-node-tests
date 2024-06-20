@@ -31,11 +31,11 @@ class ReceiptsHelper
       rcp.Bloom = new Bloom(receipts[i].LogsBloom.ToBytes());
 
       // ??? not sure it's the right field
-      rcp.PostTransactionState = new Hash256(receipts[i].Root);
+      rcp.PostTransactionState = receipts[i].Root == null ? null : new Hash256(receipts[i].Root);
       rcp.ReturnValue = receipts[i].Status.HexValue.ToBytes();
 
       rcp.Recipient = new Address(receipts[i].To);
-      rcp.ContractAddress = receipts[i].ContractAddress != null ? new Address(receipts[i].ContractAddress) : null;
+      rcp.ContractAddress = receipts[i].ContractAddress == null ? null : new Address(receipts[i].ContractAddress);
       rcp.Sender = new Address(receipts[i].From);
       rcp.GasUsedTotal = (long)receipts[i].CumulativeGasUsed.Value;
       rcp.GasUsed = (long)receipts[i].GasUsed.Value;

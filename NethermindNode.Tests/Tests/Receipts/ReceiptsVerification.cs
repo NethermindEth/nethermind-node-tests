@@ -54,7 +54,7 @@ class ReceiptsVerification
 
   private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-  // public Queue<Block> blocks = new Queue<Block>();
+  public Queue<Block> blocks = new Queue<Block>();
 
 
   // [Test]
@@ -104,15 +104,16 @@ class ReceiptsVerification
   {
     var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
     TestContext.WriteLine($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
-    Logger.Info($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
+    Logger.Info($"\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
     var block = e.Response;
     TestContext.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
     Logger.Info($"Block: {JsonConvert.SerializeObject(block)}");
-    var calculatedRoot = CompareHeadReceipts(block);
-    var receiptsRoot = block.ReceiptsRoot;
+    // var calculatedRoot = CompareHeadReceipts(block);
+    // var receiptsRoot = block.ReceiptsRoot;
 
-    Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+    // Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
 
+    blocks.Append(block);
   }
 
 
@@ -165,6 +166,15 @@ class ReceiptsVerification
     //allow time to unsubscribe
     while (subscribed)
     {
+      if (blocks.Count > 0)
+      {
+        var block = blocks.Dequeue();
+        Logger.Info($"Processing: {block.BlockHash}");
+
+        var calculatedRoot = CompareHeadReceipts(block);
+        var receiptsRoot = block.ReceiptsRoot;
+        Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+      }
       // if (sw.Elapsed.Seconds % 10 == 0)
       // {
       //   TestContext.WriteLine(".");

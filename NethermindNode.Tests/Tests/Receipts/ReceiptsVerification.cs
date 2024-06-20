@@ -116,7 +116,7 @@ class ReceiptsVerification
 
   [Test]
   [Category("Receipts")]
-  public void NewBlockHeader_With_Subscription()
+  public async Task NewBlockHeader_With_Subscription()
   {
     TestContext.WriteLine("NewBlockHeader_With_Subscription");
     var client = new StreamingWebSocketClient(WsAddress);
@@ -139,12 +139,12 @@ class ReceiptsVerification
     };
 
     // open the web socket connection
-    client.StartAsync().Wait();
+    await client.StartAsync();
 
     // subscribe to new block headers
     // blocks will be received on another thread
     // therefore this doesn't block the current thread
-    subscription.SubscribeAsync().Wait();
+    await subscription.SubscribeAsync();
 
     //allow some time before we close the connection and end the subscription
     // await Task.Delay(TimeSpan.FromMinutes(1));

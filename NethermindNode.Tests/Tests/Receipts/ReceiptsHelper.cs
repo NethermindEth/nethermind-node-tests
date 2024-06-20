@@ -52,12 +52,12 @@ class ReceiptsHelper
         var log = receipts[i].Logs[j];
         var addr = new Address(log["address"].ToString());
         // var data = log["data"].ToBytes();
-        var data = log.Value<string>("data")?.ToBytes();
-        var topics = log["topics"].Select(t => new Hash256(t.ToString())).ToArray();
-        Logger.Info($"Log!!!: {addr} {data} {topics}");
+        byte[] data = log.Value<string>("data")?.ToBytes();
+        Hash256[] topics = log["topics"].Select(t => new Hash256(t.ToString())).ToArray();
+        Logger.Info($"Log!!!: {addr} {data} {data.Count()} {topics} {topics.Count()}");
         var entry = new LogEntry(addr, data, topics);
 
-        Logger.Info($"Log: {JsonConvert.SerializeObject(entry)}");
+        // Logger.Info($"Log: {JsonConvert.SerializeObject(entry)}");
 
         rcp.Logs[j] = entry;
         // rcp.Logs[j] = new LogEntry(new Address(receipts[i].Logs[j].Address), receipts[i].Logs[j].Data.ToBytes(), receipts[i].Logs[j].Topics.Select(t => new Hash256(t)).ToArray());

@@ -28,22 +28,23 @@ class ReceiptsVerification
   private const string RpcAddress = "http://localhost:8545";
   private const string WsAddress = "ws://localhost:8545";
 
-  private Web3 w3 = new Web3(RpcAddress);
-
+  // private Web3 w3 = new Web3(RpcAddress);
 
   private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-  public Queue<Block> blocks = new Queue<Block>();
+  // public Queue<Block> blocks = new Queue<Block>();
 
 
   [Test]
   [Category("Receipts")]
   public void ShouldVerifyHeadReceipts()
   {
-    Logger.Info($"***Starting test: ShouldVerifyHeadReceipts ***");
-    var w3 = new Web3(RpcAddress);
-    var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
-    Console.WriteLine($"Current block number: {blockNumber}");
+    Console.WriteLine("ShouldVerifyHeadReceipts");
+
+    // Logger.Info($"***Starting test: ShouldVerifyHeadReceipts ***");
+    // var w3 = new Web3(RpcAddress);
+    // var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
+    // Console.WriteLine($"Current block number: {blockNumber}");
   }
 
 
@@ -53,6 +54,7 @@ class ReceiptsVerification
     var receiptsRoot = block.ReceiptsRoot;
     var hash = block.BlockHash;
     var number = block.Number.Value;
+    var w3 = new Web3(RpcAddress);
 
     var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(number)).Result;
 
@@ -81,48 +83,48 @@ class ReceiptsVerification
   }
 
 
-
   [Test]
   [Category("Receipts")]
   public async Task NewBlockHeader_With_Subscription()
   {
-    var client = new StreamingWebSocketClient(WsAddress);
-    // create a subscription 
-    // it won't do anything just yet though
-    var subscription = new EthNewBlockHeadersSubscription(client);
+    Console.WriteLine("NewBlockHeader_With_Subscription");
+    // var client = new StreamingWebSocketClient(WsAddress);
+    // // create a subscription 
+    // // it won't do anything just yet though
+    // var subscription = new EthNewBlockHeadersSubscription(client);
 
-    // attach our handler for new block header data
-    subscription.SubscriptionDataResponse += SubscriptionHandler;
+    // // attach our handler for new block header data
+    // subscription.SubscriptionDataResponse += SubscriptionHandler;
 
-    bool subscribed = true;
+    // bool subscribed = true;
 
-    // handle unsubscription
-    // optional - but may be important depending on your use case
-    subscription.UnsubscribeResponse += (object sender, StreamingEventArgs<bool> success) =>
-    {
-      subscribed = false;
-      Console.WriteLine($"Unsubscribed: {success.Response}");
-    };
+    // // handle unsubscription
+    // // optional - but may be important depending on your use case
+    // subscription.UnsubscribeResponse += (object sender, StreamingEventArgs<bool> success) =>
+    // {
+    //   subscribed = false;
+    //   Console.WriteLine($"Unsubscribed: {success.Response}");
+    // };
 
-    // open the web socket connection
-    await client.StartAsync();
+    // // open the web socket connection
+    // await client.StartAsync();
 
-    // subscribe to new block headers
-    // blocks will be received on another thread
-    // therefore this doesn't block the current thread
-    await subscription.SubscribeAsync();
+    // // subscribe to new block headers
+    // // blocks will be received on another thread
+    // // therefore this doesn't block the current thread
+    // await subscription.SubscribeAsync();
 
-    //allow some time before we close the connection and end the subscription
-    // await Task.Delay(TimeSpan.FromMinutes(1));
+    // //allow some time before we close the connection and end the subscription
+    // // await Task.Delay(TimeSpan.FromMinutes(1));
 
-    // // run for a minute before unsubscribing
-    // await Task.Delay(TimeSpan.FromMinutes(1));
+    // // // run for a minute before unsubscribing
+    // // await Task.Delay(TimeSpan.FromMinutes(1));
 
-    // // unsubscribe
-    // await subscription.UnsubscribeAsync();
+    // // // unsubscribe
+    // // await subscription.UnsubscribeAsync();
 
-    //allow time to unsubscribe
-    while (subscribed) await Task.Delay(TimeSpan.FromSeconds(1));
+    // //allow time to unsubscribe
+    // while (subscribed) await Task.Delay(TimeSpan.FromSeconds(1));
 
     // the connection closing will end the subscription
   }

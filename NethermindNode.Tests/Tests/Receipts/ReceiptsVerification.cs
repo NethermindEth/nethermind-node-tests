@@ -171,7 +171,7 @@ class ReceiptsVerification
       // TestContext.Write(".");
       // TestContext.Out.Write("Message to write to log");
       // Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
-      if (sw.ElapsedMilliseconds > 4 * 60 * 1000)
+      if (sw.ElapsedMilliseconds > 10 * 60 * 1000)
       {
         break;
       }

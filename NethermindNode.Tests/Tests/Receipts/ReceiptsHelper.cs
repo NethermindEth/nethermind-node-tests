@@ -23,7 +23,7 @@ class ReceiptsHelper
     TxReceipt[] txReceipts = new TxReceipt[receipts.Length];
     for (int i = 0; i < receipts.Length; i++)
     {
-      // Logger.Info($"Converting {JsonConvert.SerializeObject(receipts[i])}");
+      Logger.Info($"\n\nConverting {JsonConvert.SerializeObject(receipts[i])}");
       var rcp = new TxReceipt();
       rcp.Bloom = new Bloom(receipts[i].LogsBloom.ToBytes());
 
@@ -55,7 +55,7 @@ class ReceiptsHelper
       }
 
       txReceipts[i] = rcp;
-      // Logger.Info($"Converted: {i}");
+      Logger.Info($"Converted: {i}");
     }
 
     return txReceipts;

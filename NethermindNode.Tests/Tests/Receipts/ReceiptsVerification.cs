@@ -104,13 +104,12 @@ class ReceiptsVerification
   {
     var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
     TestContext.WriteLine($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
-    Logger.Info($"\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
+    Logger.Info($"\n\n\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
     var block = e.Response;
-    TestContext.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
-    Logger.Info($"Block: {JsonConvert.SerializeObject(block)}");
+    // TestContext.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
+    // Logger.Info($"Block: {JsonConvert.SerializeObject(block)}");
     blocks.Enqueue(block);
   }
-
 
   [Test]
   [Category("Receipts")]
@@ -144,14 +143,6 @@ class ReceiptsVerification
     // therefore this doesn't block the current thread
     await subscription.SubscribeAsync();
 
-    //allow some time before we close the connection and end the subscription
-    // await Task.Delay(TimeSpan.FromMinutes(1));
-
-    // // run for a minute before unsubscribing
-    // await Task.Delay(TimeSpan.FromMinutes(1));
-
-    // // unsubscribe
-    // await subscription.UnsubscribeAsync();
 
     TestContext.Write("Waiting for new blocks: ");
     Logger.Info("Waiting for new blocks: ");

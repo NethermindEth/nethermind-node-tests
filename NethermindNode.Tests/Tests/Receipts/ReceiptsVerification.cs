@@ -163,11 +163,11 @@ class ReceiptsVerification
     //allow time to unsubscribe
     while (subscribed)
     {
-      if (sw.Elapsed.Seconds % 10 == 0)
-      {
-        TestContext.WriteLine(".");
-        Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
-      }
+      // if (sw.Elapsed.Seconds % 10 == 0)
+      // {
+      //   TestContext.WriteLine(".");
+      //   Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
+      // }
       // Task.Delay(100).Wait();
       // TestContext.Write(".");
       // TestContext.Out.Write("Message to write to log");

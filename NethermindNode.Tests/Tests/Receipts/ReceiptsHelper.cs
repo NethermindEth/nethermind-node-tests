@@ -76,12 +76,10 @@ class ReceiptsHelper
     var txReceipts = ConvertReceipts(receipts);
     Logger.Info($"txReceipts: {txReceipts.Length}");
 
-    return ReceiptsRootCalculator.Instance.GetReceiptsRoot(txReceipts, new ReleaseSpec() { ValidateReceipts = false }, new Hash256("0x0")).ToString();
+    // return ReceiptsRootCalculator.Instance.GetReceiptsRoot(txReceipts, new ReleaseSpec() { ValidateReceipts = false }, new Hash256("0x0")).ToString();
 
-    // var spec = new ReleaseSpec() { ValidateReceipts = false };
-    // var _decoder = Rlp.GetStreamDecoder<TxReceipt>(RlpDecoderKey.Trie);
-    // Hash256 receiptsRoot = ReceiptTrie<TxReceipt>.CalculateRoot(spec, receipts, _decoder);
-
-
+    var spec = new ReleaseSpec() { ValidateReceipts = false };
+    var _decoder = Rlp.GetStreamDecoder<TxReceipt>(RlpDecoderKey.Trie);
+    return ReceiptTrie<TxReceipt>.CalculateRoot(spec, txReceipts, _decoder).ToString();
   }
 }

@@ -5,6 +5,7 @@ using Nethereum.RPC.Eth.DTOs;
 using Nethermind.Blockchain.Receipts;
 using Nethermind.Core;
 using Nethermind.Core.Crypto;
+using Nethermind.Core.Specs;
 using Nethermind.Evm.Tracing.GethStyle.Custom.JavaScript;
 using Nethermind.Serialization.Rlp;
 using Nethermind.Specs;
@@ -25,9 +26,7 @@ class ReceiptsHelper
     for (int i = 0; i < receipts.Length; i++)
     {
       Logger.Info($"Converting {JsonConvert.SerializeObject(receipts[i])}");
-      // var entry = JsonConvert.DeserializeObject<LogEntry>(JsonConvert.SerializeObject(receipts[i].Logs[0]));
       var rcp = new TxReceipt();
-      // rcp.Logs = receipts[i].Logs.Select(l => new LogEntry(new Address(l.Address), l.Data.ToBytes(), l.Topics.Select(t => new Hash256(t)).ToArray())).ToArray(),
       rcp.Bloom = new Bloom(receipts[i].LogsBloom.ToBytes());
 
       // ??? not sure it's the right field
@@ -49,16 +48,12 @@ class ReceiptsHelper
       rcp.Logs = new LogEntry[receipts[i].Logs.Count];
       for (int j = 0; j < receipts[i].Logs.Count; j++)
       {
-        // var entry = JsonConvert.DeserializeObject<LogEntry>(receipts[i].Logs[j]);
         var log = receipts[i].Logs[j];
         var addr = new Address(log["address"].ToString());
-        // var data = log["data"].ToBytes();
-        byte[] data = log.Value<string>("data")?.ToBytes();
+        byte[] data = log.Value<string>("data").ToBytes();
         Hash256[] topics = log["topics"].Select(t => new Hash256(t.ToString())).ToArray();
-        Logger.Info($"Log!!!: {addr} {data} {data.Count()} {topics} {topics.Count()}");
 
         rcp.Logs[j] = new LogEntry(addr, data, topics);
-        // rcp.Logs[j] = new LogEntry(new Address(receipts[i].Logs[j].Address), receipts[i].Logs[j].Data.ToBytes(), receipts[i].Logs[j].Topics.Select(t => new Hash256(t)).ToArray());
       }
 
       txReceipts[i] = rcp;
@@ -78,7 +73,9 @@ class ReceiptsHelper
 
     // return ReceiptsRootCalculator.Instance.GetReceiptsRoot(txReceipts, new ReleaseSpec() { ValidateReceipts = false }, new Hash256("0x0")).ToString();
 
-    var spec = new ReleaseSpec() { ValidateReceipts = false };
+    // var spec = new ReleaseSpec() { ValidateReceipts = false };
+    var spec = HoleskySpecProvider.Instance.GetSpec(HoleskySpecProvider.Instance.TransitionActivations[1]);
+
     var _decoder = Rlp.GetStreamDecoder<TxReceipt>(RlpDecoderKey.Trie);
     return ReceiptTrie<TxReceipt>.CalculateRoot(spec, txReceipts, _decoder).ToString();
   }

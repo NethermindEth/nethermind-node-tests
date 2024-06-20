@@ -55,11 +55,8 @@ class ReceiptsHelper
         byte[] data = log.Value<string>("data")?.ToBytes();
         Hash256[] topics = log["topics"].Select(t => new Hash256(t.ToString())).ToArray();
         Logger.Info($"Log!!!: {addr} {data} {data.Count()} {topics} {topics.Count()}");
-        var entry = new LogEntry(addr, data, topics);
 
-        // Logger.Info($"Log: {JsonConvert.SerializeObject(entry)}");
-
-        rcp.Logs[j] = entry;
+        rcp.Logs[j] = new LogEntry(addr, data, topics);
         // rcp.Logs[j] = new LogEntry(new Address(receipts[i].Logs[j].Address), receipts[i].Logs[j].Data.ToBytes(), receipts[i].Logs[j].Topics.Select(t => new Hash256(t)).ToArray());
       }
 

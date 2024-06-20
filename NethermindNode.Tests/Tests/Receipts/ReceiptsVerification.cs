@@ -80,6 +80,8 @@ class ReceiptsVerification
     var w3 = new Web3(RpcAddress);
 
     var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(number)).Result;
+    Logger.Info($"Receipts: {JsonConvert.SerializeObject(receipts)}");
+
 
     return ReceiptsHelper.CalculateRoot(receipts);
 
@@ -172,7 +174,7 @@ class ReceiptsVerification
       // TestContext.Write(".");
       // TestContext.Out.Write("Message to write to log");
       // Logger.Info($". ({sw.Elapsed.Seconds}s) {subscription.SubscriptionState}");
-      if (sw.ElapsedMilliseconds > 120 * 1000)
+      if (sw.ElapsedMilliseconds > 4 * 60 * 1000)
       {
         break;
       }

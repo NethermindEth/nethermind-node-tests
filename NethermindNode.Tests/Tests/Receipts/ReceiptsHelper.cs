@@ -13,6 +13,8 @@ using Nethermind.State.Proofs;
 class ReceiptsHelper
 {
 
+  private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
+
   ReleaseSpec spec = new ReleaseSpec() { ValidateReceipts = false };
 
   private static TxReceipt[] ConvertReceipts(TransactionReceipt[] receipts)
@@ -59,8 +61,12 @@ class ReceiptsHelper
   public static string CalculateRoot(TransactionReceipt[] receipts)
   {
     // Calculate the root hash of the receipts
+    Logger.Info($"CalculateRoot: {receipts.Length}");
+
 
     var txReceipts = ConvertReceipts(receipts);
+    Logger.Info($"txReceipts: {txReceipts.Length}");
+
     return ReceiptsRootCalculator.Instance.GetReceiptsRoot(txReceipts, new ReleaseSpec() { ValidateReceipts = false }, new Hash256("0x0")).ToString();
 
     // var spec = new ReleaseSpec() { ValidateReceipts = false };

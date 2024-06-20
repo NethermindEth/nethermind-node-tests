@@ -80,7 +80,7 @@ class ReceiptsVerification
     var w3 = new Web3(RpcAddress);
 
     var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(number)).Result;
-    Logger.Info($"Receipts: {JsonConvert.SerializeObject(receipts)}");
+    Logger.Info($"Receipts count: {receipts.Length}");
 
 
     return ReceiptsHelper.CalculateRoot(receipts);

@@ -53,6 +53,7 @@ class ReceiptsHelper
       rcp.TxType = (TxType)(byte)receipts[i].Type.Value;
 
       txReceipts[i] = rcp;
+      Logger.Info($"Converted: {i}");
     }
 
     return txReceipts;
@@ -62,7 +63,6 @@ class ReceiptsHelper
   {
     // Calculate the root hash of the receipts
     Logger.Info($"CalculateRoot: {receipts.Length}");
-
 
     var txReceipts = ConvertReceipts(receipts);
     Logger.Info($"txReceipts: {txReceipts.Length}");

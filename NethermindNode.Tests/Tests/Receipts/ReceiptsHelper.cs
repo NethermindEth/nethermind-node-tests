@@ -48,7 +48,10 @@ class ReceiptsHelper
 
       for (int j = 0; j < receipts[i].Logs.Count; j++)
       {
-        var entry = JsonConvert.DeserializeObject<LogEntry>(JsonConvert.SerializeObject(receipts[i].Logs[j]));
+        // var entry = JsonConvert.DeserializeObject<LogEntry>(receipts[i].Logs[j]);
+        var log = receipts[i].Logs[j];
+        var entry = new LogEntry(new Address(log["address"]?.ToString()), log["data"].ToBytes(), log["topics"].Select(t => new Hash256(t.ToString())).ToArray());
+
         Logger.Info($"Log: {JsonConvert.SerializeObject(entry)}");
 
         rcp.Logs[j] = entry;

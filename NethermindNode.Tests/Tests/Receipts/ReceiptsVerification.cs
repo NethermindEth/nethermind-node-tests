@@ -113,7 +113,7 @@ class ReceiptsVerification
 
     // Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
 
-    blocks.Append(block);
+    blocks.Enqueue(block);
   }
 
 

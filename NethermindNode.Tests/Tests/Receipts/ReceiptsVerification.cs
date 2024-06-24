@@ -74,8 +74,6 @@ class ReceiptsVerification
   // 1. Head receipts verification
   private string CompareHeadReceipts(Block block)
   {
-    var receiptsRoot = block.ReceiptsRoot;
-    var hash = block.BlockHash;
     var number = block.Number.Value;
     var w3 = new Web3(RpcAddress);
 
@@ -84,9 +82,6 @@ class ReceiptsVerification
 
 
     return ReceiptsHelper.CalculateRoot(receipts);
-
-
-    // Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
 
     /*
     1. On synced node subscribe to new blocks using eth_subscribe with newHeads topic
@@ -106,16 +101,16 @@ class ReceiptsVerification
     TestContext.WriteLine($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
     Logger.Info($"\n\n\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
     var block = e.Response;
-    // TestContext.WriteLine($"Block: {JsonConvert.SerializeObject(block)}");
-    // Logger.Info($"Block: {JsonConvert.SerializeObject(block)}");
     blocks.Enqueue(block);
   }
 
   [Test]
   [Category("Receipts")]
-  public async Task NewBlockHeader_With_Subscription()
+  public async Task Verify_New_Receipts()
   {
-    TestContext.WriteLine("NewBlockHeader_With_Subscription");
+    var testRunTime = 2 * 60 * 1000; // 10 minutes
+
+
     var client = new StreamingWebSocketClient(WsAddress);
     // create a subscription 
     // it won't do anything just yet though
@@ -162,14 +157,57 @@ class ReceiptsVerification
         Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
         Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
       }
-      if (sw.ElapsedMilliseconds > 10 * 60 * 1000)
+      if (sw.ElapsedMilliseconds > testRunTime)
       {
+        subscription.UnsubscribeAsync().Wait();
+        break;
+      }
+    }
+  }
+
+  [Test]
+  [Category("Receipts")]
+  public async Task Verify_Historical_Receipts()
+  {
+    Logger.Info("Verify_Historical_Receipts");
+
+    /*
+
+2. Historical receipts verification
+    1. On a synced node get a latest block hash (call it block X)
+    2. Do a steps from **1.b.i** to **1.b.iv** for this block
+    3. Get block X-1 and do the same as for point b
+    4. Continue till genesis.
+
+    */
+
+
+
+    var sw = new Stopwatch();
+    sw.Start();
+    var testRunTime = 3 * 60 * 1000; // 10 minutes
+
+    var w3 = new Web3(RpcAddress);
+    var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
+    var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
+    var count = 0;
+    while (true)
+    {
+      if (sw.ElapsedMilliseconds > testRunTime)
+      {
+        Logger.Info($"Terminating. Processed: {count} blocks");
         break;
       }
 
+      Logger.Info($"Processing: {block.BlockHash}");
 
+      var calculatedRoot = CompareHeadReceipts(block);
+      var receiptsRoot = block.ReceiptsRoot;
+      Logger.Info($"[{block.Number}] ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+      Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
+      count++;
+
+      block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value - 1)).Result;
     }
-
-    // the connection closing will end the subscription
   }
 }

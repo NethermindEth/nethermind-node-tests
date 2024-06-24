@@ -159,7 +159,7 @@ class ReceiptsVerification
       }
       if (sw.ElapsedMilliseconds > testRunTime)
       {
-        subscription.UnsubscribeAsync().Wait();
+        await subscription.UnsubscribeAsync();
         break;
       }
     }

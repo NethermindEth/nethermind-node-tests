@@ -204,7 +204,7 @@ class ReceiptsVerification
 
       var calculatedRoot = CompareHeadReceipts(block);
       var receiptsRoot = block.ReceiptsRoot;
-      Logger.Info($"[{block.Number}] ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+      Logger.Info($"[{block.Number}] [{block.BlockHash}] ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
       Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
       count++;
 

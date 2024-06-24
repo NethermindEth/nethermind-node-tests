@@ -55,7 +55,7 @@ class ReceiptsHelper
       }
 
       txReceipts[i] = rcp;
-      Logger.Info($"Converted: {i}");
+      // Logger.Info($"Converted: {i}");
     }
 
     return txReceipts;

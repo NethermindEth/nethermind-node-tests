@@ -184,29 +184,29 @@ class ReceiptsVerification
 
 
 
-    var sw = new Stopwatch();
-    sw.Start();
-    var testRunTime = 3 * 60 * 1000; // 10 minutes
-
     var w3 = new Web3(RpcAddress);
     var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
     var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
     var count = 0;
     while (true)
     {
-      if (sw.ElapsedMilliseconds > testRunTime)
-      {
-        Logger.Info($"Terminating. Processed: {count} blocks");
-        break;
-      }
-
-      Logger.Info($"Processing: {block.BlockHash}");
-
       var calculatedRoot = CompareHeadReceipts(block);
       var receiptsRoot = block.ReceiptsRoot;
-      Logger.Info($"[{block.Number}] [{block.BlockHash}] ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+      if (count % 100 == 0)
+      {
+        Logger.Info($"Processing: {block.BlockHash}");
+        Logger.Info($"[{block.Number}] [{block.BlockHash}] ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+      }
+
       Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
       count++;
+
+      if (block.Number.Value == 0)
+      {
+        Logger.Info($"Reached genesis block!!!. Processed: {count} blocks");
+
+        break;
+      }
 
       block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value - 1)).Result;
     }

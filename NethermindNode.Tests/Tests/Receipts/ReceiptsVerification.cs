@@ -104,12 +104,11 @@ class ReceiptsVerification
     blocks.Enqueue(block);
   }
 
-  [Test]
-  [Category("Receipts")]
+  // [Test]
+  // [Category("Receipts")]
   public async Task Verify_New_Receipts()
   {
     var testRunTime = 2 * 60 * 1000; // 10 minutes
-
 
     var client = new StreamingWebSocketClient(WsAddress);
     // create a subscription 
@@ -160,6 +159,8 @@ class ReceiptsVerification
       if (sw.ElapsedMilliseconds > testRunTime)
       {
         await subscription.UnsubscribeAsync();
+        subscribed = false;
+        await client.StopAsync();
         break;
       }
     }

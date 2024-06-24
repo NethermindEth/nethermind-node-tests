@@ -50,7 +50,7 @@ class ReceiptsVerification
   private const string RpcAddress = "http://localhost:8545";
   private const string WsAddress = "ws://localhost:8545";
 
-  // private Web3 w3 = new Web3(RpcAddress);
+  private Web3 w3 = new Web3(RpcAddress);
 
   private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
@@ -65,21 +65,15 @@ class ReceiptsVerification
     Logger.Info("ShouldVerifyHeadReceipts");
 
     Logger.Info($"***Starting test: ShouldVerifyHeadReceipts ***");
-    var w3 = new Web3(RpcAddress);
     var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
     TestContext.WriteLine($"Current block number: {blockNumber}");
   }
-
 
   // 1. Head receipts verification
   private string CompareHeadReceipts(Block block)
   {
     var number = block.Number.Value;
-    var w3 = new Web3(RpcAddress);
-
     var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(number)).Result;
-    Logger.Info($"Receipts count: {receipts.Length}");
-
 
     return ReceiptsHelper.CalculateRoot(receipts);
 
@@ -111,8 +105,6 @@ class ReceiptsVerification
     var testRunTime = 2 * 60 * 1000; // 10 minutes
 
     var client = new StreamingWebSocketClient(WsAddress);
-    // create a subscription 
-    // it won't do anything just yet though
     var subscription = new EthNewBlockHeadersSubscription(client);
 
     // attach our handler for new block header data
@@ -166,27 +158,66 @@ class ReceiptsVerification
     }
   }
 
+  private void ProcessBlock(BigInteger blockNumber)
+  {
+    if (blockNumber <= 0)
+    {
+      Logger.Info($"Negative block number: {blockNumber}");
+      return;
+    }
+    var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
+    var calculatedRoot = CompareHeadReceipts(block);
+    var receiptsRoot = block.ReceiptsRoot;
+    if (blockNumber % 100 == 0)
+    {
+      Logger.Info($"Processing: {block.BlockHash}");
+      Logger.Info($"[{block.Number}] [{block.BlockHash}] ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+    }
+    Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
+  }
+
   [Test]
   [Category("Receipts")]
-  public async Task Verify_Historical_Receipts()
+  public async Task Verify_Historical_Receipts_Threads()
+  {
+    Logger.Info("Verify_Historical_Receipts_Threads");
+
+    var count = 0;
+    var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
+    while (true)
+    {
+
+      if (head <= 0)
+      {
+        Logger.Info($"Reached genesis block!!!. Processed: {count} blocks");
+
+        break;
+      }
+
+      var tasks = new List<Task>();
+      var i = 0;
+      var max_threads = 10;
+      for (i = 0; i < max_threads; i++)
+      {
+        if (head - i < 0) break;
+        tasks.Add(Task.Run(() => ProcessBlock(head - i)));
+      }
+
+      await Task.WhenAll(tasks);
+      head -= i;
+      count += i;
+      // block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value - 1)).Result;
+    }
+  }
+
+  // [Test]
+  // [Category("Receipts")]
+  public void Verify_Historical_Receipts()
   {
     Logger.Info("Verify_Historical_Receipts");
 
-    /*
-
-2. Historical receipts verification
-    1. On a synced node get a latest block hash (call it block X)
-    2. Do a steps from **1.b.i** to **1.b.iv** for this block
-    3. Get block X-1 and do the same as for point b
-    4. Continue till genesis.
-
-    */
-
-
-
-    var w3 = new Web3(RpcAddress);
-    var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
-    var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
+    var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
+    var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(head)).Result;
     var count = 0;
     while (true)
     {

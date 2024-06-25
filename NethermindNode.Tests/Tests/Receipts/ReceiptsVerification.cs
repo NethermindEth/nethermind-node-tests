@@ -196,11 +196,12 @@ class ReceiptsVerification
 
       var tasks = new List<Task>();
       var i = 0;
-      var max_threads = 10;
+      var max_threads = 8;
       for (i = 0; i < max_threads; i++)
       {
         if (head - i < 0) break;
-        tasks.Add(Task.Run(() => ProcessBlock(head - i)));
+        var blockNumber = head - i;
+        tasks.Add(Task.Run(() => ProcessBlock(blockNumber)));
       }
 
       await Task.WhenAll(tasks);

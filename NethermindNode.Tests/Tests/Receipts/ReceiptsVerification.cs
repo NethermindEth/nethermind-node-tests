@@ -196,7 +196,7 @@ class ReceiptsVerification
 
       var tasks = new List<Task>();
       var i = 0;
-      var max_threads = 8;
+      var max_threads = 4;
       for (i = 0; i < max_threads; i++)
       {
         if (head - i < 0) break;

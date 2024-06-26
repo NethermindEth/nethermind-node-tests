@@ -70,10 +70,9 @@ class ReceiptsVerification
   }
 
   // 1. Head receipts verification
-  private string CompareHeadReceipts(Block block)
+  private string CompareHeadReceipts(BigInteger blockNumber)
   {
-    var number = block.Number.Value;
-    var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(number)).Result;
+    var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
 
     return ReceiptsHelper.CalculateRoot(receipts);
 
@@ -143,7 +142,7 @@ class ReceiptsVerification
         var block = blocks.Dequeue();
         Logger.Info($"Processing: {block.BlockHash}");
 
-        var calculatedRoot = CompareHeadReceipts(block);
+        var calculatedRoot = CompareHeadReceipts(block.Number.Value);
         var receiptsRoot = block.ReceiptsRoot;
         Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
         Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
@@ -166,7 +165,7 @@ class ReceiptsVerification
       return;
     }
     var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
-    var calculatedRoot = CompareHeadReceipts(block);
+    var calculatedRoot = CompareHeadReceipts(block.Number.Value);
     var receiptsRoot = block.ReceiptsRoot;
     if (blockNumber % 100 == 0)
     {
@@ -178,37 +177,45 @@ class ReceiptsVerification
 
   [Test]
   [Category("Receipts")]
-  public async Task Verify_Historical_Receipts_Threads()
+  public void Verify_Historical_Receipts_Threads()
   {
     Logger.Info("Verify_Historical_Receipts_Threads");
 
     var count = 0;
     var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
-    while (true)
+    // while (true)
+    // {
+
+    //   if (head <= 0)
+    //   {
+    //     Logger.Info($"Reached genesis block!!!. Processed: {count} blocks");
+
+    //     break;
+    //   }
+
+    //   // var tasks = new List<Task>();
+    //   // var i = 0;
+    //   // var max_threads = 4;
+    //   // for (i = 0; i < max_threads; i++)
+    //   // {
+    //   //   if (head - i < 0) break;
+    //   //   var blockNumber = head - i;
+    //   //   tasks.Add(Task.Run(() => ProcessBlock(blockNumber)));
+    //   // }
+
+    //   // await Task.WhenAll(tasks);
+    //   // head -= i;
+    //   // count += i;
+    //   // block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value - 1)).Result;
+    // }
+
+    var upperBound = (int)head + 1;
+
+    Parallel.For(0, upperBound, i =>
     {
-
-      if (head <= 0)
-      {
-        Logger.Info($"Reached genesis block!!!. Processed: {count} blocks");
-
-        break;
-      }
-
-      var tasks = new List<Task>();
-      var i = 0;
-      var max_threads = 4;
-      for (i = 0; i < max_threads; i++)
-      {
-        if (head - i < 0) break;
-        var blockNumber = head - i;
-        tasks.Add(Task.Run(() => ProcessBlock(blockNumber)));
-      }
-
-      await Task.WhenAll(tasks);
-      head -= i;
-      count += i;
-      // block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value - 1)).Result;
-    }
+      var blockNumber = head - i;
+      ProcessBlock(blockNumber);
+    });
   }
 
   // [Test]

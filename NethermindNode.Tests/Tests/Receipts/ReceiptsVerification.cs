@@ -193,20 +193,20 @@ class ReceiptsVerification
     //     break;
     //   }
 
-    //   // var tasks = new List<Task>();
-    //   // var i = 0;
-    //   // var max_threads = 4;
-    //   // for (i = 0; i < max_threads; i++)
-    //   // {
-    //   //   if (head - i < 0) break;
-    //   //   var blockNumber = head - i;
-    //   //   tasks.Add(Task.Run(() => ProcessBlock(blockNumber)));
-    //   // }
+    // var tasks = new List<Task>();
+    // var i = 0;
+    // var max_threads = 4;
+    // for (i = 0; i < max_threads; i++)
+    // {
+    //   if (head - i < 0) break;
+    //   var blockNumber = head - i;
+    //   tasks.Add(Task.Run(() => ProcessBlock(blockNumber)));
+    // }
 
-    //   // await Task.WhenAll(tasks);
-    //   // head -= i;
-    //   // count += i;
-    //   // block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value - 1)).Result;
+    // await Task.WhenAll(tasks);
+    // head -= i;
+    // count += i;
+    // block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value - 1)).Result;
     // }
 
     var upperBound = (int)head + 1;
@@ -229,7 +229,7 @@ class ReceiptsVerification
     var count = 0;
     while (true)
     {
-      var calculatedRoot = CompareHeadReceipts(block);
+      var calculatedRoot = CompareHeadReceipts(block.Number.Value);
       var receiptsRoot = block.ReceiptsRoot;
       if (count % 100 == 0)
       {

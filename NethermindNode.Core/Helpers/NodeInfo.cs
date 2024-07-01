@@ -140,7 +140,7 @@ public static class NodeInfo
 
     public static async Task<SingleResult> GetConfigValue(Logger logger, string category, string key)
     {
-        var res = await HttpExecutor.ExecuteAndSerialize<SingleResult>("debug_getConfigValue", $"[\"{category}\", \"{key}\"]", "http://localhost:8545", logger);
+        var res = await HttpExecutor.ExecuteAndSerialize<SingleResult>("debug_getConfigValue", $"\"{category}\", \"{key}\"", "http://localhost:8545", logger);
         return res;
     }
 

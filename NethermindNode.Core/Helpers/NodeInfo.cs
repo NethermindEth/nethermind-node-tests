@@ -123,9 +123,9 @@ public static class NodeInfo
         }
     }
 
-    public static NetworkType GetNetworkType(Logger logger)
+    public static async Task<NetworkType> GetNetworkType(Logger logger)
     {
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_chainId", "", "http://localhost:8545", logger);
+        var commandResult = await HttpExecutor.ExecuteAndSerialize<SingleResult>("eth_chainId", "", "http://localhost:8545", logger);
         var result = commandResult.Result;
         if (result == null)
         {
@@ -133,38 +133,38 @@ public static class NodeInfo
         }
         else
         {
-            return (NetworkType)int.Parse(result.Item1, System.Globalization.NumberStyles.HexNumber);
+            logger.Info($"Network type: {result}");
+            return (NetworkType)int.Parse(result, System.Globalization.NumberStyles.HexNumber);
         }
     }
 
-    public static Tuple<string, TimeSpan, bool>? GetConfigValue(Logger logger, string category, string key)
+    public static async Task<SingleResult> GetConfigValue(Logger logger, string category, string key)
     {
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getConfigValue", $"[\"{category}\", \"{key}\"]", "http://localhost:8545", logger);
-        return commandResult.Result;
+        var res = await HttpExecutor.ExecuteAndSerialize<SingleResult>("debug_getConfigValue", $"[\"{category}\", \"{key}\"]", "http://localhost:8545", logger);
+        return res;
     }
 
 
-    public static long GetPivotNumber(Logger logger)
+    public static async Task<long> GetPivotNumber(Logger logger)
     {
-        var result = GetConfigValue(logger, "Sync", "PivotNumber");
-        if (result == null)
-        {
-
-            return 0;
-        }
-
-        return long.Parse(result.Item1);
-    }
-
-    public static long GetAncientReceiptsBarrier(Logger logger)
-    {
-        var result = GetConfigValue(logger, "Sync", "AncientReceiptsBarrier");
-        if (result == null)
+        var result = await GetConfigValue(logger, "Sync", "PivotNumber");
+        if (result.Result == null)
         {
             return 0;
         }
 
-        return long.Parse(result.Item1);
+        return long.Parse(result.Result);
+    }
+
+    public static async Task<long> GetAncientReceiptsBarrier(Logger logger)
+    {
+        var result = await GetConfigValue(logger, "Sync", "AncientReceiptsBarrier");
+        if (result.Result == null)
+        {
+            return 0;
+        }
+
+        return long.Parse(result.Result);
     }
 
 }

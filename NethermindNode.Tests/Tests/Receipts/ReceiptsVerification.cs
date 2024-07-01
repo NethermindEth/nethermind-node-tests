@@ -158,12 +158,12 @@ class ReceiptsVerification
 
   [Test]
   [Category("Receipts")]
-  public void Verify_Historical_Receipts_Near_Pivot()
+  public async Task Verify_Historical_Receipts_Near_Pivot()
   {
     Logger.Info("Verify_Historical_Receipts_Near_Pivot");
 
     var network = NodeInfo.GetNetworkType(Logger);
-    var pivotBlock = NodeInfo.GetPivotNumber(Logger);
+    var pivotBlock = await NodeInfo.GetPivotNumber(Logger);
     var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
     var upperBound = pivotBlock + 1 * 1000 * 1000; // 1mil
     var lowerBound = pivotBlock - 1 * 1000 * 1000; // 1mil

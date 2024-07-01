@@ -18,6 +18,7 @@ public static class HttpExecutor
 
     static public async Task<T> ExecuteAndSerialize<T>(string command, string parameters, string url, Logger logger) where T : IRpcResponse
     {
+        logger.Info($"Executing command: {command} with parameters: {parameters}");
         var response = await ExecuteNethermindJsonRpcCommand(command, parameters, url, logger);
         logger.Info($"Response: {response.Item1}");
         bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<T>(response.Item1, out IRpcResponse deserialized);

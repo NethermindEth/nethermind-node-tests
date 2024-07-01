@@ -2,25 +2,13 @@ using NethermindNode.Core.Helpers;
 using Nethereum.Web3;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Hex.HexTypes;
-using Nethereum.JsonRpc.Client;
-using System.Collections.Concurrent;
 using System.Diagnostics;
-using NethermindNode.Core.Helpers;
 using NUnit.Framework.Internal;
-
-using Nethereum.JsonRpc.WebSocketClient;
-using Nethereum.Web3;
-
-using Nethereum.ABI.FunctionEncoding.Attributes;
-using Nethereum.Contracts;
 using Nethereum.JsonRpc.Client.Streaming;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
-using Nethereum.RPC.Reactive.Eth.Subscriptions;
 using Nethereum.RPC.Eth.Subscriptions;
 using Newtonsoft.Json;
-using System;
 using System.Numerics;
-using System.Threading.Tasks;
 namespace NethermindNode.Tests.Receipts;
 
 class ReceiptsVerification
@@ -45,25 +33,6 @@ class ReceiptsVerification
     Logger.Info($"***Starting test: ShouldVerifyHeadReceipts ***");
     var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
     TestContext.WriteLine($"Current block number: {blockNumber}");
-  }
-
-  // 1. Head receipts verification
-  private string CompareHeadReceipts(BigInteger blockNumber)
-  {
-    var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
-
-    return ReceiptsHelper.CalculateRoot(receipts);
-
-    /*
-    1. On synced node subscribe to new blocks using eth_subscribe with newHeads topic
-    2. Whenever notification from subscription is received we should:
-        1. Get ReceiptsRoot from new block
-        2. Get new block hash
-        3. Use block hash and call **eth_getBlockReceipts** and calculate hash of all receipts (use Nethermind method for that or craft a new one to have a separate implementation).
-        4. Compare Hashes from point i and iii.
-    3. Thing to consider: we are “losing receipts” from time to time in unknown way so maybe such tool should not only check once after subscription notification but “recheck” also after some time (maybe after pruning interval?) to make sure receipts are properly flushed to DB
-    */
-
   }
 
   public void SubscriptionHandler(object? sender, StreamingEventArgs<Block> e)
@@ -119,8 +88,18 @@ class ReceiptsVerification
       {
         var block = blocks.Dequeue();
         Logger.Info($"Processing: {block.BlockHash}");
+        /*
+        1. On synced node subscribe to new blocks using eth_subscribe with newHeads topic
+        2. Whenever notification from subscription is received we should:
+            1. Get ReceiptsRoot from new block
+            2. Get new block hash
+            3. Use block hash and call **eth_getBlockReceipts** and calculate hash of all receipts (use Nethermind method for that or craft a new one to have a separate implementation).
+            4. Compare Hashes from point i and iii.
+        3. Thing to consider: we are “losing receipts” from time to time in unknown way so maybe such tool should not only check once after subscription notification but “recheck” also after some time (maybe after pruning interval?) to make sure receipts are properly flushed to DB
+        */
 
-        var calculatedRoot = CompareHeadReceipts(block.Number.Value);
+        var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value)).Result;
+        var calculatedRoot = ReceiptsHelper.CalculateRoot(receipts);
         var receiptsRoot = block.ReceiptsRoot;
         Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
         Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
@@ -143,18 +122,18 @@ class ReceiptsVerification
       return;
     }
     var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
-    var calculatedRoot = CompareHeadReceipts(block.Number.Value);
-    var receiptsRoot = block.ReceiptsRoot;
+    var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value)).Result;
+    var calculatedRoot = ReceiptsHelper.CalculateRoot(receipts);
     if (blockNumber % 100 == 0)
     {
       Logger.Info($"Processing: {block.BlockHash}");
-      Logger.Info($"[{block.Number}] [{block.BlockHash}] ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+      Logger.Info($"[{block.Number}] [{block.BlockHash}] Equal: {calculatedRoot == block.ReceiptsRoot}");
     }
-    Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
+    Assert.That(calculatedRoot, Is.EqualTo(block.ReceiptsRoot));
   }
 
-  [Test]
-  [Category("Receipts")]
+  // [Test]
+  // [Category("Receipts")]
   public void Verify_Historical_Receipts_To_Genesis()
   {
     Logger.Info("Verify_Historical_Receipts_To_Genesis");
@@ -166,7 +145,7 @@ class ReceiptsVerification
     ParallelOptions parallelOptions = new ParallelOptions
     {
       // Set the maximum number of concurrent operations
-      MaxDegreeOfParallelism = 16
+      MaxDegreeOfParallelism = 4
     };
 
 
@@ -177,24 +156,41 @@ class ReceiptsVerification
     });
   }
 
-  // [Test]
-  // [Category("Receipts")]
+  [Test]
+  [Category("Receipts")]
   public void Verify_Historical_Receipts_Near_Pivot()
   {
     Logger.Info("Verify_Historical_Receipts_Near_Pivot");
 
     var network = NodeInfo.GetNetworkType(Logger);
-
-
+    var pivotBlock = NodeInfo.GetPivotNumber(Logger);
     var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
-    var upperBound = (int)head + 1;
-    var lowerBound = 0; // genesis
+    var upperBound = pivotBlock + 1 * 1000 * 1000; // 1mil
+    var lowerBound = pivotBlock - 1 * 1000 * 1000; // 1mil
 
-    Parallel.For(lowerBound, upperBound, i =>
+    if (lowerBound < 0)
+    {
+      lowerBound = 0;
+    }
+
+    if (upperBound > head)
+    {
+      upperBound = (long)head;
+    }
+
+    Logger.Info($"Pivot: {pivotBlock} Head: {head} Lower: {lowerBound} Upper: {upperBound}");
+
+    ParallelOptions parallelOptions = new ParallelOptions
+    {
+      // Set the maximum number of concurrent operations
+      MaxDegreeOfParallelism = 4
+    };
+
+
+    Parallel.For(lowerBound, upperBound, parallelOptions, i =>
     {
       var blockNumber = head - i;
       ProcessBlock(blockNumber);
-      Thread.Sleep(1000);
     });
   }
 }

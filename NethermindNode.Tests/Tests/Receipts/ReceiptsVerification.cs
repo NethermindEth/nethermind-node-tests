@@ -163,11 +163,17 @@ class ReceiptsVerification
     var upperBound = (int)head + 1;
     var lowerBound = 0; // genesis
 
-    Parallel.For(lowerBound, upperBound, i =>
+    ParallelOptions parallelOptions = new ParallelOptions
+    {
+      // Set the maximum number of concurrent operations
+      MaxDegreeOfParallelism = 16
+    };
+
+
+    Parallel.For(lowerBound, upperBound, parallelOptions, i =>
     {
       var blockNumber = head - i;
       ProcessBlock(blockNumber);
-      Thread.Sleep(1000);
     });
   }
 

@@ -15,37 +15,12 @@ class ReceiptsVerification
 {
   private const string RpcAddress = "http://localhost:8545";
   private const string WsAddress = "ws://localhost:8545";
-
   private Web3 w3 = new Web3(RpcAddress);
-
   private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-
   public Queue<Block> blocks = new Queue<Block>();
 
-
-  // [Test]
-  // [Category("Receipts")]
-  public void ShouldVerifyHeadReceipts()
-  {
-    TestContext.WriteLine("ShouldVerifyHeadReceipts");
-    Logger.Info("ShouldVerifyHeadReceipts");
-
-    Logger.Info($"***Starting test: ShouldVerifyHeadReceipts ***");
-    var blockNumber = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
-    TestContext.WriteLine($"Current block number: {blockNumber}");
-  }
-
-  public void SubscriptionHandler(object? sender, StreamingEventArgs<Block> e)
-  {
-    var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
-    TestContext.WriteLine($"New Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
-    Logger.Info($"\n\n\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
-    var block = e.Response;
-    blocks.Enqueue(block);
-  }
-
-  // [Test]
-  // [Category("Receipts")]
+  [Test]
+  [Category("ReceiptsNew")]
   public async Task Verify_New_Receipts()
   {
     var testRunTime = 2 * 60 * 1000; // 10 minutes
@@ -63,7 +38,6 @@ class ReceiptsVerification
     subscription.UnsubscribeResponse += (object sender, StreamingEventArgs<bool> success) =>
     {
       subscribed = false;
-      TestContext.WriteLine($"Unsubscribed: {success.Response}");
       Logger.Info($"Unsubscribed: {success.Response}");
     };
 
@@ -76,7 +50,6 @@ class ReceiptsVerification
     await subscription.SubscribeAsync();
 
 
-    TestContext.Write("Waiting for new blocks: ");
     Logger.Info("Waiting for new blocks: ");
 
     var sw = new Stopwatch();
@@ -114,26 +87,8 @@ class ReceiptsVerification
     }
   }
 
-  private void ProcessBlock(BigInteger blockNumber)
-  {
-    if (blockNumber < 0)
-    {
-      Logger.Info($"Negative block number: {blockNumber}");
-      return;
-    }
-    var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
-    var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value)).Result;
-    var calculatedRoot = ReceiptsHelper.CalculateRoot(receipts);
-    if (blockNumber % 100 == 0)
-    {
-      Logger.Info($"Processing: {block.BlockHash}");
-      Logger.Info($"[{block.Number}] [{block.BlockHash}] Equal: {calculatedRoot == block.ReceiptsRoot}");
-    }
-    Assert.That(calculatedRoot, Is.EqualTo(block.ReceiptsRoot));
-  }
-
-  // [Test]
-  // [Category("Receipts")]
+  [Test]
+  [Category("ReceiptsToGenesis")]
   public void Verify_Historical_Receipts_To_Genesis()
   {
     Logger.Info("Verify_Historical_Receipts_To_Genesis");
@@ -157,7 +112,7 @@ class ReceiptsVerification
   }
 
   [Test]
-  [Category("Receipts")]
+  [Category("ReceiptsNearPivot")]
   public async Task Verify_Historical_Receipts_Near_Pivot()
   {
     Logger.Info("Verify_Historical_Receipts_Near_Pivot");
@@ -165,8 +120,8 @@ class ReceiptsVerification
     var network = NodeInfo.GetNetworkType(Logger);
     var pivotBlock = await NodeInfo.GetPivotNumber(Logger);
     var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
-    var upperBound = pivotBlock + 1 * 1000 * 1000; // 1mil
-    var lowerBound = pivotBlock - 1 * 1000 * 1000; // 1mil
+    var upperBound = pivotBlock + 500 * 1000; // 500k
+    var lowerBound = pivotBlock - 500 * 1000; // 500k
 
     if (lowerBound < 0)
     {
@@ -193,4 +148,79 @@ class ReceiptsVerification
       ProcessBlock(blockNumber);
     });
   }
+
+
+  [Test]
+  [Category("ReceiptsNearAncientBarrier")]
+  public async Task Verify_Historical_Receipts_Near_Ancient_Barrier()
+  {
+    Logger.Info("Verify_Historical_Receipts_Near_Ancient_Barrier");
+
+    var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
+    var pivotBlock = await NodeInfo.GetPivotNumber(Logger);
+    var ancientBarrier = await NodeInfo.GetAncientReceiptsBarrier(Logger);
+
+    if (ancientBarrier > head)
+    {
+      ancientBarrier = pivotBlock;
+    }
+
+    // The actual value is determined by this formula:
+    // max{ 1, min{ PivotNumber, max{ AncientBodiesBarrier, AncientReceiptsBarrier } } }
+    var upperBound = ancientBarrier + 500 * 1000; // 500k
+    var lowerBound = ancientBarrier - 500 * 1000; // 500k
+
+    if (lowerBound < 0)
+    {
+      lowerBound = 0;
+    }
+
+    if (upperBound > head)
+    {
+      upperBound = (long)head;
+    }
+
+    Logger.Info($"ancientBarrier: {ancientBarrier} Head: {head} Lower: {lowerBound} Upper: {upperBound}");
+
+    ParallelOptions parallelOptions = new ParallelOptions
+    {
+      // Set the maximum number of concurrent operations
+      MaxDegreeOfParallelism = 4
+    };
+
+    Parallel.For(lowerBound, upperBound, parallelOptions, i =>
+    {
+      var blockNumber = head - i;
+      ProcessBlock(blockNumber);
+    });
+  }
+
+
+  private void SubscriptionHandler(object? sender, StreamingEventArgs<Block> e)
+  {
+    var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
+    Logger.Info($"\n\n\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
+    var block = e.Response;
+    blocks.Enqueue(block);
+  }
+
+
+  private void ProcessBlock(BigInteger blockNumber)
+  {
+    if (blockNumber < 0)
+    {
+      Logger.Info($"Negative block number: {blockNumber}");
+      return;
+    }
+    var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
+    var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value)).Result;
+    var calculatedRoot = ReceiptsHelper.CalculateRoot(receipts);
+    if (blockNumber % 100 == 0)
+    {
+      Logger.Info($"Processing: {block.BlockHash}");
+      Logger.Info($"[{block.Number}] [{block.BlockHash}] Equal: {calculatedRoot == block.ReceiptsRoot}");
+    }
+    Assert.That(calculatedRoot, Is.EqualTo(block.ReceiptsRoot));
+  }
+
 }

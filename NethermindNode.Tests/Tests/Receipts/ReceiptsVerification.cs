@@ -13,9 +13,7 @@ namespace NethermindNode.Tests.Receipts;
 
 class ReceiptsVerification
 {
-  private const string RpcAddress = "http://localhost:8545";
-  private const string WsAddress = "ws://localhost:8545";
-  private Web3 w3 = new Web3(RpcAddress);
+  private Web3 w3 = new Web3(NodeInfo.apiBaseUrl);
   private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
   public Queue<Block> blocks = new Queue<Block>();
 
@@ -25,7 +23,7 @@ class ReceiptsVerification
   {
     var testRunTime = 2 * 60 * 1000; // 10 minutes
 
-    var client = new StreamingWebSocketClient(WsAddress);
+    var client = new StreamingWebSocketClient(NodeInfo.wsBaseUrl);
     var subscription = new EthNewBlockHeadersSubscription(client);
 
     // attach our handler for new block header data

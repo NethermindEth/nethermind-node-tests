@@ -7,7 +7,8 @@ namespace NethermindNode.Core.Helpers;
 public static class NodeInfo
 {
     private static readonly HttpClient client = new HttpClient();
-    private static readonly string apiBaseUrl = "http://localhost:8545";
+    public static readonly string apiBaseUrl = "http://localhost:8545";
+    public static readonly string wsBaseUrl = "ws://localhost:8545";
 
     public enum NetworkType
     {
@@ -22,7 +23,7 @@ public static class NodeInfo
 
     public static bool IsFullySynced(Logger logger)
     {
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", "http://localhost:8545", logger);
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", apiBaseUrl, logger);
         var result = commandResult.Result;
         return result == null ? false : result.Item1.Contains("false");
     }
@@ -66,7 +67,7 @@ public static class NodeInfo
 
     public static string GetCurrentStage(NLog.Logger logger)
     {
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", apiBaseUrl, logger);
         string output = "";
 
         bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
@@ -87,7 +88,7 @@ public static class NodeInfo
     public static List<Stages> GetCurrentStages(NLog.Logger logger)
     {
         List<Stages> result = new List<Stages>();
-        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", "http://localhost:8545", logger);
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", apiBaseUrl, logger);
         string output = "";
 
         bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
@@ -125,7 +126,7 @@ public static class NodeInfo
 
     public static async Task<NetworkType> GetNetworkType(Logger logger)
     {
-        var commandResult = await HttpExecutor.ExecuteAndSerialize<SingleResult>("eth_chainId", "", "http://localhost:8545", logger);
+        var commandResult = await HttpExecutor.ExecuteAndSerialize<SingleResult>("eth_chainId", "", apiBaseUrl, logger);
         var result = commandResult.Result;
         if (result == null)
         {
@@ -140,7 +141,7 @@ public static class NodeInfo
 
     public static async Task<SingleResult> GetConfigValue(Logger logger, string category, string key)
     {
-        var res = await HttpExecutor.ExecuteAndSerialize<SingleResult>("debug_getConfigValue", $"\"{category}\", \"{key}\"", "http://localhost:8545", logger);
+        var res = await HttpExecutor.ExecuteAndSerialize<SingleResult>("debug_getConfigValue", $"\"{category}\", \"{key}\"", apiBaseUrl, logger);
         return res;
     }
 

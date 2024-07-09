@@ -23,7 +23,7 @@ class ReceiptsVerification
     Queue<Block> blocks = new Queue<Block>();
     var processedBlocks = new List<Block>();
 
-    var testBlocks = 128;
+    var testBlocks = 256;
 
     var client = new StreamingWebSocketClient(NodeInfo.wsBaseUrl);
     var subscription = new EthNewBlockHeadersSubscription(client);

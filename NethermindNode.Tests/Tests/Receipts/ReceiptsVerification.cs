@@ -15,13 +15,15 @@ class ReceiptsVerification
 {
   private Web3 w3 = new Web3(NodeInfo.apiBaseUrl);
   private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-  public Queue<Block> blocks = new Queue<Block>();
 
   [Test]
   [Category("ReceiptsNew")]
   public async Task Verify_New_Receipts()
   {
-    var testRunTime = 2 * 60 * 1000; // 10 minutes
+    Queue<Block> blocks = new Queue<Block>();
+    var processedBlocks = new List<Block>();
+
+    var testBlocks = 128;
 
     var client = new StreamingWebSocketClient(NodeInfo.wsBaseUrl);
     var subscription = new EthNewBlockHeadersSubscription(client);
@@ -50,9 +52,6 @@ class ReceiptsVerification
 
     Logger.Info("Waiting for new blocks: ");
 
-    var sw = new Stopwatch();
-    sw.Start();
-    //allow time to unsubscribe
     while (subscribed)
     {
       if (blocks.Count > 0)
@@ -74,14 +73,25 @@ class ReceiptsVerification
         var receiptsRoot = block.ReceiptsRoot;
         Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
         Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
+        processedBlocks.Add(block);
       }
-      if (sw.ElapsedMilliseconds > testRunTime)
+      if (processedBlocks.Count() >= testBlocks)
       {
         await subscription.UnsubscribeAsync();
         subscribed = false;
         await client.StopAsync();
         break;
       }
+    }
+
+    // Re-verify already processed blocks
+    foreach (var block in processedBlocks)
+    {
+      var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value)).Result;
+      var calculatedRoot = ReceiptsHelper.CalculateRoot(receipts);
+      Logger.Info($"Processed: {block.BlockHash}");
+      Logger.Info($"[{block.Number}] [{block.BlockHash}] Equal: {calculatedRoot == block.ReceiptsRoot}");
+      Assert.That(calculatedRoot, Is.EqualTo(block.ReceiptsRoot));
     }
   }
 

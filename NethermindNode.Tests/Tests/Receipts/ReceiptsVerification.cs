@@ -9,8 +9,10 @@ using Nethereum.JsonRpc.WebSocketStreamingClient;
 using Nethereum.RPC.Eth.Subscriptions;
 using Newtonsoft.Json;
 using System.Numerics;
+
 namespace NethermindNode.Tests.Receipts;
 
+[TestFixture]
 class ReceiptsVerification
 {
   private Web3 w3 = new Web3(NodeInfo.apiBaseUrl);

@@ -20,7 +20,7 @@ class ReceiptsVerification
   [Category("ReceiptsNew")]
   public async Task Verify_New_Receipts()
   {
-    Queue<Block> blocks = new Queue<Block>();
+    var blocks = new Queue<Block>();
     var processedBlocks = new List<Block>();
 
     var testBlocks = 256;
@@ -29,7 +29,13 @@ class ReceiptsVerification
     var subscription = new EthNewBlockHeadersSubscription(client);
 
     // attach our handler for new block header data
-    subscription.SubscriptionDataResponse += SubscriptionHandler;
+    subscription.SubscriptionDataResponse += (object sender, StreamingEventArgs<Block> e) =>
+    {
+      var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
+      Logger.Info($"\n\n\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
+      var block = e.Response;
+      blocks.Enqueue(block);
+    };
 
     bool subscribed = true;
 
@@ -201,15 +207,6 @@ class ReceiptsVerification
       var blockNumber = head - i;
       ProcessBlock(blockNumber);
     });
-  }
-
-
-  private void SubscriptionHandler(object? sender, StreamingEventArgs<Block> e)
-  {
-    var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
-    Logger.Info($"\n\n\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
-    var block = e.Response;
-    blocks.Enqueue(block);
   }
 
 

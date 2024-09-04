@@ -38,12 +38,18 @@
     </PackageReference>
     <PackageReference Include="NunitXml.TestLogger" Version="3.0.131" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
-	<None Include="..\config.json" Link="config.json" CopyToOutputDirectory="Always" />
+    <None Include="..\config.json" Link="config.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\NethermindNode.SedgeFuzzer\NethermindNode.SedgeFuzzer.csproj" />
-    <ProjectReference Include="..\nethermind\src\Nethermind\Nethermind.Runner\Nethermind.Runner.csproj" />
+    <ProjectReference Include="..\nethermind\src\Nethermind\Nethermind.Runner\Nethermind.Runner.csproj" Condition=" $(DefineConstants.Contains('INCLUDE_SUBMODULES')) " />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

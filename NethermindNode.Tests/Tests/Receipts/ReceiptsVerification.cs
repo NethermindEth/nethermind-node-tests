@@ -1,3 +1,5 @@
+#if INCLUDE_SUBMODULES
+
 using NethermindNode.Core.Helpers;
 using Nethereum.Web3;
 using Nethereum.RPC.Eth.DTOs;
@@ -231,3 +233,5 @@ class ReceiptsVerification
   }
 
 }
+
+#endif

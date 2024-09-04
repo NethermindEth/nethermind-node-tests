@@ -13,7 +13,7 @@ public class StabilityTests : BaseTest
     [Category("StabilityCheck")]
     public void ShouldVerifyThatNodeSyncsWithoutErrors()
     {
-        Logger.Info("***Starting test: ShouldVerifyIfNodePerformsStable***");
+        Logger.Info("***Starting test: ShouldVerifyThatNodeSyncsWithoutErrors***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
         while (!NodeInfo.IsFullySynced(Logger))
@@ -25,6 +25,6 @@ public class StabilityTests : BaseTest
             Assert.IsEmpty(corruption, "Corruption occured: " + exceptions.Select(x => x));
         }
 
-        Logger.Info("***Test finished: ShouldVerifyIfNodePerformsStable***");
+        Logger.Info("***Test finished: ShouldVerifyThatNodeSyncsWithoutErrors***");
     }
 }

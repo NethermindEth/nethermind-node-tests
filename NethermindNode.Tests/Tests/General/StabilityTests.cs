@@ -11,7 +11,7 @@ public class StabilityTests : BaseTest
 
     [Test]
     [Category("StabilityCheck")]
-    public void ShouldVerifyIfNodePerformsStable()
+    public void ShouldVerifyThatNodeSyncsWithoutErrors()
     {
         Logger.Info("***Starting test: ShouldVerifyIfNodePerformsStable***");
 

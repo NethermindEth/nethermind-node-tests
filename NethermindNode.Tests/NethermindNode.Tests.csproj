@@ -41,19 +41,10 @@
     <None Include="..\config.json" Link="config.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
-  <Choose>
-    <When Condition=" $(DefineConstants.Contains('INCLUDE_SUBMODULES')) ">
-      <ItemGroup>
-        <ProjectReference Include="..\NethermindNode.SedgeFuzzer\NethermindNode.SedgeFuzzer.csproj" />
-        <ProjectReference Include="..\nethermind\src\Nethermind\Nethermind.Runner\Nethermind.Runner.csproj" />
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <ProjectReference Include="..\NethermindNode.SedgeFuzzer\NethermindNode.SedgeFuzzer.csproj" />
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
+  <ItemGroup>
+    <ProjectReference Include="..\NethermindNode.SedgeFuzzer\NethermindNode.SedgeFuzzer.csproj" />
+    <ProjectReference Include="..\nethermind\src\Nethermind\Nethermind.Runner\Nethermind.Runner.csproj" Condition=" $(DefineConstants.Contains('INCLUDE_SUBMODULES')) " />
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="NLog.config">

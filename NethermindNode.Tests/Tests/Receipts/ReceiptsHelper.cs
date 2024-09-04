@@ -1,3 +1,5 @@
+#if INCLUDE_SUBMODULES
+
 using Nethereum.RPC.Eth.DTOs;
 using Nethermind.Core;
 using Nethermind.Core.Crypto;
@@ -57,3 +59,4 @@ class ReceiptsHelper
     return ReceiptTrie<TxReceipt>.CalculateRoot(spec, txReceipts, _decoder).ToString();
   }
 }
+#endif

@@ -11,9 +11,9 @@ public class StabilityTests : BaseTest
 
     [Test]
     [Category("StabilityCheck")]
-    public void ShouldVerifyIfNodePerformsStable()
+    public void ShouldVerifyThatNodeSyncsWithoutErrors()
     {
-        Logger.Info("***Starting test: ShouldVerifyIfNodePerformsStable***");
+        Logger.Info("***Starting test: ShouldVerifyThatNodeSyncsWithoutErrors***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
@@ -22,7 +22,7 @@ public class StabilityTests : BaseTest
         {
             isNodeSynced = NodeInfo.IsFullySynced(Logger);
             if (isNodeSynced)
-            {
+        {
                 isNodeSynced = true;
                 Thread.Sleep(600000); // Maybe small hack - wait for 10 minutes after node is synced to let it process a few blocks and then check for exceptions as a very last check
                                       // Also it is nice because some real tests can be started in meantime and be relatively short so there is a chance that stability test will catch some exceptions caused by other tests - this wil still mean that node is not stable
@@ -35,6 +35,6 @@ public class StabilityTests : BaseTest
 
         }
 
-        Logger.Info("***Test finished: ShouldVerifyIfNodePerformsStable***");
+        Logger.Info("***Test finished: ShouldVerifyThatNodeSyncsWithoutErrors***");
     }
 }

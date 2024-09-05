@@ -18,8 +18,8 @@ public class StagesTests : BaseTest
             new Stage(){ Stages = new List<Stages>(){ Stages.SnapSync }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync } },
             new Stage(){ Stages = new List<Stages>(){ Stages.StateNodes }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync } },
             new Stage(){ Stages = new List<Stages>(){ Stages.WaitingForBlock }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync } },
-            new Stage(){ Stages = new List<Stages>(){ Stages.FastBodies }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync } },
-            new Stage(){ Stages = new List<Stages>(){ Stages.FastReceipts }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync } },
+            new Stage(){ Stages = new List<Stages>(){ Stages.FastBodies }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync }, MissingOnNonValidatorNode = true },
+            new Stage(){ Stages = new List<Stages>(){ Stages.FastReceipts }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync }, MissingOnNonValidatorNode = true },
             new Stage(){ Stages = new List<Stages>(){ Stages.WaitingForBlock }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync }, ShouldOccureAlone = true }
         };
 
@@ -27,13 +27,22 @@ public class StagesTests : BaseTest
 
     private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
 
-    [TestCase(SyncTypes.SnapSync, Category = "SnapSync")]
-    [TestCase(SyncTypes.FastSync, Category = "FastSync")]
-    public void VerfiyCorrectnessOfSnapSyncStages(SyncTypes syncType)
+    [TestCase(Category = "SnapSync,FastSync,StabilityCheck")]
+    public void VerfiyCorrectnessOfSyncStages()
     {
-        Logger.Info("***Starting test: VerfiyCorrectnessOfSnapSyncStages --- syncType: " + syncType.ToString() + "***");
+        Logger.Info("***Starting test: VerfiyCorrectnessOfSyncStages***");
+        Enum.TryParse(ConfigurationHelper.Instance["sync-mode"], out SyncTypes syncType);
+        
         foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
         {
+            bool isNonValidatorNode = Convert.ToBoolean(ConfigurationHelper.Instance["non-validator-node"]);
+
+            if ((stage.Stages.ToJoinedString() == Stages.FastBodies.ToString() || stage.Stages.ToJoinedString() == Stages.FastReceipts.ToString()) && isNonValidatorNode)
+            {
+                Logger.Info("Skipping stage: " + stage.Stages.ToJoinedString() + " because nonValidatorNode enabled.");
+                continue;
+            }
+
             Logger.Info("Waiting for stage: " + stage.Stages.ToJoinedString());
             Stopwatch sw = new Stopwatch();
             sw.Start();

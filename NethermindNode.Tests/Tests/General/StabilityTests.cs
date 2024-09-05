@@ -32,7 +32,6 @@ public class StabilityTests : BaseTest
 
             var corruption = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Corrupted");
             Assert.IsEmpty(corruption, "Corruption occured: " + exceptions.Select(x => x));
-
         }
 
         Logger.Info("***Test finished: ShouldVerifyThatNodeSyncsWithoutErrors***");

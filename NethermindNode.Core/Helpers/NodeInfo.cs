@@ -117,7 +117,16 @@ public static class NodeInfo
 
     public static void WaitForNodeToBeSynced(Logger logger)
     {
-        while (!NodeInfo.IsFullySynced(logger))
+        // Wait for UpdatingPivot step to be gone
+        var currentStages = GetCurrentStages(logger);
+        while (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None) || currentStages.Contains(Stages.UpdatingPivot))
+        {
+            Thread.Sleep(1000);
+            currentStages = GetCurrentStages(logger);
+            continue;
+        }
+
+        while (!IsFullySynced(logger))
         {
             logger.Debug("Waiting for node to be fully synced...");
             Thread.Sleep(10000);

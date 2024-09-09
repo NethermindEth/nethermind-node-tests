@@ -2,6 +2,7 @@
 
 public enum Stages
 {
+    UpdatingPivot,
     FastHeaders,
     BeaconHeaders,
     FastSync,

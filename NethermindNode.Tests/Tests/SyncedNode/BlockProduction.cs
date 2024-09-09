@@ -11,9 +11,9 @@ public class BlockProduction : BaseTest
 
     [Test]
     [Category("BlockProductionSimulationVerification")]
-    public void ShouldVerifyIfBlockProductionSimualtionWorks()
+    public void ShouldVerifyIfBlockProductionSimulationWorks()
     {
-        Logger.Info($"***Starting test: ShouldVerifyIfBlockProductionSimualtionWorks***");
+        Logger.Info($"***Starting test: ShouldVerifyIfBlockProductionSimulationWorks***");
 
         NodeInfo.WaitForNodeToBeReady(Logger);
         NodeInfo.WaitForNodeToBeSynced(Logger);

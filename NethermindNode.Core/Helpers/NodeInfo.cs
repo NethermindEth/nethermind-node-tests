@@ -23,6 +23,12 @@ public static class NodeInfo
 
     public static bool IsFullySynced(Logger logger)
     {
+        var currentStages = GetCurrentStages(logger);
+        if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None) || currentStages.Contains(Stages.UpdatingPivot))
+        {
+            return false;
+        }
+
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", apiBaseUrl, logger);
         var result = commandResult.Result;
         return result == null ? false : result.Item1.Contains("false");
@@ -56,13 +62,6 @@ public static class NodeInfo
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
         }
-
-        //Waiting for proper start of node
-        //while (DockerCommands.CheckIfDockerContainerIsCreated(ConfigurationHelper.Instance["execution-container-name"], logger) == false)
-        //{
-        //    logger.Info("Waiting for Execution to be started.");
-        //    Thread.Sleep(30000);
-        //}
     }
 
     public static string GetCurrentStage(NLog.Logger logger)
@@ -117,15 +116,6 @@ public static class NodeInfo
 
     public static void WaitForNodeToBeSynced(Logger logger)
     {
-        // Wait for UpdatingPivot step to be gone
-        var currentStages = GetCurrentStages(logger);
-        while (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None) || currentStages.Contains(Stages.UpdatingPivot))
-        {
-            Thread.Sleep(1000);
-            currentStages = GetCurrentStages(logger);
-            continue;
-        }
-
         while (!IsFullySynced(logger))
         {
             logger.Debug("Waiting for node to be fully synced...");

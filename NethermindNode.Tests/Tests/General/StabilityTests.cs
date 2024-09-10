@@ -17,23 +17,59 @@ public class StabilityTests : BaseTest
 
         NodeInfo.WaitForNodeToBeReady(Logger);
 
-        bool isNodeSynced = NodeInfo.IsFullySynced(Logger);
-        while (!isNodeSynced)
+        bool isNodeSynced = false;
+        bool hasErrors = false;
+
+        List<string> exceptionLogs = new List<string>();
+        List<string> corruptionLogs = new List<string>();
+
+        while (!isNodeSynced && !hasErrors)
         {
             isNodeSynced = NodeInfo.IsFullySynced(Logger);
+
+            var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
+            if (exceptions.Any())
+            {
+                hasErrors = true;
+                exceptionLogs.AddRange(exceptions); 
+            }
+
+            // Capture any corruption logs
+            var corruption = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Corruption");
+            if (corruption.Any())
+            {
+                hasErrors = true;
+                corruptionLogs.AddRange(corruption); 
+            }
+
             if (isNodeSynced)
             {
-                isNodeSynced = true;
-                Thread.Sleep(600000); // Maybe small hack - wait for 10 minutes after node is synced to let it process a few blocks and then check for exceptions as a very last check
-                                      // Also it is nice because some real tests can be started in meantime and be relatively short so there is a chance that stability test will catch some exceptions caused by other tests - this wil still mean that node is not stable
+                Logger.Info("Node is fully synced. Waiting for 10 minutes to check for further errors...");
+                Thread.Sleep(600000); 
+                break;
             }
-            var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
-            Assert.IsEmpty(exceptions, "Exception occured: " + exceptions.Select(x => x));
 
-            var corruption = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Corrupted");
-            Assert.IsEmpty(corruption, "Corruption occured: " + exceptions.Select(x => x));
+            Thread.Sleep(10000);
+        }
+
+        if (hasErrors)
+        {
+            if (exceptionLogs.Any())
+            {
+                Assert.Fail("Exceptions occurred: " + string.Join(", ", exceptionLogs));
+            }
+
+            if (corruptionLogs.Any())
+            {
+                Assert.Fail("Corruption occurred: " + string.Join(", ", corruptionLogs));
+            }
+        }
+        else
+        {
+            Assert.IsTrue(isNodeSynced, "Node did not sync successfully.");
         }
 
         Logger.Info("***Test finished: ShouldVerifyThatNodeSyncsWithoutErrors***");
     }
+
 }

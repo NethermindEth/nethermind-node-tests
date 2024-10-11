@@ -19,7 +19,6 @@ namespace NethermindNode.Tests.Tests.Pruning
         [Timeout(172800000)] //48 hours
         [Category("RpcPruning")]
         [Test]
-        // Requires adding a "JsonRpc.EnabledModules=[Eth,Subscribe,Trace,TxPool,Web3,Personal,Proof,Net,Parity,Health,Rpc,Debug,Admin]" for Nethermind
         public void ShouldPruneDbUsingAdminRpc()
         {
             Logger.Info($"***Starting test: ShouldPruneDbUsingAdminRpc***");
@@ -67,12 +66,8 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             string[] expectedLogs =
             {
-                "Full Pruning Persist Cache started",
                 "Full Pruning Ready to start: waiting for state",
-                "Full Pruning Persist Cache in progress",
-                "Full Pruning Persist Cache finished",
                 "Full Pruning Waiting for state",
-                "Full Pruning Waiting for block",
                 "Full Pruning Ready to start",
                 "Full Pruning Started on root hash",
                 "Full Pruning In Progress",

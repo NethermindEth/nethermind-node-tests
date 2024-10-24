@@ -5,7 +5,7 @@ Description=Nethermind Node Tests
 Type=simple
 TimeoutStopSec=180
 WorkingDirectory=%WORKINGDIR%
-ExecStart=dotnet test NethermindNodeTests.sln -c Release --logger:"nunit;LogFilePath=%WORKINGDIR%/test-result.xml" --filter %CATEGORIES% --timeout %TIMEOUT%
+ExecStart=dotnet test NethermindNodeTests.sln -c Release --logger:"nunit;LogFilePath=%WORKINGDIR%/test-result.xml" --filter %CATEGORIES% --settings:NUnit.runsettings
 Environment=DOTNET_CLI_HOME=/tmp/
 StandardOutput=file:%WORKINGDIR%/testsOutput.log
 StandardError=file:%WORKINGDIR%/testsErrors.log

@@ -2,5 +2,6 @@
     "execution-container-name": "sedge-execution-client",
     "consensus-container-name": "sedge-consensus-client",
     "sync-mode": "SnapSync",
-    "non-validator-node": false
+    "non-validator-node": false,
+    "default-rpc-port": 8545
 }

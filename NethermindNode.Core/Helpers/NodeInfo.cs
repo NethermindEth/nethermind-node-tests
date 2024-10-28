@@ -7,8 +7,8 @@ namespace NethermindNode.Core.Helpers;
 public static class NodeInfo
 {
     private static readonly HttpClient client = new HttpClient();
-    public static readonly string apiBaseUrl = "http://localhost:8545";
-    public static readonly string wsBaseUrl = "ws://localhost:8545";
+    public static readonly string apiBaseUrl = "http://localhost:" + ConfigurationHelper.Instance["default-rpc-port"];
+    public static readonly string wsBaseUrl = "ws://localhost:" + ConfigurationHelper.Instance["default-rpc-port"];
 
     public enum NetworkType
     {

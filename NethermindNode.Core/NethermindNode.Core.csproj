@@ -16,7 +16,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
     <PackageReference Include="NLog" Version="5.1.3" />
     <PackageReference Include="Notion.Net" Version="4.1.0" />
-	<None Include="..\config.json" Link="config.json" CopyToOutputDirectory="PreserveNewest" />
+	<None Include="..\config.json" Link="config.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>

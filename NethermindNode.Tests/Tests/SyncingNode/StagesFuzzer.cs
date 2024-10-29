@@ -13,7 +13,6 @@ public class StagesFuzzer : BaseTest
     [Category("SnapSync")]
     [Category("FastSync")]
     [Category("FullSync")]
-    [Category("ArchiveSync")]
     [Category("StageFuzzerKiller")]
     public void ShouldKillNodeOnAllPossibleStages()
     {
@@ -40,7 +39,6 @@ public class StagesFuzzer : BaseTest
     [Category("SnapSync")]
     [Category("FastSync")]
     [Category("FullSync")]
-    [Category("ArchiveSync")]
     public void ShouldStopGracefullyNodeOnAllPossibleStages()
     {
         Logger.Info("***Starting test: ShouldStopGracefullyNodeOnAllPossibleStages***");

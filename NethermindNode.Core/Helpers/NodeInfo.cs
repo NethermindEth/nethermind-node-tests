@@ -114,6 +114,15 @@ public static class NodeInfo
         return result;
     }
 
+    public static int GetCurrentBlock(NLog.Logger logger)
+    {
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_blockNumber", "", apiBaseUrl, logger);
+        string output = commandResult.Result.Item1;
+
+        logger.Debug("Current Block is: " + output);
+        return Convert.ToInt32(output);
+    }
+
     public static void WaitForNodeToBeSynced(Logger logger)
     {
         while (!IsFullySynced(logger))

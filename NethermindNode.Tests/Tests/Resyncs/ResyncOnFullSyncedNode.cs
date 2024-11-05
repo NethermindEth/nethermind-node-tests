@@ -37,4 +37,35 @@ internal class ResyncOnFullSyncedNode
             DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
         }
     }
+
+    [Category("ResyncsNoLimit")]
+    public void ShouldResyncAfterFullSyncNoLimit()
+    {
+        Logger.Info($"***Starting test: ShouldResyncAfterFullSyncNoLimit***");
+        while (true)
+        {
+            //Waiting for proper start of node
+            NodeInfo.WaitForNodeToBeReady(Logger);
+
+            //Waiting for Full Sync
+            while (!NodeInfo.IsFullySynced(Logger))
+            {
+                Logger.Debug("Waiting for node to be fully synced.");
+                Thread.Sleep(30000);
+            }
+
+            //Stopping and clearing EL
+            DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+            while (!DockerCommands.GetDockerContainerStatus(ConfigurationHelper.Instance["execution-container-name"], Logger).Contains("exited"))
+            {
+                Logger.Debug($"Waiting for {ConfigurationHelper.Instance["execution-container-name"]} docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus(ConfigurationHelper.Instance["execution-container-name"], Logger)}");
+                Thread.Sleep(30000);
+            }
+            CommandExecutor.RemoveDirectory("/root/execution-data/nethermind_db", Logger);
+
+            //Restarting Node - freshSync
+            Logger.Info($"Starting a FreshSync.");
+            DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+        }
+    }
 }

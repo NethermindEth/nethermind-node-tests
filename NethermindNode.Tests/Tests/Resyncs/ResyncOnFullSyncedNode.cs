@@ -38,6 +38,7 @@ internal class ResyncOnFullSyncedNode
         }
     }
 
+    [Test]
     [Category("ResyncsNoLimit")]
     public void ShouldResyncAfterFullSyncNoLimit()
     {

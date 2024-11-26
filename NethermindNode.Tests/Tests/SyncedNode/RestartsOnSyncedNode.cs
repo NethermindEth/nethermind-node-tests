@@ -116,7 +116,7 @@ public class RestartsOnSyncedNode : BaseTest
     [Repeat(10)]
     [Category("InMemoryFastKill")]
     [Test]
-    public void ShouldKillNethermindClientAfterMemoryPruning()
+    public async Task ShouldKillNethermindClientAfterMemoryPruning()
     {
         Logger.Info($"***Starting test: ShouldKillNethermindClientAfterMemoryPruning***");
 
@@ -125,7 +125,9 @@ public class RestartsOnSyncedNode : BaseTest
 
         string expectedLog = "Executed memory prune";
 
-        foreach (var line in DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "", true, null, "--since 2m")) //since to ensure that we will get only recent logs but including all from beggining of test
+        CancellationTokenSource cts = new CancellationTokenSource();
+
+        await foreach (var line in DockerCommands.GetDockerLogsAsync(ConfigurationHelper.Instance["execution-container-name"], "", true, cts.Token)) 
         {
             Console.WriteLine(line);
 
@@ -145,7 +147,7 @@ public class RestartsOnSyncedNode : BaseTest
     [Repeat(10)]
     [Category("InMemorySaveKill")]
     [TestCase(1, 1)]
-    public void ShouldKillNethermindClientAfterMemoryPruningSavedReorgBoundary(int amountOfGracefullShutdowns, int amountOfKills)
+    public async Task ShouldKillNethermindClientAfterMemoryPruningSavedReorgBoundary(int amountOfGracefullShutdowns, int amountOfKills)
     {
         Logger.Info($"***Starting test: ShouldKillNethermindClientAfterMemoryPruningSavedReorgBoundary***");
 
@@ -157,7 +159,9 @@ public class RestartsOnSyncedNode : BaseTest
         int executedGracefull = 0;
         int executedKills = 0;
 
-        foreach (var line in DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "", true, null, "--since 2m")) //since to ensure that we will get only recent logs but including all from beggining of test
+        CancellationTokenSource cts = new CancellationTokenSource();
+
+        await foreach (var line in DockerCommands.GetDockerLogsAsync(ConfigurationHelper.Instance["execution-container-name"], "", true, cts.Token)) //since to ensure that we will get only recent logs but including all from beggining of test
         {
             Console.WriteLine(line);
 

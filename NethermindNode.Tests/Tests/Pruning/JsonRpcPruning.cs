@@ -19,7 +19,7 @@ namespace NethermindNode.Tests.Tests.Pruning
         [Timeout(172800000)] //48 hours
         [Category("RpcPruning")]
         [Test]
-        public void ShouldPruneDbUsingAdminRpc()
+        public async Task ShouldPruneDbUsingAdminRpc()
         {
             Logger.Info($"***Starting test: ShouldPruneDbUsingAdminRpc***");
 
@@ -75,7 +75,7 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             try
             {
-                foreach (var line in DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Full Pruning", true, cts.Token))
+                await foreach (var line in DockerCommands.GetDockerLogsAsync(ConfigurationHelper.Instance["execution-container-name"], "Full Pruning", true, cts.Token))
                 {
                     Logger.Info(line); // For visibility during testing
 

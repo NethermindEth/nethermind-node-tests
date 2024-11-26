@@ -11,7 +11,7 @@ public class BlockProduction : BaseTest
 
     [Test]
     [Category("BlockProductionSimulationVerification")]
-    public void ShouldVerifyIfBlockProductionSimulationWorks()
+    public async Task ShouldVerifyIfBlockProductionSimulationWorksAsync()
     {
         Logger.Info($"***Starting test: ShouldVerifyIfBlockProductionSimulationWorks***");
 

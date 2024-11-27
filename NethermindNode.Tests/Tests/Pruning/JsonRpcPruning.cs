@@ -72,13 +72,12 @@ namespace NethermindNode.Tests.Tests.Pruning
             };
 
             HashSet<string> missingLogs = new HashSet<string>(expectedLogs);
+            List<string> foundLogs = new List<string>();
 
             try
             {
                 await foreach (var line in DockerCommands.GetDockerLogsAsync(ConfigurationHelper.Instance["execution-container-name"], "Full Pruning", true, cts.Token))
                 {
-                    Logger.Info(line); // For visibility during testing
-
                     foreach (var expectedLog in missingLogs)
                     {
                         if (!line.Contains(expectedLog))
@@ -87,14 +86,13 @@ namespace NethermindNode.Tests.Tests.Pruning
                         }
 
                         Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
+                        foundLogs.Add(expectedLog);
                         missingLogs.Remove(expectedLog);
+                    }
 
-                        if (expectedLog == expectedLogs.Last())
-                        {
-                            // End because Pruning itself may work but for some reason some logs may not be found - so better this way than waiting for all
-                            cts.Cancel();
-                            break;
-                        }
+                    if (foundLogs.Count == expectedLogs.Length)
+                    {
+                        break;
                     }
                 }
             }

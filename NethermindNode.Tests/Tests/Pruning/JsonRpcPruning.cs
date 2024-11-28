@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace NethermindNode.Tests.Tests.Pruning
 {
     [TestFixture]
-    [Parallelizable(ParallelScope.None)]
+    [Parallelizable(ParallelScope.All)]
     public class JsonRpcPruning
     {
         [Timeout(172800000)] //48 hours

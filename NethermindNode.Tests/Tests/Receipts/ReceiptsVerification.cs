@@ -18,9 +18,9 @@ namespace NethermindNode.Tests.Receipts;
 class ReceiptsVerification
 {
   private Web3 w3 = new Web3(NodeInfo.apiBaseUrl);
-  private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
+  
 
-  [Test]
+  [NethermindTest]
   [Category("ReceiptsNew")]
   public async Task Verify_New_Receipts()
   {
@@ -105,7 +105,7 @@ class ReceiptsVerification
     }
   }
 
-  [Test]
+  [NethermindTest]
   [Category("ReceiptsToGenesis")]
   public void Verify_Historical_Receipts_To_Genesis()
   {
@@ -129,7 +129,7 @@ class ReceiptsVerification
     });
   }
 
-  [Test]
+  [NethermindTest]
   [Category("ReceiptsNearPivot")]
   public async Task Verify_Historical_Receipts_Near_Pivot()
   {
@@ -168,7 +168,7 @@ class ReceiptsVerification
   }
 
 
-  [Test]
+  [NethermindTest]
   [Category("ReceiptsNearAncientBarrier")]
   public async Task Verify_Historical_Receipts_Near_Ancient_Barrier()
   {

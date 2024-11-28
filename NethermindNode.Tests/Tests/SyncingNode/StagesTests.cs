@@ -1,4 +1,6 @@
-﻿using NethermindNode.Core.Helpers;
+﻿using NethermindNode.Core;
+using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomAttributes;
 using NethermindNode.Tests.CustomObjects;
 using NethermindNode.Tests.Enums;
 using NethermindNode.Tests.Helpers;
@@ -24,12 +26,9 @@ public class StagesTests : BaseTest
 
     int MaxWaitTimeForStageToCompleteInMilliseconds = 36 * 60 * 60 * 1000;
 
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-
-    [TestCase(Category = "SnapSync,FastSync,StabilityCheck")]
+    [NethermindTestCase(Category = "SnapSync,FastSync,StabilityCheck")]
     public void VerifyCorrectnessOfSyncStages()
     {
-        Logger.Info("***Starting test: VerifyCorrectnessOfSyncStages***");
         Enum.TryParse(ConfigurationHelper.Instance["sync-mode"], out SyncTypes syncType);
         
         foreach (var stage in correctOrderOfStages.Where(x => x.SyncTypesApplicable.Contains(syncType)))
@@ -38,15 +37,15 @@ public class StagesTests : BaseTest
 
             if ((stage.Stages.ToJoinedString() == Stages.FastBodies.ToString() || stage.Stages.ToJoinedString() == Stages.FastReceipts.ToString()) && isNonValidatorNode)
             {
-                Logger.Info("Skipping stage: " + stage.Stages.ToJoinedString() + " because nonValidatorNode enabled.");
+                TestLoggerContext.Logger.Info("Skipping stage: " + stage.Stages.ToJoinedString() + " because nonValidatorNode enabled.");
                 continue;
             }
 
-            Logger.Info("Waiting for stage: " + stage.Stages.ToJoinedString());
+            TestLoggerContext.Logger.Info("Waiting for stage: " + stage.Stages.ToJoinedString());
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            var currentStage = NodeInfo.GetCurrentStage(Logger);
+            var currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
             while (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString()))
             {
                 if (sw.ElapsedMilliseconds > MaxWaitTimeForStageToCompleteInMilliseconds)
@@ -59,10 +58,10 @@ public class StagesTests : BaseTest
                         );
                 }
                 Thread.Sleep(1000);
-                currentStage = NodeInfo.GetCurrentStage(Logger);
+                currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
             }
             sw.Stop();
-            Logger.Info("Stage found! " + stage.Stages.ToJoinedString());
+            TestLoggerContext.Logger.Info("Stage found! " + stage.Stages.ToJoinedString());
         }
     }
 }

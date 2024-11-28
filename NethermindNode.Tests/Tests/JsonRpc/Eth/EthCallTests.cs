@@ -6,6 +6,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using NethermindNode.Core.Helpers;
 using NUnit.Framework.Internal;
+using NethermindNode.Tests.CustomAttributes;
+using NethermindNode.Core;
 
 namespace NethermindNode.Tests.JsonRpc.Eth;
 
@@ -13,11 +15,11 @@ namespace NethermindNode.Tests.JsonRpc.Eth;
 [Parallelizable(ParallelScope.None)]
 public class EthCallTests : BaseTest
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
+    
 
-    [TestCase(1, 1, Category = "JsonRpc")]
-    [TestCase(10000, 5, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmark")]
-    [TestCase(10000, 500, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmarkStress")]
+    [NethermindTestCase(1, 1, Category = "JsonRpc")]
+    [NethermindTestCase(10000, 5, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmark")]
+    [NethermindTestCase(10000, 500, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmarkStress")]
     public async Task EthCall(int repeatCount, int parallelizableLevel)
     {
         int i = 0;
@@ -56,12 +58,12 @@ public class EthCallTests : BaseTest
     }
     
 
-   [TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    //[TestCase(100000, 100, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    // [TestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    // [TestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
-    [TestCase(100000, 150, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+   [NethermindTestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    //[NethermindTestCase(100000, 100, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    // [NethermindTestCase(100000, 150, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    // [NethermindTestCase(0, 100, 0, 0, 600, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [NethermindTestCase(5, 50, 0, 0, 0, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
+    [NethermindTestCase(100000, 150, 0, 0, 0, TestingType.EthCallAndTraceCall, Category = "JsonRpcBenchmark,JsonRpcGatewayEthCallBenchmarkStress")]
     public async Task EthCallGatewayScenario(int repeatCount, int initialRequestsPerSecond, int rpsStep, int stepInterval, int maxTimeout = 0, TestingType testingType = TestingType.EthCallOnly)
     {
         int counter = 0;
@@ -154,7 +156,7 @@ public class EthCallTests : BaseTest
         try
         {
             var parameters = $"{{\"from\":null,\"to\":\"{TestItems.TestingAddress}\",\"data\":\"{code}\"}},[\"trace\"], \"latest\"";
-            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_call", parameters, TestItems.RpcAddress, Logger).Result.Item1;
+            var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_call", parameters, TestItems.RpcAddress, TestLoggerContext.Logger).Result.Item1;
             return result;
 
         }
@@ -196,8 +198,8 @@ public class EthCallTests : BaseTest
         }
         catch (Exception e)
         {
-            Logger.Error(e.Message);
-            Logger.Error(e.StackTrace);
+            TestLoggerContext.Logger.Error(e.Message);
+            TestLoggerContext.Logger.Error(e.StackTrace);
         }
     }
 

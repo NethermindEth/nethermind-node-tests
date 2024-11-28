@@ -1,5 +1,7 @@
-﻿using NethermindNode.Core.Helpers;
+﻿using NethermindNode.Core;
+using NethermindNode.Core.Helpers;
 using NethermindNode.Core.RpcResponses;
+using NethermindNode.Tests.CustomAttributes;
 using NethermindNode.Tests.CustomObjects;
 using NethermindNode.Tests.Helpers;
 using NethermindNode.Tests.RpcResponses;
@@ -12,10 +14,8 @@ namespace NethermindNode.Tests.JsonRpc.Trace;
 [Parallelizable(ParallelScope.None)]
 public class TraceBlockTests : BaseTest
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-
-    [TestCase(5, 1, Category = "JsonRpc")]
-    [TestCase(50, 1, Category = "JsonRpc")]
+    [NethermindTestCase(5, 1, Category = "JsonRpc")]
+    [NethermindTestCase(50, 1, Category = "JsonRpc")]
     [Description("This test should be used only on Archive node OR on node with Pruning.Mode=None")]
     public void TraceBlockHttp(int repeatCount, int parallelizableLevel)
     {
@@ -26,7 +26,7 @@ public class TraceBlockTests : BaseTest
             new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
             (task, loopState) =>
             {
-                var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", TestItems.RpcAddress, Logger);
+                var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", TestItems.RpcAddress, TestLoggerContext.Logger);
                 //Test result
                 bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(result.Result.Item1, out IRpcResponse deserialized);
 
@@ -36,7 +36,7 @@ public class TraceBlockTests : BaseTest
                 }
                 else
                 {
-                    Logger.Error(result.Result.Item1);
+                    TestLoggerContext.Logger.Error(result.Result.Item1);
                     Console.WriteLine("Curl result: " + result.Result.Item3);
                     Console.WriteLine("Parsing result: " + isVerifiedPositively);
                     Console.WriteLine("Output: " + result.Result.Item1);
@@ -68,8 +68,8 @@ public class TraceBlockTests : BaseTest
         Console.WriteLine(serializedJson);
     }
 
-    [TestCase(5, 5, 1, Category = "JsonRpc")]
-    [TestCase(50, 5, 1, Category = "JsonRpc")]
+    [NethermindTestCase(5, 5, 1, Category = "JsonRpc")]
+    [NethermindTestCase(50, 5, 1, Category = "JsonRpc")]
     [Description("This test should be used only on Archive node OR on node with Pruning.Mode=None")]
     public void TraceBlockBatched(int repeatCount, int batchSize, int parallelizableLevel)
     {
@@ -84,7 +84,7 @@ public class TraceBlockTests : BaseTest
             (task, loopState) =>
             {
                 var batchedIds = Enumerable.Range(task, batchSize).Select(x => $"\"{x}\"").ToList();
-                var result = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, TestItems.RpcAddress, Logger);
+                var result = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, TestItems.RpcAddress, TestLoggerContext.Logger);
                 //Test result
                 bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(result.Result.Item1, out IEnumerable<IRpcResponse> deserialized);
 
@@ -94,7 +94,7 @@ public class TraceBlockTests : BaseTest
                 }
                 else
                 {
-                    Logger.Error(result.Result.Item1);
+                    TestLoggerContext.Logger.Error(result.Result.Item1);
                     Console.WriteLine("Curl result: " + result.Result.Item3);
                     Console.WriteLine("Parsing result: " + isVerifiedPositively);
                     Console.WriteLine("Output: " + result.Result.Item1);
@@ -126,9 +126,9 @@ public class TraceBlockTests : BaseTest
         Console.WriteLine(serializedJson);
     }
 
-    [TestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcComapare")]
-    [TestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmarkComapare")]
-    [TestCase("18.222.197.12", "18.216.213.143", 500, 10, Category = "JsonRpcBenchmarkComapare")]
+    [NethermindTestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcComapare")]
+    [NethermindTestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmarkComapare")]
+    [NethermindTestCase("18.222.197.12", "18.216.213.143", 500, 10, Category = "JsonRpcBenchmarkComapare")]
     public void TraceBlockCompare(string sourceNode, string targetNode, int repeatCount, int parallelizableLevel)
     {
         List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -139,8 +139,8 @@ public class TraceBlockTests : BaseTest
             new ParallelOptions { MaxDegreeOfParallelism = parallelizableLevel },
             (task, loopState) =>
             {
-                var resultSource = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{sourceNode}:8545", Logger);
-                var resultTarget = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{targetNode}:8545", Logger);
+                var resultSource = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{sourceNode}:8545", TestLoggerContext.Logger);
+                var resultTarget = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{targetNode}:8545", TestLoggerContext.Logger);
                 //Test result
                 bool isVerifiedPositivelySource = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(resultSource.Result.Item1, out IRpcResponse deserializedSource);
                 bool isVerifiedPositivelyTarget = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(resultTarget.Result.Item1, out IRpcResponse deserializedTarget);
@@ -152,7 +152,7 @@ public class TraceBlockTests : BaseTest
             });
     }
 
-    [TestCase("18.222.197.12", "18.216.213.143", 500, 5, 10, Category = "JsonRpcBenchmarkComapare")]
+    [NethermindTestCase("18.222.197.12", "18.216.213.143", 500, 5, 10, Category = "JsonRpcBenchmarkComapare")]
     public void TraceBlockBatchedCompare(string sourceNode, string targetNode, int requestsCount, int step, int parallelizableLevel)
     {
         List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -167,8 +167,8 @@ public class TraceBlockTests : BaseTest
             (task, loopState) =>
             {
                 var batchedIds = Enumerable.Range(task, step).Select(x => $"\"{x}\"").ToList();
-                var resultSource = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{sourceNode}:8545", Logger);
-                var resultTarget = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{targetNode}:8545", Logger);
+                var resultSource = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{sourceNode}:8545", TestLoggerContext.Logger);
+                var resultTarget = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{targetNode}:8545", TestLoggerContext.Logger);
                 //Test result
                 bool isVerifiedPositivelySource = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(resultSource.Result.Item1, out IEnumerable<IRpcResponse> deserializedSource);
                 bool isVerifiedPositivelyTarget = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(resultTarget.Result.Item1, out IEnumerable<IRpcResponse> deserializedTarget);

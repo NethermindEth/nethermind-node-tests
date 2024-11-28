@@ -1,18 +1,17 @@
-﻿using NethermindNode.Core.Helpers;
-using NethermindNode.NotionDataStructures;
+﻿using NethermindNode.Core;
+using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomAttributes;
 using NethermindNode.Tests.Enums;
 using NethermindNode.Tests.Helpers;
-using Notion.Client;
 using System.Diagnostics;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace NethermindNode.Tests.SyncingNode;
 
 [TestFixture]
 public class SyncTimeMonitor : BaseTest
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
+    
 
     int MaxWaitTimeForSyncToComplete = 72 * 60 * 60 * 1000; //3 days
 
@@ -31,14 +30,11 @@ public class SyncTimeMonitor : BaseTest
             : false;
     }
 
-
     [Description("Single monitoring of current sync")]
     [Category("PerfMonitoring")]
-    [Test]
+    [NethermindTest]
     public void MonitorSyncTimesOfStages()
     {
-        Logger.Info("***Starting test: MonitorSyncTimesOfStages***");
-
         DateTime startTime = DateTime.MinValue;
 
         List<MetricStage> stagesToMonitor = new List<MetricStage>()
@@ -51,7 +47,7 @@ public class SyncTimeMonitor : BaseTest
             !_isNonValidator ? new MetricStage(){ Stage = Stages.FastReceipts } : null
         }.Where(stage => stage != null).ToList();
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
         double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
 
         //Calculate Totals
@@ -63,14 +59,13 @@ public class SyncTimeMonitor : BaseTest
         WriteReportToFile(totalExecutionTime, stagesToMonitor);
     }
 
-    [TestCase(12)]
+    [NethermindTestCase(12)]
     [Description("To be used when testing mulitple resyncs + metrics")]
     [Category("PerfMonitoringWithResync")]
     public void MonitorSyncTimesOfStagesInSnapSync(int repeatCount)
     {
         long timeStamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
 
-        Logger.Info("***Starting test: MonitorSyncTimesOfStagesInSnapSync --- syncType: SnapSync***");
         Dictionary<int, List<MetricStage>> results = new Dictionary<int, List<MetricStage>>();
         Dictionary<int, double> totals = new Dictionary<int, double>();
         DateTime startTime = DateTime.MinValue;
@@ -87,7 +82,7 @@ public class SyncTimeMonitor : BaseTest
                 new MetricStage(){ Stage = Stages.FastReceipts }
             };
 
-            NodeInfo.WaitForNodeToBeReady(Logger);
+            NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
             double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
 
             //Calculate Totals
@@ -105,7 +100,7 @@ public class SyncTimeMonitor : BaseTest
             if (i + 1 < repeatCount)
                 NodeResync();
 
-            Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
+            TestLoggerContext.Logger.Info($"Starting a FreshSync. Remaining fresh syncs to be executed: {repeatCount - i - 1}");
         }
 
         //Find longest and shortest runs and remove them
@@ -151,7 +146,7 @@ public class SyncTimeMonitor : BaseTest
 
         while (stagesToMonitor.Any(x => x.EndTime == null))
         {
-            var currentStages = NodeInfo.GetCurrentStages(Logger);
+            var currentStages = NodeInfo.GetCurrentStages(TestLoggerContext.Logger);
             if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None))
             {
                 Thread.Sleep(1000);
@@ -216,23 +211,23 @@ public class SyncTimeMonitor : BaseTest
     private void NodeStop()
     {
         //Stopping and clearing EL
-        DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
-        while (!DockerCommands.GetDockerContainerStatus(ConfigurationHelper.Instance["execution-container-name"], Logger).Contains("exited"))
+        DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger);
+        while (!DockerCommands.GetDockerContainerStatus(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger).Contains("exited"))
         {
-            Logger.Debug($"Waiting for {ConfigurationHelper.Instance["execution-container-name"]} docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus(ConfigurationHelper.Instance["execution-container-name"], Logger)}");
+            TestLoggerContext.Logger.Debug($"Waiting for {ConfigurationHelper.Instance["execution-container-name"]} docker status to be \"exited\". Current status: {DockerCommands.GetDockerContainerStatus(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger)}");
             Thread.Sleep(30000);
         }
     }
 
     private void NodeStart()
     {
-        DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+        DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger);
     }
 
     private void NodeResync()
     {
         var path = GetExecutionDataPath();
-        CommandExecutor.RemoveDirectory(path + "/nethermind_db", Logger);
+        CommandExecutor.RemoveDirectory(path + "/nethermind_db", TestLoggerContext.Logger);
 
         //Restarting Node - freshSync
         NodeStart();
@@ -240,7 +235,7 @@ public class SyncTimeMonitor : BaseTest
 
     private string GetExecutionDataPath()
     {
-        return DockerCommands.GetDockerDetails(ConfigurationHelper.Instance["execution-container-name"], "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", Logger).Trim(); ;
+        return DockerCommands.GetDockerDetails(ConfigurationHelper.Instance["execution-container-name"], "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", TestLoggerContext.Logger).Trim(); ;
     }
 
     private void WriteReportToFile(double totalExecutionTime, List<MetricStage> stagesToMonitor)

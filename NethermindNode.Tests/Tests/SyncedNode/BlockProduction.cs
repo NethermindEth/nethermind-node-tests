@@ -1,4 +1,6 @@
+using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomAttributes;
 
 namespace NethermindNode.Tests.SyncedNode;
 
@@ -7,16 +9,12 @@ namespace NethermindNode.Tests.SyncedNode;
 [Parallelizable(ParallelScope.All)]
 public class BlockProduction : BaseTest
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-
-    [Test]
+    [NethermindTest]
     [Category("BlockProductionSimulationVerification")]
     public async Task ShouldVerifyIfBlockProductionSimulationWorksAsync()
     {
-        Logger.Info($"***Starting test: ShouldVerifyIfBlockProductionSimulationWorks***");
-
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
         Thread.Sleep(120000); //Give it a time to warm up after sync (catching 32 blocks, starting oldBodies etc - it takes short time and in emantime first blocks should appear)
 

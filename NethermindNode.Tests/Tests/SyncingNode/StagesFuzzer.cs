@@ -1,4 +1,6 @@
-﻿using NethermindNode.Core.Helpers;
+﻿using NethermindNode.Core;
+using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomAttributes;
 
 namespace NethermindNode.Tests.SyncingNode;
 
@@ -6,57 +8,48 @@ namespace NethermindNode.Tests.SyncingNode;
 [Parallelizable(ParallelScope.All)]
 public class StagesFuzzer : BaseTest
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
     private List<string> _stagesFound = new List<string>();
 
-    [Test]
+    [NethermindTest]
     [Category("SnapSync")]
     [Category("FastSync")]
     [Category("FullSync")]
     [Category("StageFuzzerKiller")]
     public void ShouldKillNodeOnAllPossibleStages()
     {
-        Logger.Info("***Starting test: ShouldKillNodeOnAllPossibleStages***");
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
-
-        while (!NodeInfo.IsFullySynced(Logger))
+        while (!NodeInfo.IsFullySynced(TestLoggerContext.Logger))
         {
-            var currentStage = NodeInfo.GetCurrentStage(Logger);
+            var currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
             if (!_stagesFound.Contains(currentStage) && currentStage != "WaitingForConnection")
             {
                 _stagesFound.Add(currentStage);
-                Logger.Info("Killing node at stage: " + currentStage);
-                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true, DockerContainerName = ConfigurationHelper.Instance["execution-container-name"] }, Logger);
+                TestLoggerContext.Logger.Info("Killing node at stage: " + currentStage);
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceKillCommand = true, DockerContainerName = ConfigurationHelper.Instance["execution-container-name"] }, TestLoggerContext.Logger);
             }
             Thread.Sleep(1000);
         }
-
-        Logger.Info("***Test finished: ShouldKillNodeOnAllPossibleStages***");
     }
 
-    [Test]
+    [NethermindTest]
     [Category("SnapSync")]
     [Category("FastSync")]
     [Category("FullSync")]
     public void ShouldStopGracefullyNodeOnAllPossibleStages()
     {
-        Logger.Info("***Starting test: ShouldStopGracefullyNodeOnAllPossibleStages***");
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
-
-        while (!NodeInfo.IsFullySynced(Logger))
+        while (!NodeInfo.IsFullySynced(TestLoggerContext.Logger))
         {
-            var currentStage = NodeInfo.GetCurrentStage(Logger);
+            var currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
             if (!_stagesFound.Contains(currentStage) && currentStage != "WaitingForConnection")
             {
                 _stagesFound.Add(currentStage);
-                Logger.Info("Stopping gracefully at stage: " + currentStage);
-                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceGracefullCommand = true, DockerContainerName = ConfigurationHelper.Instance["execution-container-name"] }, Logger);
+                TestLoggerContext.Logger.Info("Stopping gracefully at stage: " + currentStage);
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { ShouldForceGracefullCommand = true, DockerContainerName = ConfigurationHelper.Instance["execution-container-name"] }, TestLoggerContext.Logger);
             }
             Thread.Sleep(1000);
         }
-
-        Logger.Info("***Test finished: ShouldStopGracefullyNodeOnAllPossibleStages***");
     }
 }

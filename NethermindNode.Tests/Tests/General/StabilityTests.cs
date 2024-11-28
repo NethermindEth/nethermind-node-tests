@@ -1,5 +1,6 @@
-
+using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomAttributes;
 
 namespace NethermindNode.Tests.SyncingNode;
 
@@ -7,15 +8,11 @@ namespace NethermindNode.Tests.SyncingNode;
 [Parallelizable(ParallelScope.All)]
 public class StabilityTests : BaseTest
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-
-    [Test]
+    [NethermindTest]
     [Category("StabilityCheck")]
     public void ShouldVerifyThatNodeSyncsWithoutErrors()
     {
-        Logger.Info("***Starting test: ShouldVerifyThatNodeSyncsWithoutErrors***");
-
-        NodeInfo.WaitForNodeToBeReady(Logger);
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
 
         bool isNodeSynced = false;
         bool hasErrors = false;
@@ -25,7 +22,7 @@ public class StabilityTests : BaseTest
 
         while (!isNodeSynced && !hasErrors)
         {
-            isNodeSynced = NodeInfo.IsFullySynced(Logger);
+            isNodeSynced = NodeInfo.IsFullySynced(TestLoggerContext.Logger);
 
             var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
             if (exceptions.Any())
@@ -44,7 +41,7 @@ public class StabilityTests : BaseTest
 
             if (isNodeSynced)
             {
-                Logger.Info("Node is fully synced. Waiting for 10 minutes to check for further errors...");
+                TestLoggerContext.Logger.Info("Node is fully synced. Waiting for 10 minutes to check for further errors...");
                 Thread.Sleep(600000); 
                 break;
             }
@@ -68,8 +65,5 @@ public class StabilityTests : BaseTest
         {
             Assert.IsTrue(isNodeSynced, "Node did not sync successfully.");
         }
-
-        Logger.Info("***Test finished: ShouldVerifyThatNodeSyncsWithoutErrors***");
     }
-
 }

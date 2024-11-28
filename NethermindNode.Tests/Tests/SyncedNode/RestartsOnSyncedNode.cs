@@ -1,4 +1,6 @@
-﻿using NethermindNode.Core.Helpers;
+﻿using NethermindNode.Core;
+using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomAttributes;
 
 namespace NethermindNode.Tests.SyncedNode;
 
@@ -6,8 +8,6 @@ namespace NethermindNode.Tests.SyncedNode;
 [Parallelizable(ParallelScope.All)]
 public class RestartsOnSyncedNode : BaseTest
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-
     private int initialDelay = 60;
 
     public static IEnumerable<TestCaseData> DelayForFuzzerTestCases()
@@ -26,16 +26,14 @@ public class RestartsOnSyncedNode : BaseTest
     [Category("FullSync")]
     [Category("RestartOnFullSync")]
     [NonParallelizable]
-    [TestCaseSource(nameof(DelayForFuzzerTestCases))]
+    [NethermindTestCaseSource(nameof(DelayForFuzzerTestCases))]
     [Order(0)]
     public void ShouldRestartNethermindClientWithIncreasingDelay(int currentDelay)
     {
-        Logger.Info($"***Starting test: ShouldRestartNethermindClientWithIncreasingDelay: {currentDelay} Delay***");
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
-
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, TestLoggerContext.Logger);
     }
 
     [Category("SnapSync")]
@@ -43,16 +41,14 @@ public class RestartsOnSyncedNode : BaseTest
     [Category("FullSync")]
     [Category("RestartOnFullSync")]
     [NonParallelizable]
-    [TestCaseSource(nameof(DelayForFuzzerTestCases))]
+    [NethermindTestCaseSource(nameof(DelayForFuzzerTestCases))]
     [Order(1)]
     public void ShouldRestartConsensusClientWithIncreasingDelay(int currentDelay)
     {
-        Logger.Info($"***Starting test: ShouldRestartConsensusClientWithIncreasingDelay: {currentDelay} Delay***");
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
-
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["consensus-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["consensus-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceGracefullCommand = true }, TestLoggerContext.Logger);
     }
 
     [Category("SnapSync")]
@@ -60,16 +56,14 @@ public class RestartsOnSyncedNode : BaseTest
     [Category("FullSync")]
     [Category("RestartOnFullSync")]
     [NonParallelizable]
-    [TestCaseSource(nameof(DelayForFuzzerTestCases))]
+    [NethermindTestCaseSource(nameof(DelayForFuzzerTestCases))]
     [Order(0)]
     public void ShouldKillNethermindClientWithIncreasingDelay(int currentDelay)
     {
-        Logger.Info($"***Starting test: ShouldKillNethermindClientWithIncreasingDelay: {currentDelay} Delay***");
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
-
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, TestLoggerContext.Logger);
     }
 
     [Category("SnapSync")]
@@ -77,51 +71,43 @@ public class RestartsOnSyncedNode : BaseTest
     [Category("FullSync")]
     [Category("RestartOnFullSync")]
     [NonParallelizable]
-    [TestCaseSource(nameof(DelayForFuzzerTestCases))]
+    [NethermindTestCaseSource(nameof(DelayForFuzzerTestCases))]
     [Order(1)]
     public void ShouldKillConsensusClientWithIncreasingDelay(int currentDelay)
     {
-        Logger.Info($"***Starting test: ShouldKillConsensusClientWithIncreasingDelay: {currentDelay} Delay***");
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
-
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["consensus-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["consensus-container-name"], Count = 1, Minimum = currentDelay, Maximum = currentDelay, ShouldForceKillCommand = true }, TestLoggerContext.Logger);
     }
 
-    [TestCase(0, 60, 120)]
+    [NethermindTestCase(0, 60, 120)]
     [Category("InfinityRestartGracefullyOnFullSync")]
     public void ShouldRestartGracefullyNodeForInfinityOnSyncedNode(int restartCount, int minimumWait, int maximumWait)
     {
-        Logger.Info("***Starting test: ShouldRestartGracefullyNodeForInfinityOnSyncedNode***");
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
-
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceGracefullCommand = true }, TestLoggerContext.Logger);
     }
 
-    [TestCase(0, 60, 120)]
+    [NethermindTestCase(0, 60, 120)]
     [Category("InfinityKillOnFullSync")]
     public void ShouldKillNodeForInfinityOnSyncedNode(int restartCount, int minimumWait, int maximumWait)
     {
-        Logger.Info("***Starting test: ShouldKillNodeForInfinityOnSyncedNode***");
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
-
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceKillCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = restartCount, Minimum = minimumWait, Maximum = maximumWait, ShouldForceKillCommand = true }, TestLoggerContext.Logger);
     }
 
     [Repeat(10)]
     [Category("InMemoryFastKill")]
-    [Test]
+    [NethermindTest]
     public async Task ShouldKillNethermindClientAfterMemoryPruning()
     {
-        Logger.Info($"***Starting test: ShouldKillNethermindClientAfterMemoryPruning***");
-
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
         string expectedLog = "Executed memory prune";
 
@@ -136,23 +122,21 @@ public class RestartsOnSyncedNode : BaseTest
                 continue;
             }
 
-            Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
+            TestLoggerContext.Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
 
             break;
         }
 
-        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceKillCommand = true }, Logger);
+        FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceKillCommand = true }, TestLoggerContext.Logger);
     }
 
     [Repeat(10)]
     [Category("InMemorySaveKill")]
-    [TestCase(1, 1)]
+    [NethermindTestCase(1, 1)]
     public async Task ShouldKillNethermindClientAfterMemoryPruningSavedReorgBoundary(int amountOfGracefullShutdowns, int amountOfKills)
     {
-        Logger.Info($"***Starting test: ShouldKillNethermindClientAfterMemoryPruningSavedReorgBoundary***");
-
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        NodeInfo.WaitForNodeToBeSynced(Logger);
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
         string expectedLog = "Saving reorg boundary";
 
@@ -172,16 +156,16 @@ public class RestartsOnSyncedNode : BaseTest
 
             if (executedGracefull < amountOfGracefullShutdowns)
             {
-                FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceGracefullCommand = true }, Logger);
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceGracefullCommand = true }, TestLoggerContext.Logger);
                 executedGracefull++;
             }
             else if (executedKills < amountOfKills)
             {
-                FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceKillCommand = true }, Logger);
+                FuzzerHelper.Fuzz(new FuzzerCommandOptions { DockerContainerName = ConfigurationHelper.Instance["execution-container-name"], Count = 1, ShouldForceKillCommand = true }, TestLoggerContext.Logger);
                 executedKills++;
             }
 
-            Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
+            TestLoggerContext.Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
 
             break;
         }

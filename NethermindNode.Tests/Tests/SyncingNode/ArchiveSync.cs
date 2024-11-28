@@ -1,4 +1,6 @@
+using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomAttributes;
 
 namespace NethermindNode.Tests.SyncingNode;
 
@@ -6,23 +8,17 @@ namespace NethermindNode.Tests.SyncingNode;
 [Parallelizable(ParallelScope.All)]
 public class ArchiveTests : BaseTest
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-
     [Category("ArchiveSync")]
-    [Test]
+    [NethermindTest]
     public void ShouldSyncArchiveTillSpecifiedMillionBlock()
     {
-        Logger.Info("***Starting test: ShouldSyncArchiveTillSpecifiedMillionBlock***");
-
-        NodeInfo.WaitForNodeToBeReady(Logger);
-        var blockNumber = NodeInfo.GetCurrentBlock(Logger);
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        var blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger);
 
         while (blockNumber <= 1000000)
         {
-            Logger.Info("Waiting for block 1000000. Current block is: " + blockNumber);
+            TestLoggerContext.Logger.Info("Waiting for block 1000000. Current block is: " + blockNumber);
             Thread.Sleep(10000);
         }
-
-        Logger.Info("***Test finished: ShouldSyncArchiveTillSpecifiedMillionBlock***");
     }
 }

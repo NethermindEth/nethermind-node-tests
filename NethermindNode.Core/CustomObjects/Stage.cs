@@ -8,5 +8,5 @@ public struct Stage
     public List<SyncTypes> SyncTypesApplicable { get; set; }
     public bool ShouldOccureAlone { get; set; }
     public bool MissingOnNonValidatorNode { get; set; }
-    public Stages? ShouldNotOccurWith { get; set; } = null
+    public Stages? ShouldNotOccurWith { get; set; }
 }

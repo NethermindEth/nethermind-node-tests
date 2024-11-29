@@ -21,7 +21,7 @@ public class StagesTests : BaseTest
             new Stage(){ Stages = new List<Stages>(){ Stages.WaitingForBlock }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync } },
             new Stage(){ Stages = new List<Stages>(){ Stages.FastBodies }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync }, MissingOnNonValidatorNode = true },
             new Stage(){ Stages = new List<Stages>(){ Stages.FastReceipts }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync }, MissingOnNonValidatorNode = true },
-            new Stage(){ Stages = new List<Stages>(){ Stages.WaitingForBlock }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync }, ShouldOccureAlone = true, MissingOnNonValidatorNode = true }
+            new Stage(){ Stages = new List<Stages>(){ Stages.WaitingForBlock }, SyncTypesApplicable = new List<SyncTypes>(){ SyncTypes.SnapSync, SyncTypes.FastSync }, ShouldNotOccurWith = Stages.FastReceipts, MissingOnNonValidatorNode = true }
         };
 
     int MaxWaitTimeForStageToCompleteInMilliseconds = 36 * 60 * 60 * 1000;
@@ -46,7 +46,8 @@ public class StagesTests : BaseTest
             sw.Start();
 
             var currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
-            while (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString()))
+            while ((stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString())) ||
+                   (stage.ShouldNotOccurWith != null && currentStage.Contains(stage.ShouldNotOccurWith.Value.ToString())))
             {
                 if (sw.ElapsedMilliseconds > MaxWaitTimeForStageToCompleteInMilliseconds)
                 {

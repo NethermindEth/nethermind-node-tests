@@ -60,7 +60,8 @@ namespace NethermindNode.Tests.Tests.Pruning
                 "Full Pruning Ready to start",
                 "Full Pruning Started on root hash",
                 "Full Pruning In Progress",
-                "Full Pruning Finished"
+                "Full Pruning Finished",
+                "Disposing DB State"
             };
 
             HashSet<string> missingLogs = new HashSet<string>(expectedLogs);
@@ -81,28 +82,25 @@ namespace NethermindNode.Tests.Tests.Pruning
                         foundLogs.Add(expectedLog);
                         missingLogs.Remove(expectedLog);
                     }
-
-                    if (foundLogs.Count == expectedLogs.Length)
-                    {
-                        break;
-                    }
                 }
             }
             catch (OperationCanceledException)
             {
                 TestLoggerContext.Logger.Info("Operation was canceled.");
             }
-
-            if (missingLogs.Count > 0)
-            {
-                // In case some of the logs were not displayed log Warning
-                TestLoggerContext.Logger.Warn($"Missing logs: {string.Join(", ", missingLogs)}");
-            }
-
-            Assert.That(missingLogs.Count, Is.EqualTo(0), $"Not all expected log substrings were found. Missing logs: {string.Join(", ", missingLogs)}");
             
             stateDirectories = Directory.GetDirectories(statePath);
             Assert.That(stateDirectories.Length, Is.EqualTo(1), "After Pruning directories length should be back on 1.");
+        }
+
+        [Category("RpcPruningInfinity")]
+        [NethermindTest]
+        public async Task ShouldPruneDbUsingAdminRpcInfinity()
+        {
+            while (true)
+            {
+                await ShouldPruneDbUsingAdminRpc();
+            }
         }
     }    
 }

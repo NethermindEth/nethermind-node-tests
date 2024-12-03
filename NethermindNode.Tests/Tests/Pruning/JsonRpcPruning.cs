@@ -71,7 +71,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             {
                 await foreach (var line in DockerCommands.GetDockerLogsAsync(ConfigurationHelper.Instance["execution-container-name"], "", true, cts.Token))
                 {
-                    if (!line.Contains("Full Pruning") || !line.Contains("Disposing"))
+                    if (!line.Contains("Full Pruning") && !line.Contains("Disposing"))
                         continue;
 
                     foreach (var expectedLog in missingLogs)

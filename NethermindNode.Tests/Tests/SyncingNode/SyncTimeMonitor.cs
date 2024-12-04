@@ -9,6 +9,7 @@ using System.Text;
 namespace NethermindNode.Tests.SyncingNode;
 
 [TestFixture]
+[Parallelizable(ParallelScope.All)]
 public class SyncTimeMonitor : BaseTest
 {
     

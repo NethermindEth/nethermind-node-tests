@@ -96,7 +96,9 @@ namespace NethermindNode.Tests.Tests.Pruning
             {
                 TestLoggerContext.Logger.Info("Operation was canceled.");
             }
-            
+
+            //Wait for 30 seconds for data to be properly removed.
+            Thread.Sleep(30000);
             stateDirectories = Directory.GetDirectories(statePath);
             Assert.That(stateDirectories.Length, Is.EqualTo(1), "After Pruning directories length should be back on 1.");
         }

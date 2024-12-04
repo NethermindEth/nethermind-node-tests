@@ -85,6 +85,11 @@ namespace NethermindNode.Tests.Tests.Pruning
                         foundLogs.Add(expectedLog);
                         missingLogs.Remove(expectedLog);
                     }
+
+                    if (foundLogs.Count == expectedLogs.Length)
+                    {
+                        break;
+                    }
                 }
             }
             catch (OperationCanceledException)

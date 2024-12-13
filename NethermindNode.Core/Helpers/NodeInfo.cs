@@ -24,7 +24,7 @@ public static class NodeInfo
     public static bool IsFullySynced(Logger logger)
     {
         var currentStages = GetCurrentStages(logger);
-        if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None) || currentStages.Contains(Stages.UpdatingPivot))
+        if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None) || currentStages.Contains(Stages.UpdatingPivot) && !currentStages.Contains(Stages.WaitingForBlock))
         {
             return false;
         }

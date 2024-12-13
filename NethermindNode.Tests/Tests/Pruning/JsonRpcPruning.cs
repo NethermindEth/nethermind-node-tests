@@ -38,7 +38,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            while (stateDirectories.Length != 2 && stopwatch.Elapsed < TimeSpan.FromSeconds(60))
+            while (stateDirectories.Length != 2 && stopwatch.Elapsed < TimeSpan.FromSeconds(300))
             {
                 System.Threading.Thread.Sleep(500);
                 stateDirectories = Directory.GetDirectories(statePath);

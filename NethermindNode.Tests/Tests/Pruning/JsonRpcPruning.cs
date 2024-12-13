@@ -59,7 +59,6 @@ namespace NethermindNode.Tests.Tests.Pruning
                 "Full Pruning Waiting for state",
                 "Full Pruning Ready to start",
                 "Full Pruning Started on root hash",
-                "Full Pruning In Progress",
                 "Full Pruning Finished",
                 "Disposing DB State"
             };

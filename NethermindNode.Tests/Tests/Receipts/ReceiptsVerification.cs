@@ -9,6 +9,7 @@ using NUnit.Framework.Internal;
 using Nethereum.JsonRpc.Client.Streaming;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
 using Nethereum.RPC.Eth.Subscriptions;
+using NethermindNode.Tests.CustomAttributes;
 using Newtonsoft.Json;
 using System.Numerics;
 

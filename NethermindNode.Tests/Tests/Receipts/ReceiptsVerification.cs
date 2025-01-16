@@ -37,7 +37,7 @@ class ReceiptsVerification
     subscription.SubscriptionDataResponse += (object sender, StreamingEventArgs<Block> e) =>
     {
       var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)e.Response.Timestamp.Value);
-      Logger.Info($"\n\n\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
+      TestLoggerContext.Logger.Info($"\n\n\n\nNew Block: Number: {e.Response.Number.Value}, Timestamp: {JsonConvert.SerializeObject(utcTimestamp)}");
       var block = e.Response;
       blocks.Enqueue(block);
     };
@@ -49,7 +49,7 @@ class ReceiptsVerification
     subscription.UnsubscribeResponse += (object sender, StreamingEventArgs<bool> success) =>
     {
       subscribed = false;
-      Logger.Info($"Unsubscribed: {success.Response}");
+      TestLoggerContext.Logger.Info($"Unsubscribed: {success.Response}");
     };
 
     // open the web socket connection
@@ -61,14 +61,14 @@ class ReceiptsVerification
     await subscription.SubscribeAsync();
 
 
-    Logger.Info("Waiting for new blocks: ");
+    TestLoggerContext.Logger.Info("Waiting for new blocks: ");
 
     while (subscribed)
     {
       if (blocks.Count > 0)
       {
         var block = blocks.Dequeue();
-        Logger.Info($"Processing: {block.BlockHash}");
+        TestLoggerContext.Logger.Info($"Processing: {block.BlockHash}");
         /*
         1. On synced node subscribe to new blocks using eth_subscribe with newHeads topic
         2. Whenever notification from subscription is received we should:
@@ -82,7 +82,7 @@ class ReceiptsVerification
         var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value)).Result;
         var calculatedRoot = ReceiptsHelper.CalculateRoot(receipts);
         var receiptsRoot = block.ReceiptsRoot;
-        Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
+        TestLoggerContext.Logger.Info($"ReceiptsRoot: {receiptsRoot} CalculatedRoot: {calculatedRoot} {calculatedRoot == receiptsRoot}");
         Assert.That(calculatedRoot, Is.EqualTo(receiptsRoot));
         processedBlocks.Add(block);
       }
@@ -100,8 +100,8 @@ class ReceiptsVerification
     {
       var receipts = w3.Eth.Blocks.GetBlockReceiptsByNumber.SendRequestAsync(new HexBigInteger(block.Number.Value)).Result;
       var calculatedRoot = ReceiptsHelper.CalculateRoot(receipts);
-      Logger.Info($"Processed: {block.BlockHash}");
-      Logger.Info($"[{block.Number}] [{block.BlockHash}] Equal: {calculatedRoot == block.ReceiptsRoot}");
+      TestLoggerContext.Logger.Info($"Processed: {block.BlockHash}");
+      TestLoggerContext.Logger.Info($"[{block.Number}] [{block.BlockHash}] Equal: {calculatedRoot == block.ReceiptsRoot}");
       Assert.That(calculatedRoot, Is.EqualTo(block.ReceiptsRoot));
     }
   }
@@ -110,7 +110,7 @@ class ReceiptsVerification
   [Category("ReceiptsToGenesis")]
   public void Verify_Historical_Receipts_To_Genesis()
   {
-    Logger.Info("Verify_Historical_Receipts_To_Genesis");
+    TestLoggerContext.Logger.Info("Verify_Historical_Receipts_To_Genesis");
 
     var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
     var upperBound = (int)head + 1;
@@ -134,10 +134,10 @@ class ReceiptsVerification
   [Category("ReceiptsNearPivot")]
   public async Task Verify_Historical_Receipts_Near_Pivot()
   {
-    Logger.Info("Verify_Historical_Receipts_Near_Pivot");
+    TestLoggerContext.Logger.Info("Verify_Historical_Receipts_Near_Pivot");
 
-    var network = NodeInfo.GetNetworkType(Logger);
-    var pivotBlock = await NodeInfo.GetPivotNumber(Logger);
+    var network = NodeInfo.GetNetworkType(TestLoggerContext.Logger);
+    var pivotBlock = await NodeInfo.GetPivotNumber(TestLoggerContext.Logger);
     var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
     var upperBound = pivotBlock + 500 * 1000; // 500k
     var lowerBound = pivotBlock - 500 * 1000; // 500k
@@ -152,7 +152,7 @@ class ReceiptsVerification
       upperBound = (long)head;
     }
 
-    Logger.Info($"Pivot: {pivotBlock} Head: {head} Lower: {lowerBound} Upper: {upperBound}");
+    TestLoggerContext.Logger.Info($"Pivot: {pivotBlock} Head: {head} Lower: {lowerBound} Upper: {upperBound}");
 
     ParallelOptions parallelOptions = new ParallelOptions
     {
@@ -173,11 +173,11 @@ class ReceiptsVerification
   [Category("ReceiptsNearAncientBarrier")]
   public async Task Verify_Historical_Receipts_Near_Ancient_Barrier()
   {
-    Logger.Info("Verify_Historical_Receipts_Near_Ancient_Barrier");
+    TestLoggerContext.Logger.Info("Verify_Historical_Receipts_Near_Ancient_Barrier");
 
     var head = w3.Eth.Blocks.GetBlockNumber.SendRequestAsync().Result.Value;
-    var pivotBlock = await NodeInfo.GetPivotNumber(Logger);
-    var ancientBarrier = await NodeInfo.GetAncientReceiptsBarrier(Logger);
+    var pivotBlock = await NodeInfo.GetPivotNumber(TestLoggerContext.Logger);
+    var ancientBarrier = await NodeInfo.GetAncientReceiptsBarrier(TestLoggerContext.Logger);
 
     if (ancientBarrier > head)
     {
@@ -199,7 +199,7 @@ class ReceiptsVerification
       upperBound = (long)head;
     }
 
-    Logger.Info($"ancientBarrier: {ancientBarrier} Head: {head} Lower: {lowerBound} Upper: {upperBound}");
+    TestLoggerContext.Logger.Info($"ancientBarrier: {ancientBarrier} Head: {head} Lower: {lowerBound} Upper: {upperBound}");
 
     ParallelOptions parallelOptions = new ParallelOptions
     {
@@ -219,7 +219,7 @@ class ReceiptsVerification
   {
     if (blockNumber < 0)
     {
-      Logger.Info($"Negative block number: {blockNumber}");
+      TestLoggerContext.Logger.Info($"Negative block number: {blockNumber}");
       return;
     }
     var block = w3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockNumber)).Result;
@@ -227,8 +227,8 @@ class ReceiptsVerification
     var calculatedRoot = ReceiptsHelper.CalculateRoot(receipts);
     if (blockNumber % 100 == 0)
     {
-      Logger.Info($"Processing: {block.BlockHash}");
-      Logger.Info($"[{block.Number}] [{block.BlockHash}] Equal: {calculatedRoot == block.ReceiptsRoot}");
+      TestLoggerContext.Logger.Info($"Processing: {block.BlockHash}");
+      TestLoggerContext.Logger.Info($"[{block.Number}] [{block.BlockHash}] Equal: {calculatedRoot == block.ReceiptsRoot}");
     }
     Assert.That(calculatedRoot, Is.EqualTo(block.ReceiptsRoot));
   }

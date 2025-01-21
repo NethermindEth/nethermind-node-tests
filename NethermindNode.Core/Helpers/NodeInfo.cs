@@ -24,7 +24,7 @@ public static class NodeInfo
     public static bool IsFullySynced(Logger logger)
     {
         var currentStages = GetCurrentStages(logger);
-        if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None) || currentStages.Contains(Stages.UpdatingPivot))
+        if (currentStages.Count == 0 || currentStages.ToJoinedString() == Stages.Disconnected.ToString() || currentStages.ToJoinedString() == Stages.None.ToString() || currentStages.Contains(Stages.UpdatingPivot) && !currentStages.Contains(Stages.WaitingForBlock))
         {
             return false;
         }
@@ -176,4 +176,24 @@ public static class NodeInfo
         return long.Parse(result.Result);
     }
 
+    public static bool VerifyLogsForUndesiredEntries(ref List<string> errors)
+    {
+        var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
+        var corruption = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Corruption");
+        bool status = true;
+
+        if (exceptions.Any())
+        {
+            errors.AddRange(exceptions);
+            status = false;
+        }
+
+        if (corruption.Any())
+        {
+            errors.AddRange(corruption);
+            status = false;
+        }
+
+        return status;
+    }
 }

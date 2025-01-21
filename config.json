@@ -3,5 +3,6 @@
     "consensus-container-name": "sedge-consensus-client",
     "sync-mode": "SnapSync",
     "non-validator-node": false,
-    "default-rpc-port": 8545
+    "default-rpc-port": 8545,
+    "health-verification": true
 }

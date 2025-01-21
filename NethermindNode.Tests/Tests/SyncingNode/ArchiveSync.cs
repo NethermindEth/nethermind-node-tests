@@ -8,17 +8,22 @@ namespace NethermindNode.Tests.SyncingNode;
 [Parallelizable(ParallelScope.All)]
 public class ArchiveTests : BaseTest
 {
-    [Category("ArchiveSync")]
-    [NethermindTest]
-    public void ShouldSyncArchiveTillSpecifiedMillionBlock()
+    [NethermindTestCase(1000000), Category("ArchiveMilionBlocks")]
+    public void ShouldSyncArchiveTillSpecifiedBlock(int blocksCount)
     {
         NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
         var blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger);
+        List<string> errors = new List<string>();
+        bool verificationSuceeded;
 
-        while (blockNumber <= 1000000)
+        while (blockNumber <= blocksCount)
         {
-            TestLoggerContext.Logger.Info("Waiting for block 1000000. Current block is: " + blockNumber);
+            verificationSuceeded = NodeInfo.VerifyLogsForUndesiredEntries(ref errors);
+            Assert.That(verificationSuceeded == true, "Undesired log occurred: " + string.Join(", ", errors));
+            TestLoggerContext.Logger.Info($"Waiting for block {blocksCount}. Current block is: " + blockNumber);
             Thread.Sleep(10000);
         }
+
+        TestLoggerContext.Logger.Info($"Block {blocksCount} reached.");
     }
 }

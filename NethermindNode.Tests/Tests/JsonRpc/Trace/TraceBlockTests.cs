@@ -3,7 +3,6 @@ using NethermindNode.Core.Helpers;
 using NethermindNode.Core.RpcResponses;
 using NethermindNode.Tests.CustomAttributes;
 using NethermindNode.Tests.CustomObjects;
-using NethermindNode.Tests.Helpers;
 using NethermindNode.Tests.RpcResponses;
 using Newtonsoft.Json;
 using System.Text;
@@ -43,7 +42,7 @@ public class TraceBlockTests : BaseTest
                 }
             });
 
-        Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measure times of execution.");
+        Assert.That(executionTimes.Count > 0, "All requests failed - unable to measure times of execution.");
 
         var average = executionTimes.Average(x => x.TotalMilliseconds);
         var totalRequestsSucceeded = executionTimes.Count();
@@ -101,7 +100,7 @@ public class TraceBlockTests : BaseTest
                 }
             });
 
-        Assert.IsNotEmpty(executionTimes, "All requests failed - unable to measeure times of execution.");
+        Assert.That(executionTimes.Count > 0, "All requests failed - unable to measeure times of execution.");
 
         var average = executionTimes.Average(x => x.TotalMilliseconds);
         var totalRequestsSucceeded = executionTimes.Count();

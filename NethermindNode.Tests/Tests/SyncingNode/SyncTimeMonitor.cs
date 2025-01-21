@@ -2,7 +2,6 @@
 using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
 using NethermindNode.Tests.Enums;
-using NethermindNode.Tests.Helpers;
 using System.Diagnostics;
 using System.Text;
 

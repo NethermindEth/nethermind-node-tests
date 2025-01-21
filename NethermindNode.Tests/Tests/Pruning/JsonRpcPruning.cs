@@ -20,7 +20,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             string dataPath = DockerCommands.GetExecutionDataPath(TestLoggerContext.Logger);
             string nethermindDbPath = Path.Combine(dataPath, "nethermind_db");
             string network = Directory.GetDirectories(nethermindDbPath).FirstOrDefault();
-            Assert.IsNotNull(network, "There is no network directory.");
+            Assert.That(network != null, "There is no network directory.");
 
             string statePath = Path.Combine(network, "state");
 
@@ -32,7 +32,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             var parameters = $"";
             var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("admin_prune", parameters, TestItems.RpcAddress, TestLoggerContext.Logger).Result.Item1;
 
-            Assert.IsTrue(result.ToLowerInvariant().Contains("starting"), $"Result should contains \"starting\" but it doesn't. Result content: {result}");
+            Assert.That(result.ToLowerInvariant().Contains("starting"), $"Result should contains \"starting\" but it doesn't. Result content: {result}");
 
             // Wait for maximum 60 seconds for pruning to be properly started
             Stopwatch stopwatch = new Stopwatch();
@@ -48,7 +48,7 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             // Verify if second state dir is created
             stateDirectories = Directory.GetDirectories(statePath);
-            Assert.IsTrue(stateDirectories.Length == 2, "Pruning active - backup state directory should be created.");
+            Assert.That(stateDirectories.Length == 2, "Pruning active - backup state directory should be created.");
 
             // Verify Logs
             CancellationTokenSource cts = new CancellationTokenSource();

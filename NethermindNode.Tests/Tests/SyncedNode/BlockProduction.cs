@@ -19,9 +19,9 @@ public class BlockProduction : BaseTest
         Thread.Sleep(120000); //Give it a time to warm up after sync (catching 32 blocks, starting oldBodies etc - it takes short time and in emantime first blocks should appear)
 
         var blockImprove = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Improved post-merge block");
-        Assert.IsNotEmpty(blockImprove, "No block improvements after sync in simulation mode.");
+        Assert.That(blockImprove.Count() > 0 , "No block improvements after sync in simulation mode.");
 
         var blockProduction = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Produced block");
-        Assert.IsNotEmpty(blockProduction, "No block production after sync in simulation mode.");
+        Assert.That(blockProduction.Count() > 0, "No block production after sync in simulation mode.");
     }
 }

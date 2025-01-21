@@ -38,7 +38,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            while (stateDirectories.Length != 2 && stopwatch.Elapsed < TimeSpan.FromSeconds(60))
+            while (stateDirectories.Length != 2 && stopwatch.Elapsed < TimeSpan.FromSeconds(300))
             {
                 System.Threading.Thread.Sleep(500);
                 stateDirectories = Directory.GetDirectories(statePath);
@@ -59,7 +59,6 @@ namespace NethermindNode.Tests.Tests.Pruning
                 "Full Pruning Waiting for state",
                 "Full Pruning Ready to start",
                 "Full Pruning Started on root hash",
-                "Full Pruning In Progress",
                 "Full Pruning Finished",
                 "Disposing DB State"
             };

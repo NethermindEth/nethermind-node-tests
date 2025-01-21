@@ -4,5 +4,5 @@
     "sync-mode": "SnapSync",
     "non-validator-node": false,
     "default-rpc-port": 8545,
-    "health-verification": true
+    "health-verification": false
 }

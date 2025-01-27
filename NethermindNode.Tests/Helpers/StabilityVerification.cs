@@ -15,7 +15,6 @@ public class StabilityVerification
         {
             bool verificationSuceeded = NodeInfo.VerifyLogsForUndesiredEntries(ref errors);
             Assert.That(verificationSuceeded == true, "Undesired log occurred: " + string.Join(", ", errors));
-            TestLoggerContext.Logger.Info($"Verification status: {verificationSuceeded}");
             Thread.Sleep(10000);
         }
     }

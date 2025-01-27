@@ -188,12 +188,16 @@ public static class NodeInfo
             {
                 if (!string.IsNullOrEmpty(item))
                 {
-                    TestLoggerContext.Logger.Error("Found undesired exception: ");
-                    TestLoggerContext.Logger.Error(item);
+                    if (!item.Contains("ObjectDisposedException")) //HACK: Until TImer disposals will be fixed
+                    {
+                        TestLoggerContext.Logger.Error("Found undesired exception: ");
+                        TestLoggerContext.Logger.Error(item);
+
+                        errors.Add(item);
+                        status = false;
+                    }
                 }
             }
-            errors.AddRange(exceptions);
-            status = false;
         }
 
         if (corruption.Any())

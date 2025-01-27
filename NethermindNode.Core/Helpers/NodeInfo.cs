@@ -184,12 +184,28 @@ public static class NodeInfo
 
         if (exceptions.Any())
         {
+            foreach (var item in exceptions)
+            {
+                if (!string.IsNullOrEmpty(item))
+                {
+                    TestLoggerContext.Logger.Error("Found undesired exception: ");
+                    TestLoggerContext.Logger.Error(item);
+                }
+            }
             errors.AddRange(exceptions);
             status = false;
         }
 
         if (corruption.Any())
         {
+            foreach (var item in corruption)
+            {
+                if (!string.IsNullOrEmpty(item))
+                {
+                    TestLoggerContext.Logger.Error("Found undesired corruption: ");
+                    TestLoggerContext.Logger.Error(item);
+                }
+            }
             errors.AddRange(corruption);
             status = false;
         }

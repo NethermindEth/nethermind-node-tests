@@ -12,6 +12,8 @@ namespace NethermindNode.Tests.Tests.SyncedNode
         private const string EcImageVersionVariableName = "EC_IMAGE_VERSION";
 
         [NethermindTest]
+        [Description("Upgrade from actually installed version to current docker image version.")]
+        [Category("UpgradeTest")]
         public void UpgradeFromOldToCurrent()
         {
             NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
@@ -36,6 +38,7 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
         [NethermindTest]
         [Description("Downgrade from release candidate or master to latest stable version.")]
+        [Category("DowngradeTest")]
         public void DowngradeToLatest()
         {
             NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);

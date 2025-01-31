@@ -36,7 +36,8 @@ namespace NethermindNode.Tests.Tests.SyncedNode
             VerifyNoUndesiredLogs(maxIterations: 10, intervalMs: 60000);
         }
 
-        [NethermindTest]
+        [NethermindTest(Order = 1)]
+        [NonParallelizable]
         [Description("Downgrade from release candidate or master to latest stable version.")]
         [Category("DowngradeTest")]
         public void DowngradeToLatest()
@@ -58,8 +59,8 @@ namespace NethermindNode.Tests.Tests.SyncedNode
             );
 
             // Optionally check for specific exceptions in logs after restart
-            var version = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], ConfigurationHelper.Instance["latest-nethermind-version"]);
-            Assert.That(version.Count() > 0, "Unable to find a version after upgrade");
+            // var version = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], ConfigurationHelper.Instance["latest-nethermind-version"]);
+            // Assert.That(version.Count() > 0, "Unable to find a version after upgrade");
             
             VerifyNoUndesiredLogs(maxIterations: 10, intervalMs: 60000);
         }

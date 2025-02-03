@@ -28,6 +28,12 @@ public static class DockerCommands
         DockerCommandExecute("start " + containerName, logger);
     }
 
+    public static void ComposeUp(string containerName, string dockerComposeFilePath, Logger logger)
+    {
+        DockerCommandExecute($"compose -f {dockerComposeFilePath}" + " up -d " + containerName, logger);
+    }
+
+
     public static string GetDockerContainerStatus(string containerName, Logger logger)
     {
         var result = DockerCommandExecute("inspect -f '{{.State.Status}}' " + containerName, logger);

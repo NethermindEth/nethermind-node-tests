@@ -29,6 +29,7 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
             RestartDockerContainer(
                 ConfigurationHelper.Instance["execution-container-name"],
+                Path.Combine(Path.GetDirectoryName(envFilePath), "docker-compose.yml"), //Hack: get docker compose dir
                 TestLoggerContext.Logger
             );
 
@@ -55,12 +56,9 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
             RestartDockerContainer(
                 ConfigurationHelper.Instance["execution-container-name"],
+                Path.Combine(Path.GetDirectoryName(envFilePath), "docker-compose.yml"), //Hack: get docker compose dir
                 TestLoggerContext.Logger
             );
-
-            // Optionally check for specific exceptions in logs after restart
-            // var version = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], ConfigurationHelper.Instance["latest-nethermind-version"]);
-            // Assert.That(version.Count() > 0, "Unable to find a version after upgrade");
             
             VerifyNoUndesiredLogs(maxIterations: 10, intervalMs: 60000);
         }
@@ -102,10 +100,11 @@ namespace NethermindNode.Tests.Tests.SyncedNode
             File.WriteAllLines(envFilePath, lines);
         }
 
-        private void RestartDockerContainer(string containerName, Logger logger)
+        private void RestartDockerContainer(string containerName, string dockerComposePathDir, Logger logger)
         {
             DockerCommands.StopDockerContainer(containerName, logger);
-            DockerCommands.StartDockerContainer(containerName, logger);
+            // Hack: recreate all which are down so I don't need to specify compose label which is different than container label
+            DockerCommands.ComposeUp("", dockerComposePathDir, logger);
         }
 
         private void VerifyNoUndesiredLogs(int maxIterations, int intervalMs)

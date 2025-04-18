@@ -216,4 +216,15 @@ public static class NodeInfo
 
         return status;
     }
+
+    public static async Task<long> GetMergeBlockNumber()
+    {
+        var netType = await GetNetworkType(TestLoggerContext.Logger);
+        switch (netType)
+        {
+
+            case NetworkType.Sepolia: return 10000;
+            default: throw new NotImplementedException();
+        }
+    }
 }

@@ -101,7 +101,6 @@ internal class NodeConfig
 
 
 [TestFixture]
-[Parallelizable(ParallelScope.All)]
 public class HistoryExpiryTests : BaseTest
 {
     [NethermindTest]
@@ -117,32 +116,44 @@ public class HistoryExpiryTests : BaseTest
         {
             throw new Exception("Debug RPC is disabled or FullSync is not enabled. Double check your config!");
         }
+        l.Info("Waiting for sync..");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
 
         Thread.Sleep(120000);
+        l.Info("Done with sync");
 
         // Export
+
+        l.Info("Starting era export");
         DockerCommands.StopDockerContainer(elInstance, l);
         NodeConfig.AddElFlag("Era", "ExportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "From", "0");
         NodeConfig.AddElFlag("Era", "To", (await NodeInfo.GetMergeBlockNumber()).ToString());
         DockerCommands.StartDockerContainer(elInstance, l);
+        l.Info("Waiting for export to finish");
         NodeInfo.WaitForNodeToBeReady(l);
+        NodeInfo.WaitForNodeToBeSynced(l);
+        l.Info("Done with export");
 
         // Set up Import
+        l.Info("Preparing for import");
         DockerCommands.StopDockerContainer(elInstance, l);
         NodeConfig.RemoveElFlag("Era", "ExportDirectory");
         NodeConfig.AddElFlag("Era", "ImportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "TrustedAccumulatorFile", eraDir + "/accumulators.txt");
 
         // Remove DB:
+        l.Info("Removing DB");
         var execDataDir = DockerCommands.GetExecutionDataPath(l);
         CommandExecutor.RemoveDirectory(execDataDir + "/nethermind_db", l);
 
         // Import
+        l.Info("Starting Import");
         DockerCommands.StartDockerContainer(elInstance, l);
         NodeInfo.WaitForNodeToBeReady(l);
+        NodeInfo.WaitForNodeToBeSynced(l);
+        l.Info("Done with import");
 
         // Check block production :shrug:
         var blockProduction = DockerCommands.GetDockerLogs(elInstance, "Produced ");

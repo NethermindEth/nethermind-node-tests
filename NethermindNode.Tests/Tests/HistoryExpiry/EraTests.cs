@@ -116,44 +116,44 @@ public class HistoryExpiryTests : BaseTest
         {
             throw new Exception("Debug RPC is disabled or FullSync is not enabled. Double check your config!");
         }
-        l.Info("Waiting for sync..");
+        Console.WriteLine("Waiting for sync..");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
 
         Thread.Sleep(120000);
-        l.Info("Done with sync");
+        Console.WriteLine("Done with sync");
 
         // Export
 
-        l.Info("Starting era export");
+        Console.WriteLine("Starting era export");
         DockerCommands.StopDockerContainer(elInstance, l);
         NodeConfig.AddElFlag("Era", "ExportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "From", "0");
         NodeConfig.AddElFlag("Era", "To", (await NodeInfo.GetMergeBlockNumber()).ToString());
         DockerCommands.StartDockerContainer(elInstance, l);
-        l.Info("Waiting for export to finish");
+        Console.WriteLine("Waiting for export to finish");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
-        l.Info("Done with export");
+        Console.WriteLine("Done with export");
 
         // Set up Import
-        l.Info("Preparing for import");
+        Console.WriteLine("Preparing for import");
         DockerCommands.StopDockerContainer(elInstance, l);
         NodeConfig.RemoveElFlag("Era", "ExportDirectory");
         NodeConfig.AddElFlag("Era", "ImportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "TrustedAccumulatorFile", eraDir + "/accumulators.txt");
 
         // Remove DB:
-        l.Info("Removing DB");
+        Console.WriteLine("Removing DB");
         var execDataDir = DockerCommands.GetExecutionDataPath(l);
         CommandExecutor.RemoveDirectory(execDataDir + "/nethermind_db", l);
 
         // Import
-        l.Info("Starting Import");
+        Console.WriteLine("Starting Import");
         DockerCommands.StartDockerContainer(elInstance, l);
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
-        l.Info("Done with import");
+        Console.WriteLine("Done with import");
 
         // Check block production :shrug:
         var blockProduction = DockerCommands.GetDockerLogs(elInstance, "Produced ");

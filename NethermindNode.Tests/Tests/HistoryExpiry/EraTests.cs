@@ -111,7 +111,7 @@ public class HistoryExpiryTests : BaseTest
         var eraDir = "/era";
         var volumeMap = "${EC_DATA_DIR}/era:" + eraDir;
 
-        var result = await NodeInfo.GetConfigValue(l, "Sync", "FullSync");
+        var result = await NodeInfo.GetConfigValue(l, "Sync", "FastSync");
         if (result.Result == null || bool.Parse(result.Result) == false)
         {
             throw new Exception("Debug RPC is disabled or FullSync is not enabled. Double check your config!");

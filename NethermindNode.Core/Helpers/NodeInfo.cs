@@ -143,7 +143,8 @@ public static class NodeInfo
         else
         {
             logger.Info($"Network type: {result}");
-            return (NetworkType)int.Parse(result, System.Globalization.NumberStyles.HexNumber);
+            // return (NetworkType)int.Parse(result, System.Globalization.NumberStyles.HexNumber);
+            return (NetworkType)Convert.ToInt32(result, 16);
         }
     }
 

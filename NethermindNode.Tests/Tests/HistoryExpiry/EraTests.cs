@@ -52,7 +52,7 @@ internal class NodeConfig
     {
         Load();
         var volumes = GetSeqNode("execution", "volumes");
-        volumes.Add(new YamlSequenceNode(volume));
+        volumes.Add(new YamlScalarNode(volume));
         Save();
     }
 

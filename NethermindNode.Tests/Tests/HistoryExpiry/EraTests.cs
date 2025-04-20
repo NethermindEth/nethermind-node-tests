@@ -50,6 +50,7 @@ internal class NodeConfig
 
     public static void AddVolume(string volume)
     {
+        Load();
         var volumes = GetSeqNode("execution", "volumes");
         volumes.Add(new YamlSequenceNode(volume));
     }
@@ -87,15 +88,14 @@ internal class NodeConfig
 
     }
 
-
-
     private static string GetComposeFilePath()
     {
-
         var currentDir = AppContext.BaseDirectory;
-        var projectRoot = Path.GetFullPath(Path.Combine(currentDir, "../../../../"));
-        Console.WriteLine(projectRoot);
-        return Path.Combine(projectRoot, composePath);
+
+        // Parent directory to the tests root
+        var parentDir = Path.GetFullPath(Path.Combine(currentDir, "../../../../../"));
+        Console.WriteLine(parentDir);
+        return Path.Combine(parentDir, composePath);
     }
 }
 
@@ -110,6 +110,8 @@ public class HistoryExpiryTests : BaseTest
         var elInstance = ConfigurationHelper.Instance["execution-container-name"];
         var eraDir = "/era";
         var volumeMap = "${EC_DATA_DIR}/era:" + eraDir;
+        var mergeBlock = (await NodeInfo.GetMergeBlockNumber()).ToString();
+        var execDataDir = DockerCommands.GetExecutionDataPath(l);
 
         var result = await NodeInfo.GetConfigValue(l, "Sync", "FastSync");
         if (result.Result == null || bool.Parse(result.Result) == false)
@@ -120,16 +122,16 @@ public class HistoryExpiryTests : BaseTest
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
 
-        Thread.Sleep(120000);
+        // Thread.Sleep(120000);
         Console.WriteLine("Done with sync");
 
         // Export
-
         Console.WriteLine("Starting era export");
-        DockerCommands.StopDockerContainer(elInstance, l);
+        NodeConfig.AddVolume(volumeMap);
         NodeConfig.AddElFlag("Era", "ExportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "From", "0");
-        NodeConfig.AddElFlag("Era", "To", (await NodeInfo.GetMergeBlockNumber()).ToString());
+        NodeConfig.AddElFlag("Era", "To", mergeBlock);
+        DockerCommands.StopDockerContainer(elInstance, l);
         DockerCommands.StartDockerContainer(elInstance, l);
         Console.WriteLine("Waiting for export to finish");
         NodeInfo.WaitForNodeToBeReady(l);
@@ -138,14 +140,13 @@ public class HistoryExpiryTests : BaseTest
 
         // Set up Import
         Console.WriteLine("Preparing for import");
-        DockerCommands.StopDockerContainer(elInstance, l);
         NodeConfig.RemoveElFlag("Era", "ExportDirectory");
         NodeConfig.AddElFlag("Era", "ImportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "TrustedAccumulatorFile", eraDir + "/accumulators.txt");
 
         // Remove DB:
         Console.WriteLine("Removing DB");
-        var execDataDir = DockerCommands.GetExecutionDataPath(l);
+        DockerCommands.StopDockerContainer(elInstance, l);
         CommandExecutor.RemoveDirectory(execDataDir + "/nethermind_db", l);
 
         // Import

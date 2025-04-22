@@ -128,7 +128,7 @@ public class HistoryExpiryTests : BaseTest
         Console.WriteLine("Done with sync");
 
         var parameters = $"""[${mergeBlock}, true]""";
-        var rpcResponse1 = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
+        var rpcResponse1 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
         Console.WriteLine($"Response1: ${rpcResponse1}");
 
         // Export
@@ -144,7 +144,7 @@ public class HistoryExpiryTests : BaseTest
         NodeInfo.WaitForNodeToBeSynced(l);
         Console.WriteLine("Done with export");
 
-        var rpcResponse2 = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
+        var rpcResponse2 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
         Console.WriteLine($"Response2: ${rpcResponse1}");
 
         // Set up Import
@@ -170,7 +170,7 @@ public class HistoryExpiryTests : BaseTest
         Assert.That(blockProduction.Count() > 0, "No block production after sync in simulation mode.");
 
 
-        var rpcResponse3 = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
+        var rpcResponse3 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
         Console.WriteLine($"Response3: ${rpcResponse1}");
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse2));
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse3));

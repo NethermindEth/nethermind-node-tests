@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
+using NethermindNode.Tests.JsonRpc;
 using YamlDotNet.RepresentationModel;
 
 namespace NethermindNode.Tests.HistoryExpiry;
@@ -126,6 +127,10 @@ public class HistoryExpiryTests : BaseTest
         // Thread.Sleep(120000);
         Console.WriteLine("Done with sync");
 
+        var parameters = $"""[${mergeBlock}, true]""";
+        var rpcResponse1 = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
+        Console.WriteLine($"Response1: ${rpcResponse1}");
+
         // Export
         Console.WriteLine("Starting era export");
         NodeConfig.AddVolume(volumeMap);
@@ -138,6 +143,9 @@ public class HistoryExpiryTests : BaseTest
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
         Console.WriteLine("Done with export");
+
+        var rpcResponse2 = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
+        Console.WriteLine($"Response2: ${rpcResponse1}");
 
         // Set up Import
         Console.WriteLine("Preparing for import");
@@ -160,6 +168,12 @@ public class HistoryExpiryTests : BaseTest
         // Check block production :shrug:
         var blockProduction = DockerCommands.GetDockerLogs(elInstance, "Produced ");
         Assert.That(blockProduction.Count() > 0, "No block production after sync in simulation mode.");
+
+
+        var rpcResponse3 = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
+        Console.WriteLine($"Response3: ${rpcResponse1}");
+        Assert.That(rpcResponse1, Is.EqualTo(rpcResponse2));
+        Assert.That(rpcResponse1, Is.EqualTo(rpcResponse3));
     }
 }
 

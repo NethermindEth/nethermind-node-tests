@@ -19,6 +19,7 @@ public static class NodeInfo
         Volta = 73799,
         Sepolia = 11155111,
         Holesky = 17000,
+        Hoodi = 560048,
     }
 
     public static bool IsFullySynced(Logger logger)
@@ -224,7 +225,8 @@ public static class NodeInfo
         switch (netType)
         {
 
-            case NetworkType.Sepolia: return 10000;
+            case NetworkType.Sepolia: return 100000;
+            case NetworkType.Hoodi: return 100000;
             default: throw new NotImplementedException();
         }
     }

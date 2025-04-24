@@ -1,5 +1,3 @@
-
-using System.Runtime.CompilerServices;
 using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
@@ -22,7 +20,7 @@ internal class NodeConfig
         var size = commandNode.Children.Count;
         for (int i = 0; i < size; i++)
         {
-            Console.WriteLine($"Node[{i}]: {commandNode.Children[i]}");
+            TestLoggerContext.Logger.Debug($"Node[{i}]: {commandNode.Children[i]}");
         }
 
         commandNode.Add(new YamlScalarNode(flag));
@@ -40,7 +38,7 @@ internal class NodeConfig
         {
             if (commandNode.Children[i].ToString().Contains(flag))
             {
-                Console.WriteLine($"Found {flag}, removing");
+                TestLoggerContext.Logger.Debug($"Found {flag}, removing");
                 commandNode.Children.RemoveAt(i);
                 break;
             }
@@ -96,7 +94,7 @@ internal class NodeConfig
 
         // Parent directory to the tests root
         var parentDir = Path.GetFullPath(Path.Combine(currentDir, "../../../../../"));
-        Console.WriteLine(parentDir);
+        TestLoggerContext.Logger.Debug(parentDir);
         return Path.Combine(parentDir, composePath);
     }
 }
@@ -120,50 +118,52 @@ public class HistoryExpiryTests : BaseTest
         {
             throw new Exception("Debug RPC is disabled or FullSync is not enabled. Double check your config!");
         }
-        Console.WriteLine("Waiting for sync..");
+        l.Debug("Waiting for sync..");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
 
-        // Thread.Sleep(120000);
-        Console.WriteLine("Done with sync");
+        Thread.Sleep(120000);
+        l.Debug("Done with sync");
 
         var parameters = $"""[${mergeBlock}, true]""";
         var rpcResponse1 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
-        Console.WriteLine($"Response1: ${rpcResponse1}");
+        l.Debug($"Response1: ${rpcResponse1}");
 
         // Export
-        Console.WriteLine("Starting era export");
+        l.Debug("Starting era export");
         NodeConfig.AddVolume(volumeMap);
         NodeConfig.AddElFlag("Era", "ExportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "From", "0");
         NodeConfig.AddElFlag("Era", "To", mergeBlock);
         DockerCommands.StopDockerContainer(elInstance, l);
         DockerCommands.StartDockerContainer(elInstance, l);
-        Console.WriteLine("Waiting for export to finish");
+        l.Debug("Waiting for export to finish");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
-        Console.WriteLine("Done with export");
+        l.Debug("Done with export");
 
         var rpcResponse2 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
-        Console.WriteLine($"Response2: ${rpcResponse1}");
+        l.Debug($"Response2: ${rpcResponse1}");
 
         // Set up Import
-        Console.WriteLine("Preparing for import");
+        l.Debug("Preparing for import");
         NodeConfig.RemoveElFlag("Era", "ExportDirectory");
         NodeConfig.AddElFlag("Era", "ImportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "TrustedAccumulatorFile", eraDir + "/accumulators.txt");
 
         // Remove DB:
-        Console.WriteLine("Removing DB");
+        l.Debug("Removing DB");
         DockerCommands.StopDockerContainer(elInstance, l);
+
+        Thread.Sleep(60000);
         CommandExecutor.RemoveDirectory(execDataDir + "/nethermind_db", l);
 
         // Import
-        Console.WriteLine("Starting Import");
+        l.Debug("Starting Import");
         DockerCommands.StartDockerContainer(elInstance, l);
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
-        Console.WriteLine("Done with import");
+        l.Debug("Done with import");
 
         // Check block production :shrug:
         var blockProduction = DockerCommands.GetDockerLogs(elInstance, "Produced ");
@@ -171,7 +171,7 @@ public class HistoryExpiryTests : BaseTest
 
 
         var rpcResponse3 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
-        Console.WriteLine($"Response3: ${rpcResponse1}");
+        l.Debug($"Response3: ${rpcResponse1}");
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse2));
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse3));
     }

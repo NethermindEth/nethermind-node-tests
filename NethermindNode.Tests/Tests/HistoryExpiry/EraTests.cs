@@ -20,7 +20,7 @@ internal class NodeConfig
         var size = commandNode.Children.Count;
         for (int i = 0; i < size; i++)
         {
-            TestLoggerContext.Logger.Debug($"Node[{i}]: {commandNode.Children[i]}");
+            TestLoggerContext.Logger.Info($"Node[{i}]: {commandNode.Children[i]}");
         }
 
         commandNode.Add(new YamlScalarNode(flag));
@@ -38,7 +38,7 @@ internal class NodeConfig
         {
             if (commandNode.Children[i].ToString().Contains(flag))
             {
-                TestLoggerContext.Logger.Debug($"Found {flag}, removing");
+                TestLoggerContext.Logger.Info($"Found {flag}, removing");
                 commandNode.Children.RemoveAt(i);
                 break;
             }
@@ -94,7 +94,7 @@ internal class NodeConfig
 
         // Parent directory to the tests root
         var parentDir = Path.GetFullPath(Path.Combine(currentDir, "../../../../../"));
-        TestLoggerContext.Logger.Debug(parentDir);
+        TestLoggerContext.Logger.Info(parentDir);
         return Path.Combine(parentDir, composePath);
     }
 }
@@ -118,52 +118,52 @@ public class HistoryExpiryTests : BaseTest
         {
             throw new Exception("Debug RPC is disabled or FullSync is not enabled. Double check your config!");
         }
-        l.Debug("Waiting for sync..");
+        l.Info("Waiting for sync..");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
 
         Thread.Sleep(120000);
-        l.Debug("Done with sync");
+        l.Info("Done with sync");
 
         var parameters = $"""[${mergeBlock}, true]""";
         var rpcResponse1 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
-        l.Debug($"Response1: ${rpcResponse1}");
+        l.Info($"Response1: ${rpcResponse1}");
 
         // Export
-        l.Debug("Starting era export");
+        l.Info("Starting era export");
         NodeConfig.AddVolume(volumeMap);
         NodeConfig.AddElFlag("Era", "ExportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "From", "0");
         NodeConfig.AddElFlag("Era", "To", mergeBlock);
         DockerCommands.StopDockerContainer(elInstance, l);
         DockerCommands.StartDockerContainer(elInstance, l);
-        l.Debug("Waiting for export to finish");
+        l.Info("Waiting for export to finish");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
-        l.Debug("Done with export");
+        l.Info("Done with export");
 
         var rpcResponse2 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
-        l.Debug($"Response2: ${rpcResponse1}");
+        l.Info($"Response2: ${rpcResponse1}");
 
         // Set up Import
-        l.Debug("Preparing for import");
+        l.Info("Preparing for import");
         NodeConfig.RemoveElFlag("Era", "ExportDirectory");
         NodeConfig.AddElFlag("Era", "ImportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "TrustedAccumulatorFile", eraDir + "/accumulators.txt");
 
         // Remove DB:
-        l.Debug("Removing DB");
+        l.Info("Removing DB");
         DockerCommands.StopDockerContainer(elInstance, l);
 
         Thread.Sleep(60000);
         CommandExecutor.RemoveDirectory(execDataDir + "/nethermind_db", l);
 
         // Import
-        l.Debug("Starting Import");
+        l.Info("Starting Import");
         DockerCommands.StartDockerContainer(elInstance, l);
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
-        l.Debug("Done with import");
+        l.Info("Done with import");
 
         // Check block production :shrug:
         var blockProduction = DockerCommands.GetDockerLogs(elInstance, "Produced ");
@@ -171,7 +171,7 @@ public class HistoryExpiryTests : BaseTest
 
 
         var rpcResponse3 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
-        l.Debug($"Response3: ${rpcResponse1}");
+        l.Info($"Response3: ${rpcResponse1}");
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse2));
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse3));
     }

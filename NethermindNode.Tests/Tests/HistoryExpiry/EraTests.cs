@@ -125,8 +125,8 @@ public class HistoryExpiryTests : BaseTest
         Thread.Sleep(120000);
         l.Info("Done with sync");
 
-        var parameters = $"""[${mergeBlock}, true]""";
-        var rpcResponse1 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
+        var rpcParams = $"""[{(long.Parse(mergeBlock) / 2).ToString()}, true]""";
+        var rpcResponse1 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l);
         l.Info($"Response1: ${rpcResponse1}");
 
         // Export
@@ -142,14 +142,20 @@ public class HistoryExpiryTests : BaseTest
         NodeInfo.WaitForNodeToBeSynced(l);
         l.Info("Done with export");
 
-        var rpcResponse2 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
-        l.Info($"Response2: ${rpcResponse1}");
+        var rpcResponse2 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l);
+        l.Info($"Response2: ${rpcResponse2}");
 
-        // Set up Import
+        // Set up Import: 
+        // - Remove Era export directory
+        // - Use default snap sync
+        // - Set ancient barriers to mergeBlock
         l.Info("Preparing for import");
         NodeConfig.RemoveElFlag("Era", "ExportDirectory");
+        NodeConfig.RemoveElFlag("Sync", "FastSync");
         NodeConfig.AddElFlag("Era", "ImportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "TrustedAccumulatorFile", eraDir + "/accumulators.txt");
+        NodeConfig.AddElFlag("Sync", "AncientBodiesBarrier", mergeBlock);
+        NodeConfig.AddElFlag("Sync", "AncientReceiptsBarrier", mergeBlock);
 
         // Remove DB:
         l.Info("Removing DB");
@@ -170,8 +176,8 @@ public class HistoryExpiryTests : BaseTest
         Assert.That(blockProduction.Count() > 0, "No block production after sync in simulation mode.");
 
 
-        var rpcResponse3 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", parameters, TestItems.RpcAddress, l);
-        l.Info($"Response3: ${rpcResponse1}");
+        var rpcResponse3 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l);
+        l.Info($"Response3: ${rpcResponse3}");
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse2));
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse3));
     }

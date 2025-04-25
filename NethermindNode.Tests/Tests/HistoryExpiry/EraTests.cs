@@ -3,9 +3,6 @@ using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
 using NethermindNode.Tests.JsonRpc;
 using YamlDotNet.RepresentationModel;
-using NLog;
-using System.ComponentModel;
-using System.Diagnostics;
 
 namespace NethermindNode.Tests.HistoryExpiry;
 
@@ -100,54 +97,6 @@ internal class NodeConfig
         TestLoggerContext.Logger.Info(parentDir);
         return Path.Combine(parentDir, composePath);
     }
-
-    public static string ShellExec(string command, Logger logger)
-    {
-        var processInfo = new ProcessStartInfo("docker", $"{command}");
-        string output = "";
-        string error = "";
-
-        logger.Debug("DOCKER command: " + processInfo.FileName + " " + command);
-        processInfo.CreateNoWindow = true;
-        processInfo.UseShellExecute = false;
-        processInfo.RedirectStandardOutput = true;
-        processInfo.RedirectStandardError = true;
-
-        using (var process = new Process())
-        {
-            try
-            {
-                process.StartInfo = processInfo;
-                process.Start();
-                process.WaitForExit(30000);
-                output = process.StandardOutput.ReadToEnd();
-                error = process.StandardError.ReadToEnd();
-
-                if (!process.HasExited)
-                {
-                    process.Kill();
-                }
-
-                process.Close();
-
-            }
-            catch (Win32Exception e)
-            {
-                if (e.Message.Contains("An error occurred trying to start process 'docker' with working directory '/root'. No such file or directory"))
-                {
-                    return "";
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex);
-            }
-        }
-
-        logger.Debug("Docker output: " + output);
-        logger.Debug("Docker error: " + error);
-        return output;
-    }
 }
 
 
@@ -160,8 +109,9 @@ public class HistoryExpiryTests : BaseTest
     public async Task ExportImportTest()
     {
         var l = TestLoggerContext.Logger;
-        var elInstance = "execution";
-        // var elInstance = ConfigurationHelper.Instance["execution-container-name"];
+        // var elInstance = "execution";
+        var elInstance = ConfigurationHelper.Instance["execution-container-name"];
+        var composeFile = "/root/docker-compose.yml";
         var eraDir = "/era";
         var volumeMap = "${EC_DATA_DIR}/era:" + eraDir;
         var isFastSync = await NodeInfo.GetConfigValue(l, "Sync", "FastSync");
@@ -177,10 +127,10 @@ public class HistoryExpiryTests : BaseTest
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
 
-        Thread.Sleep(120000);
+        Thread.Sleep(20000);
         l.Info("Done with sync");
 
-        var rpcParams = $"""[{(long.Parse(mergeBlock) / 2).ToString()}, true]""";
+        var rpcParams = $"""["{(long.Parse(mergeBlock) / 2).ToString()}", true]""";
         var rpcResponse1 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l);
         l.Info($"Response1: ${rpcResponse1}");
 
@@ -190,10 +140,8 @@ public class HistoryExpiryTests : BaseTest
         NodeConfig.AddElFlag("Era", "ExportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "From", "0");
         NodeConfig.AddElFlag("Era", "To", mergeBlock);
-        NodeConfig.ShellExec("stop", l);
-        NodeConfig.ShellExec("up", l);
-        // DockerCommands.StopDockerContainer(elInstance, l);
-        // DockerCommands.StartDockerContainer(elInstance, l);
+        DockerCommands.StopDockerContainer(elInstance, l);
+        DockerCommands.ComposeUp(elInstance, composeFile, l);
         l.Info("Waiting for export to finish");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
@@ -216,16 +164,14 @@ public class HistoryExpiryTests : BaseTest
 
         // Remove DB:
         l.Info("Removing DB");
-        // DockerCommands.StopDockerContainer(elInstance, l);
-        NodeConfig.ShellExec("stop", l);
+        DockerCommands.StopDockerContainer(elInstance, l);
 
-        Thread.Sleep(60000);
+        Thread.Sleep(30000);
         CommandExecutor.RemoveDirectory(execDataDir + "/nethermind_db", l);
 
         // Import
         l.Info("Starting Import");
-        // DockerCommands.StartDockerContainer(elInstance, l);
-        NodeConfig.ShellExec("up", l);
+        DockerCommands.ComposeUp(elInstance, composeFile, l);
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
         l.Info("Done with import");

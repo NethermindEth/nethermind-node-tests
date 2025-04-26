@@ -11,20 +11,15 @@ internal class NodeConfig
     static string composePath = "docker-compose.yml";
     static YamlStream yaml = new YamlStream();
 
-
     public static void AddElFlag(string nameSpace, string key, string value)
     {
         Load();
         var flag = $"--{nameSpace}.{key}={value}";
         var commandNode = GetSeqNode("execution", "command");
         var size = commandNode.Children.Count;
-        for (int i = 0; i < size; i++)
-        {
-            TestLoggerContext.Logger.Info($"Node[{i}]: {commandNode.Children[i]}");
-        }
-
         commandNode.Add(new YamlScalarNode(flag));
 
+        TestLoggerContext.Logger.Info($"Added {flag}");
         Save();
     }
 
@@ -94,7 +89,6 @@ internal class NodeConfig
 
         // Parent directory to the tests root
         var parentDir = Path.GetFullPath(Path.Combine(currentDir, "../../../../../"));
-        TestLoggerContext.Logger.Info(parentDir);
         return Path.Combine(parentDir, composePath);
     }
 }
@@ -141,7 +135,7 @@ public class HistoryExpiryTests : BaseTest
         NodeConfig.AddElFlag("Era", "From", "0");
         NodeConfig.AddElFlag("Era", "To", mergeBlock);
         DockerCommands.StopDockerContainer(elInstance, l);
-        DockerCommands.ComposeUp(elInstance, composeFile, l);
+        DockerCommands.ComposeUp("execution", composeFile, l);
         l.Info("Waiting for export to finish");
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
@@ -171,7 +165,7 @@ public class HistoryExpiryTests : BaseTest
 
         // Import
         l.Info("Starting Import");
-        DockerCommands.ComposeUp(elInstance, composeFile, l);
+        DockerCommands.ComposeUp("execution", composeFile, l);
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
         l.Info("Done with import");

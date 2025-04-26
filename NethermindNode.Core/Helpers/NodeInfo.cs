@@ -227,6 +227,7 @@ public static class NodeInfo
 
             case NetworkType.Sepolia: return 100000;
             case NetworkType.Hoodi: return 100000;
+            case NetworkType.Holesky: return 100000;
             default: throw new NotImplementedException();
         }
     }

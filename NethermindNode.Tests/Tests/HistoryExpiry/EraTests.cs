@@ -93,9 +93,6 @@ internal class NodeConfig
     }
 }
 
-
-
-
 [TestFixture]
 public class HistoryExpiryTests : BaseTest
 {
@@ -112,6 +109,12 @@ public class HistoryExpiryTests : BaseTest
         if (isFastSync.Result == null || bool.Parse(isFastSync.Result) == false)
         {
             throw new Exception("Node is down or Debug RPC is disabled or FullSync is not enabled. Double check your config!");
+        }
+
+        var isBarrierSet = await NodeInfo.GetConfigValue(l, "Sync", "AncientBodiesBarrier");
+        if (isBarrierSet.Result == null || long.Parse(isBarrierSet.Result) != 0)
+        {
+            throw new Exception("AncientBodiesBarrier is not 0!");
         }
 
         var mergeBlock = (await NodeInfo.GetMergeBlockNumber()).ToString();

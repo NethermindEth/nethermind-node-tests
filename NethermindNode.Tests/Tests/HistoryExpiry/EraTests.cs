@@ -163,6 +163,8 @@ public class HistoryExpiryTests : BaseTest
         l.Info("Preparing for import");
         NodeConfig.RemoveElFlag("Era", "ExportDirectory");
         NodeConfig.RemoveElFlag("Sync", "FastSync");
+        NodeConfig.RemoveElFlag("Sync", "AncientBodiesBarrier");
+        NodeConfig.RemoveElFlag("Sync", "AncientReceiptsBarrier");
         NodeConfig.AddElFlag("Era", "ImportDirectory", eraDir);
         NodeConfig.AddElFlag("Era", "TrustedAccumulatorFile", eraDir + "/accumulators.txt");
         NodeConfig.AddElFlag("Sync", "AncientBodiesBarrier", mergeBlock);
@@ -185,7 +187,6 @@ public class HistoryExpiryTests : BaseTest
         // Check block production :shrug:
         var blockProduction = DockerCommands.GetDockerLogs(elInstance, "Produced ");
         Assert.That(blockProduction.Count() > 0, "No block production after sync in simulation mode.");
-
 
         var rpcResponse3 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l);
         l.Info($"Response3: ${rpcResponse3}");

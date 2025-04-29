@@ -225,7 +225,7 @@ public static class NodeInfo
         switch (netType)
         {
 
-            case NetworkType.Sepolia: return 100000;
+            case NetworkType.Sepolia: return 1000000;
             case NetworkType.Hoodi: return 100000;
             case NetworkType.Holesky: return 100000;
             default: throw new NotImplementedException();

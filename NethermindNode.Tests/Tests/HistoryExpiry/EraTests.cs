@@ -128,7 +128,7 @@ public class HistoryExpiryTests : BaseTest
         l.Info("Done with sync");
 
         var rpcParams = $"{(long.Parse(mergeBlock) / 2).ToString()}" + ", true";
-        var rpcResponse1 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l);
+        var rpcResponse1 = (await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l)).Item1;
         l.Info($"Response1: ${rpcResponse1}");
 
         // Export
@@ -186,7 +186,7 @@ public class HistoryExpiryTests : BaseTest
         // var blockProduction = DockerCommands.GetDockerLogs(elInstance, "Produced ");
         // Assert.That(blockProduction.Count() > 0, "No block production after sync in simulation mode.");
 
-        var rpcResponse2 = await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l);
+        var rpcResponse2 = (await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l)).Item1;
         l.Info($"Response2: ${rpcResponse2}");
         Assert.That(rpcResponse1, Is.EqualTo(rpcResponse2));
     }

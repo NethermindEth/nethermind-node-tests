@@ -124,7 +124,7 @@ public class HistoryExpiryTests : BaseTest
         NodeInfo.WaitForNodeToBeReady(l);
         NodeInfo.WaitForNodeToBeSynced(l);
 
-        Thread.Sleep(20000);
+        await Task.Delay(20000);
         l.Info("Done with sync");
 
         var rpcParams = $"{(long.Parse(mergeBlock) / 2).ToString()}" + ", true";

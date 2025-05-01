@@ -151,7 +151,7 @@ public class HistoryExpiryTests : BaseTest
         // check for this:
         // sedge-execution-client  | 27 Apr 05:43:19 | Finished history export from 0 to 100000
         var exportFinished = DockerCommands.GetDockerLogs(elInstance, "Finished history export from");
-        Assert.That(exportFinished.Count() > 0, "Export haven't finished successfuly?");
+        Assert.That(exportFinished.Count() > 0, "Export haven't finished successfully?");
 
         // Set up Import: 
         // - Remove Era export directory

@@ -144,12 +144,6 @@ public class HistoryExpiryTests : BaseTest
         NodeInfo.WaitForNodeToBeSynced(l);
         l.Info("Done with export");
 
-
-        // check that there is no error like below
-        // sedge-execution-client  | 27 Apr 05:33:53 | The export failed with the message: Could not find a block with number 57344.
-
-        // check for this:
-        // sedge-execution-client  | 27 Apr 05:43:19 | Finished history export from 0 to 100000
         var exportFinished = DockerCommands.GetDockerLogs(elInstance, "Finished history export from");
         Assert.That(exportFinished.Count() > 0, "Export haven't finished successfully?");
 
@@ -179,12 +173,7 @@ public class HistoryExpiryTests : BaseTest
         l.Info("Starting Import");
         DockerCommands.ComposeUp("execution", composeFile, l);
         NodeInfo.WaitForNodeToBeReady(l);
-        // NodeInfo.WaitForNodeToBeSynced(l);
         l.Info("Done with import");
-
-        // Check block production :shrug:
-        // var blockProduction = DockerCommands.GetDockerLogs(elInstance, "Produced ");
-        // Assert.That(blockProduction.Count() > 0, "No block production after sync in simulation mode.");
 
         var rpcResponse2 = (await HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_getBlockByNumber", rpcParams, TestItems.RpcAddress, l)).Item1;
         l.Info($"Response2: ${rpcResponse2}");

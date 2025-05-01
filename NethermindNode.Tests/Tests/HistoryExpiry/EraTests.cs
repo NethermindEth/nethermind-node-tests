@@ -171,9 +171,9 @@ public class HistoryExpiryTests : BaseTest
         l.Info("Removing DB");
         DockerCommands.StopDockerContainer(elInstance, l);
 
-        Thread.Sleep(30000);
+        await Task.Delay(30000);
         CommandExecutor.RemoveDirectory(execDataDir + "/nethermind_db", l);
-        Thread.Sleep(30000);
+        await Task.Delay(30000);
 
         // Import
         l.Info("Starting Import");

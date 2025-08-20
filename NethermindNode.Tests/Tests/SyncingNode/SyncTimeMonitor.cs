@@ -21,11 +21,11 @@ public class SyncTimeMonitor : BaseTest
     [SetUp]
     public void Setup()
     {
-        _isSnapSync = Environment.GetEnvironmentVariable("isSnapSync") != null
+        _isSnapSync = Environment.GetEnvironmentVariable("isSnapSync") is not null
             ? Convert.ToBoolean(Environment.GetEnvironmentVariable("isSnapSync"))
             : true;
 
-        _isNonValidator = Environment.GetEnvironmentVariable("isNonValidator") != null
+        _isNonValidator = Environment.GetEnvironmentVariable("isNonValidator") is not null
             ? Convert.ToBoolean(Environment.GetEnvironmentVariable("isNonValidator"))
             : false;
     }
@@ -41,11 +41,11 @@ public class SyncTimeMonitor : BaseTest
         {
             new MetricStage(){ Stage = Stages.FastHeaders },
             new MetricStage(){ Stage = Stages.BeaconHeaders },
-            _isSnapSync ? new MetricStage(){ Stage = Stages.SnapSync } : null,
+            _isSnapSync ? new MetricStage(){ Stage = Stages.SnapSync } : null!,
             new MetricStage(){ Stage = Stages.StateNodes },
-            !_isNonValidator ? new MetricStage(){ Stage = Stages.FastBodies } : null,
-            !_isNonValidator ? new MetricStage(){ Stage = Stages.FastReceipts } : null
-        }.Where(stage => stage != null).ToList();
+            !_isNonValidator ? new MetricStage(){ Stage = Stages.FastBodies } : null!,
+            !_isNonValidator ? new MetricStage(){ Stage = Stages.FastReceipts } : null!
+        }.Where(stage => stage is not null).ToList();
 
         NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
         double totalExecutionTime = MonitorStages(startTime, stagesToMonitor);
@@ -144,7 +144,7 @@ public class SyncTimeMonitor : BaseTest
         if (startTime == DateTime.MinValue)
             startTime = startDateTime;
 
-        while (stagesToMonitor.Any(x => x.EndTime == null))
+        while (stagesToMonitor.Where(x => x is not null).Any(x => x!.EndTime is null))
         {
             var currentStages = NodeInfo.GetCurrentStages(TestLoggerContext.Logger);
             if (currentStages.Count == 0 || currentStages.Contains(Stages.Disconnected) || currentStages.Contains(Stages.None))
@@ -165,20 +165,20 @@ public class SyncTimeMonitor : BaseTest
             {
                 //Set StartTime for stages which appeared for first time
                 var monitoringStage = stagesToMonitor.FirstOrDefault(x => x.Stage == stage);
-                if (monitoringStage != null && monitoringStage.StartTime == null)
+                if (monitoringStage is not null && monitoringStage.StartTime is null)
                 {
                     monitoringStage.StartTime = DateTime.UtcNow;
                 }
 
                 //If for any reason stage appeared again and have not null EndTime, we should reset EndTime
-                if (monitoringStage != null && monitoringStage.EndTime != null)
+                if (monitoringStage is not null && monitoringStage.EndTime is not null)
                 {
                     monitoringStage.EndTime = null;
                 }
             }
 
-            //If any stage dissapeared and have StartTime set, then we can treat it as completed
-            foreach (var monitoringStage in stagesToMonitor.Where(x => x.StartTime != null && x.EndTime == null))
+            //If any stage disappeared and have StartTime set, then we can treat it as completed
+            foreach (var monitoringStage in stagesToMonitor.Where(x => x.StartTime is not null && x.EndTime is null))
             {
                 if (!currentStages.Contains(monitoringStage.Stage))
                 {
@@ -187,7 +187,7 @@ public class SyncTimeMonitor : BaseTest
             }
 
             // Check if the EndTime of the last item is set - this may mean that for some reason sync ended but some of the stages did not have EndTime
-            if (stagesToMonitor.Last().EndTime != null)
+            if (stagesToMonitor.Last().EndTime is not null)
             {
                 break;
             }

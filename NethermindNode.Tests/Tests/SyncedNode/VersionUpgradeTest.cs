@@ -26,17 +26,21 @@ namespace NethermindNode.Tests.Tests.SyncedNode
         [Category("VersionUpgrade")]
         public void UpgradeToTargetVersion()
         {
+            TestLoggerContext.Logger.Info($"=== VERSION UPGRADE TEST STARTED ===");
+            
             // Get the target version from environment variable
             string? targetVersion = Environment.GetEnvironmentVariable(UpgradeTargetVersionEnvVar);
+            TestLoggerContext.Logger.Info($"Reading {UpgradeTargetVersionEnvVar} from environment: '{targetVersion ?? "(null)"}'");
 
             if (string.IsNullOrEmpty(targetVersion))
             {
-                Assert.Fail($"Environment variable {UpgradeTargetVersionEnvVar} is not set. " +
-                           "Please provide the target version to upgrade to.");
+                string errorMessage = $"Environment variable {UpgradeTargetVersionEnvVar} is not set or empty. " +
+                                     "Please provide the target version via the workflow input 'upgrade_target_version'.";
+                TestLoggerContext.Logger.Error(errorMessage);
+                Assert.Fail(errorMessage);
                 return;
             }
 
-            TestLoggerContext.Logger.Info($"=== VERSION UPGRADE TEST STARTED ===");
             TestLoggerContext.Logger.Info($"Target upgrade version: {targetVersion}");
 
             // ============================================

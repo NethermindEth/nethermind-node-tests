@@ -7,8 +7,9 @@ TimeoutStopSec=180
 WorkingDirectory=%WORKINGDIR%
 ExecStart=dotnet test NethermindNodeTests.sln -c Release --logger:"nunit;LogFilePath=%WORKINGDIR%/test-result.xml" --filter %CATEGORIES% --settings:NUnit.runsettings
 Environment=DOTNET_CLI_HOME=/tmp/
+Environment=UPGRADE_TARGET_VERSION=%UPGRADE_TARGET_VERSION%
 StandardOutput=file:%WORKINGDIR%/testsOutput.log
 StandardError=file:%WORKINGDIR%/testsErrors.log
 
 [Install]
-WantedBy=default.target[Unit]
+WantedBy=default.target

@@ -9,6 +9,6 @@ public static class ExtensionMethods
 
     public static TimeSpan Average(this IEnumerable<TimeSpan?> spans) 
     { 
-        return TimeSpan.FromSeconds(spans.Select(s => s.Value.TotalSeconds).Average()); 
+        return TimeSpan.FromSeconds(spans.Select(s => s.GetValueOrDefault().TotalSeconds).Average()); 
     }
 }

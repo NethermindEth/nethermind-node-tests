@@ -8,8 +8,6 @@ namespace NethermindNode.Tests.SyncedNode;
 [Parallelizable(ParallelScope.All)]
 public class RestartsOnSyncedNode : BaseTest
 {
-    private int initialDelay = 60;
-
     public static IEnumerable<TestCaseData> DelayForFuzzerTestCases()
     {
         int restartCount = 6; //Reducing slightly to fit more tests

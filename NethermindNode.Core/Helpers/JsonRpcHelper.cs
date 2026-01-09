@@ -5,13 +5,13 @@ namespace NethermindNode.Core.Helpers;
 
 public static class JsonRpcHelper
 {
-    public static bool TryDeserializeReponse<T>(string result, out IRpcResponse? deserialized) where T : IRpcResponse
+    public static bool TryDeserializeResponse<T>(string result, out IRpcResponse? deserialized) where T : IRpcResponse
     {
         deserialized = null;
         try
         {
-            RpcError error = JsonConvert.DeserializeObject<RpcError>(result);
-            bool isError = error.Error != null;
+            RpcError? error = JsonConvert.DeserializeObject<RpcError>(result);
+            bool isError = error?.Error is not null;
             if (isError)
             {
                 deserialized = error;
@@ -20,7 +20,7 @@ public static class JsonRpcHelper
 
             deserialized = JsonConvert.DeserializeObject<T>(result);
 
-            if (deserialized == null)
+            if (deserialized is null)
                 return false;
         }
         catch
@@ -32,13 +32,13 @@ public static class JsonRpcHelper
         return true;
     }
 
-    public static bool TryDeserializeReponses<T>(string result, out IEnumerable<IRpcResponse> deserialized) where T : IEnumerable<IRpcResponse>
+    public static bool TryDeserializeReponses<T>(string result, out IEnumerable<IRpcResponse>? deserialized) where T : IEnumerable<IRpcResponse>
     {
         deserialized = default;
         try
         {
-            RpcError error = JsonConvert.DeserializeObject<RpcError>(result);
-            bool isError = error.Error != null;
+            RpcError? error = JsonConvert.DeserializeObject<RpcError>(result);
+            bool isError = error?.Error is not null;
             if (isError)
             {
                 return false;
@@ -46,12 +46,12 @@ public static class JsonRpcHelper
 
             deserialized = JsonConvert.DeserializeObject<T>(result);
 
-            if (deserialized == null)
+            if (deserialized is null)
                 return false;
 
             foreach (var item in deserialized)
             {
-                if (item.GetType().GetProperty("error") != null)
+                if (item.GetType().GetProperty("error") is not null)
                     return false;
             }
 

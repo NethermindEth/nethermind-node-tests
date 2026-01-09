@@ -19,6 +19,7 @@ public static class NodeInfo
         Volta = 73799,
         Sepolia = 11155111,
         Holesky = 17000,
+        Hoodi = 560048,
     }
 
     public static bool IsFullySynced(Logger logger)
@@ -143,7 +144,8 @@ public static class NodeInfo
         else
         {
             logger.Info($"Network type: {result}");
-            return (NetworkType)int.Parse(result, System.Globalization.NumberStyles.HexNumber);
+            // return (NetworkType)int.Parse(result, System.Globalization.NumberStyles.HexNumber);
+            return (NetworkType)Convert.ToInt32(result, 16);
         }
     }
 
@@ -215,5 +217,18 @@ public static class NodeInfo
         }
 
         return status;
+    }
+
+    public static async Task<long> GetMergeBlockNumber()
+    {
+        var netType = await GetNetworkType(TestLoggerContext.Logger);
+        switch (netType)
+        {
+
+            case NetworkType.Sepolia: return 1000000;
+            case NetworkType.Hoodi: return 100000;
+            case NetworkType.Holesky: return 100000;
+            default: throw new NotImplementedException();
+        }
     }
 }

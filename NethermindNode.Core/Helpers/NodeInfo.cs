@@ -19,6 +19,7 @@ public static class NodeInfo
         Volta = 73799,
         Sepolia = 11155111,
         Holesky = 17000,
+        Hoodi = 560048,
     }
 
     public static bool IsFullySynced(Logger logger)
@@ -174,6 +175,18 @@ public static class NodeInfo
         }
 
         return long.Parse(result.Result);
+    }
+
+    public static async Task<long> GetMergeBlockNumber()
+    {
+        NetworkType networkType = await GetNetworkType(TestLoggerContext.Logger);
+        return networkType switch
+        {
+            NetworkType.Sepolia => 1_000_000,
+            NetworkType.Holesky => 100_000,
+            NetworkType.Hoodi => 100_000,
+            _ => throw new NotSupportedException($"Merge block number not known for network {networkType}.")
+        };
     }
 
     public static bool VerifyLogsForUndesiredEntries(ref List<string> errors)

@@ -138,7 +138,7 @@ public class EraTests : BaseTest
 
     private static async Task<string> QueryBlock(long blockNumber, Logger logger)
     {
-        string rpcParams = $"{blockNumber}, true";
+        string rpcParams = $"\"0x{blockNumber:X}\", true";
         Tuple<string, TimeSpan, bool> rpcResult = await HttpExecutor.ExecuteNethermindJsonRpcCommand(
             "eth_getBlockByNumber", rpcParams, NodeInfo.apiBaseUrl, logger);
         logger.Info($"Block {blockNumber} response: {rpcResult.Item1}");

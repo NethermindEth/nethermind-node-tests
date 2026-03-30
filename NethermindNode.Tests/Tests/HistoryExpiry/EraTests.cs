@@ -16,9 +16,60 @@ public class EraTests : BaseTest
     private const string EraDirectory = "/era";
     private const string ImportDirectory = EraDirectory + "/import";
     private const string ExportDirectory = EraDirectory + "/export";
-    private const string VolumeMapping = "${EC_DATA_DIR}/era:" + EraDirectory;
+    private const string VolumeMapping = "/mnt/era-stavros:" + EraDirectory;
     private const string ComposeFile = "/root/docker-compose.yml";
     private const string RemoteBaseUrl = "https://data.ethpandaops.io/erae/mainnet/";
+
+    [NethermindTest]
+    [Category("EraImport")]
+    public async Task ShouldImportFromRemote()
+    {
+        Logger logger = TestLoggerContext.Logger;
+        string containerName = ConfigurationHelper.Instance["execution-container-name"];
+
+        NodeInfo.WaitForNodeToBeReady(logger);
+        NodeInfo.WaitForNodeToBeSynced(logger);
+        logger.Info("Node snap sync complete.");
+
+        long mergeBlockNumber = await NodeInfo.GetMergeBlockNumber();
+
+        await ImportFromRemote(containerName, mergeBlockNumber, logger);
+
+        // Verify a pre-merge block is accessible — snap sync would not have this
+        string blockResponse = await QueryBlock(mergeBlockNumber / 2, logger);
+        Assert.That(blockResponse, Does.Contain("\"result\""));
+        Assert.That(blockResponse, Does.Not.Contain("\"result\":null"));
+        logger.Info("Pre-merge block accessible after import.");
+    }
+
+    [NethermindTest]
+    [Category("EraExport")]
+    public async Task ShouldExportFromDbWithMatchingBlockData()
+    {
+        Logger logger = TestLoggerContext.Logger;
+        string containerName = ConfigurationHelper.Instance["execution-container-name"];
+
+        NodeInfo.WaitForNodeToBeReady(logger);
+        long mergeBlockNumber = await NodeInfo.GetMergeBlockNumber();
+
+        string referenceResponse = await QueryBlock(mergeBlockNumber / 2, logger);
+        Assert.That(referenceResponse, Does.Contain("\"result\""));
+        Assert.That(referenceResponse, Does.Not.Contain("\"result\":null"));
+
+        DeleteImportedEraFiles(logger);
+
+        await ExportFromDb(containerName, mergeBlockNumber, logger);
+
+        // Verify exported era files exist on disk
+        string eraHostPath = DockerCommands.GetEraDataPath(logger);
+        string[] exportedFiles = Directory.GetFiles(Path.Combine(eraHostPath, "export"), "*.era", SearchOption.AllDirectories);
+        Assert.That(exportedFiles.Length, Is.GreaterThan(0), "No era files found in export directory.");
+        logger.Info($"Export produced {exportedFiles.Length} era file(s).");
+
+        // Verify the block is still accessible after export
+        string exportedResponse = await QueryBlock(mergeBlockNumber / 2, logger);
+        Assert.That(exportedResponse, Is.EqualTo(referenceResponse));
+    }
 
     [NethermindTest]
     public async Task ShouldImportFromRemoteAndExportFromDbWithMatchingBlockData()

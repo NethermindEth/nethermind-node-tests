@@ -144,7 +144,8 @@ public static class NodeInfo
         else
         {
             logger.Info($"Network type: {result}");
-            return (NetworkType)int.Parse(result, System.Globalization.NumberStyles.HexNumber);
+            string hex = result.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? result[2..] : result;
+            return (NetworkType)int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
         }
     }
 
@@ -182,6 +183,7 @@ public static class NodeInfo
         NetworkType networkType = await GetNetworkType(TestLoggerContext.Logger);
         return networkType switch
         {
+            NetworkType.Mainnet => 15_537_394,
             NetworkType.Sepolia => 1_000_000,
             NetworkType.Holesky => 100_000,
             NetworkType.Hoodi => 100_000,

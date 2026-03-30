@@ -124,6 +124,7 @@ public class EraTests : BaseTest
     }
 
     [NethermindTest]
+    [Category("EraE2E")]
     public async Task ShouldImportFromRemoteAndExportFromDbWithMatchingBlockData()
     {
         Logger logger = TestLoggerContext.Logger;

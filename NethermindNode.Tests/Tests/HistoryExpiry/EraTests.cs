@@ -18,7 +18,7 @@ public class EraTests : BaseTest
     private const string ExportDirectory = EraDirectory + "/export";
     private const string VolumeMapping = "${EC_DATA_DIR}/era:" + EraDirectory;
     private const string ComposeFile = "/root/docker-compose.yml";
-    private const string SepoliaRemoteBaseUrl = "https://data.ethpandaops.io/erae/sepolia/";
+    private const string RemoteBaseUrl = "https://data.ethpandaops.io/erae/mainnet/";
 
     [NethermindTest]
     public async Task ShouldImportFromRemoteAndExportFromDbWithMatchingBlockData()
@@ -50,7 +50,7 @@ public class EraTests : BaseTest
 
         NodeConfig.AddVolume(VolumeMapping);
         NodeConfig.AddElFlag("EraE", "ImportDirectory", ImportDirectory);
-        NodeConfig.AddElFlag("EraE", "RemoteBaseUrl", SepoliaRemoteBaseUrl);
+        NodeConfig.AddElFlag("EraE", "RemoteBaseUrl", RemoteBaseUrl);
         NodeConfig.AddElFlag("EraE", "From", "0");
         NodeConfig.AddElFlag("EraE", "To", mergeBlockNumber.ToString());
 

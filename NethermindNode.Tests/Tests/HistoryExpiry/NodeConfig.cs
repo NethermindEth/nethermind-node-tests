@@ -15,7 +15,13 @@ internal static class NodeConfig
     {
         Load();
         string flag = $"--{nameSpace}.{key}={value}";
+        string prefix = $"--{nameSpace}.{key}=";
         YamlSequenceNode commandNode = GetSequenceNode("execution", "command");
+        if (commandNode.Children.Any(c => c.ToString().StartsWith(prefix, StringComparison.Ordinal)))
+        {
+            TestLoggerContext.Logger.Info($"Flag already set, skipping: {flag}");
+            return;
+        }
         commandNode.Add(new YamlScalarNode(flag));
         TestLoggerContext.Logger.Info($"Added flag: {flag}");
         Save();
@@ -42,6 +48,11 @@ internal static class NodeConfig
     {
         Load();
         YamlSequenceNode volumesNode = GetSequenceNode("execution", "volumes");
+        if (volumesNode.Children.Any(c => c.ToString() == volume))
+        {
+            TestLoggerContext.Logger.Info($"Volume already set, skipping: {volume}");
+            return;
+        }
         volumesNode.Add(new YamlScalarNode(volume));
         Save();
     }

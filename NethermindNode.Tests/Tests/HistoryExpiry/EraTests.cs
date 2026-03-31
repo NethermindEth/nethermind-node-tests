@@ -97,9 +97,7 @@ public class EraTests : BaseTest
 
         DeleteImportedEraFiles(logger);
 
-        // Use the last known pre-merge block as the export upper bound
-        long exportTo = PreMergeBlocks[^1].Number;
-        await ExportFromDb(containerName, exportTo, logger);
+        await ExportFromDb(containerName, 24_518_655L, logger);
 
         // Verify era files were written to disk
         string eraHostPath = DockerCommands.GetEraDataPath(logger);

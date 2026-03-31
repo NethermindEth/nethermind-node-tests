@@ -176,8 +176,9 @@ public class EraTests : BaseTest
         logger.Info("Remote era import finished.");
 
         // Parse last imported block from: "Finished EraE import from {from} to {to}"
-        string[] parts = logLine.Trim().Split(' ');
-        long lastImportedBlock = long.Parse(parts[^1]);
+        const string toMarker = " to ";
+        int toIndex = logLine.LastIndexOf(toMarker, StringComparison.Ordinal);
+        long lastImportedBlock = long.Parse(logLine[(toIndex + toMarker.Length)..].Trim());
         logger.Info($"Last imported block: {lastImportedBlock}");
         return lastImportedBlock;
     }

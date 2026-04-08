@@ -123,6 +123,30 @@ public static class NodeInfo
         return Convert.ToInt32(output);
     }
 
+    public static int GetPeerCount(Logger logger)
+    {
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("net_peerCount", "", apiBaseUrl, logger);
+        string output = commandResult.Result?.Item1;
+        if (string.IsNullOrEmpty(output))
+        {
+            logger.Debug("Peer count: N/A (no response)");
+            return -1;
+        }
+
+        try
+        {
+            var cleaned = output.Replace("\"", "").Trim();
+            int count = Convert.ToInt32(cleaned, 16);
+            logger.Debug("Peer count: " + count);
+            return count;
+        }
+        catch (Exception ex)
+        {
+            logger.Debug("Failed to parse peer count: " + ex.Message);
+            return -1;
+        }
+    }
+
     public static void WaitForNodeToBeSynced(Logger logger)
     {
         while (!IsFullySynced(logger))

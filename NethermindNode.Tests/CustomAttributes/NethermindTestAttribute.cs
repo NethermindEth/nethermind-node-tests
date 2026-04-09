@@ -18,6 +18,8 @@
             TestLoggerContext.Logger = LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
             TestLoggerContext.Logger.Info($"***Starting test: {test.Name}***");
 
+            ForceStopWatcher.Start();
+
             if (Convert.ToBoolean(ConfigurationHelper.Instance["health-verification"]))
             {
                 await Task.Run(() =>

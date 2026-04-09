@@ -1,4 +1,5 @@
 ﻿using NethermindNode.Core;
+using NethermindNode.Tests.Helpers;
 using NLog;
 using NUnit.Framework.Interfaces;
 
@@ -12,6 +13,8 @@ namespace NethermindNode.Tests.CustomAttributes
         {
             TestLoggerContext.Logger = LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
             TestLoggerContext.Logger.Info($"***Starting test: {test.Name}***");
+
+            ForceStopWatcher.Start();
         }
 
         public void AfterTest(ITest test)

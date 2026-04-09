@@ -3,6 +3,7 @@ using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
 using NethermindNode.Tests.CustomObjects;
 using NethermindNode.Tests.Enums;
+using NethermindNode.Tests.Helpers;
 using System.Diagnostics;
 
 namespace NethermindNode.Tests.SyncingNode;
@@ -53,11 +54,12 @@ public class StagesTests : BaseTest
 
             var currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
             while (
-                    (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString())) 
+                    (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString()))
                     ||
                     (stage.ShouldNotOccurWith != null && currentStage.Contains(stage.ShouldNotOccurWith.Value.ToString()))
                   )
             {
+                ForceStopWatcher.ThrowIfStopRequested();
                 Thread.Sleep(1000);
                 currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
             }

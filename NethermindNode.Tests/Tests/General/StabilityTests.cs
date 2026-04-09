@@ -1,6 +1,7 @@
 ﻿using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
+using NethermindNode.Tests.Helpers;
 
 namespace NethermindNode.Tests.SyncingNode;
 
@@ -20,6 +21,8 @@ public class StabilityTests : BaseTest
 
         while (!isNodeSynced)
         {
+            ForceStopWatcher.ThrowIfStopRequested();
+
             isNodeSynced = NodeInfo.IsFullySynced(TestLoggerContext.Logger);
 
             if (isNodeSynced)

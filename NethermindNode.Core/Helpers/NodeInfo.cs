@@ -204,6 +204,7 @@ public static class NodeInfo
     {
         var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
         var corruption = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Corruption");
+        var freeDiskSpace = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Free disk space");
         bool status = true;
 
         if (exceptions.Any())
@@ -235,6 +236,20 @@ public static class NodeInfo
                 }
             }
             errors.AddRange(corruption);
+            status = false;
+        }
+
+        if (freeDiskSpace.Any())
+        {
+            foreach (var item in freeDiskSpace)
+            {
+                if (!string.IsNullOrEmpty(item))
+                {
+                    TestLoggerContext.Logger.Error("Found free disk space shutdown: ");
+                    TestLoggerContext.Logger.Error(item);
+                }
+            }
+            errors.AddRange(freeDiskSpace);
             status = false;
         }
 

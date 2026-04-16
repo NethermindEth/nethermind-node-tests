@@ -52,7 +52,7 @@ public class FullSyncTest : BaseTest
             // Log progress every 5 minutes (every 10th iteration of 30s sleep)
             if (iteration == 0 || iteration % 10 == 0)
             {
-                int blockNumber = -1;
+                long blockNumber = -1;
                 try { blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger); } catch { }
                 TestLoggerContext.Logger.Info($"[FULLSYNC] Waiting for WaitingForBlock stage \u2014 current: {string.Join(",", stages)}, block: {blockNumber}");
             }

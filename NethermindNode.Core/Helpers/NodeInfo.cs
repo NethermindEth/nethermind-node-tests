@@ -118,13 +118,39 @@ public static class NodeInfo
         return result;
     }
 
-    public static int GetCurrentBlock(NLog.Logger logger)
+    public static long GetCurrentBlock(NLog.Logger logger)
     {
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_blockNumber", "", apiBaseUrl, logger);
-        string output = commandResult.Result.Item1;
+        string output = commandResult.Result?.Item1 ?? "";
 
-        logger.Trace("Current Block is: " + output);
-        return Convert.ToInt32(output);
+        logger.Trace("Current Block raw: " + output);
+
+        try
+        {
+            // Response is JSON-RPC: {"jsonrpc":"2.0","id":1,"result":"0xffc"}
+            // Parse the result field and convert hex to long
+            var json = System.Text.Json.JsonDocument.Parse(output);
+            if (json.RootElement.TryGetProperty("result", out var result))
+            {
+                string hex = result.GetString()?.Replace("\"", "").Trim() ?? "0x0";
+                if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                    return Convert.ToInt64(hex.Substring(2), 16);
+                return long.Parse(hex);
+            }
+        }
+        catch { }
+
+        // Fallback: try parsing raw output directly (legacy format)
+        try
+        {
+            if (output.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                return Convert.ToInt64(output.Substring(2), 16);
+            return long.Parse(output);
+        }
+        catch
+        {
+            return -1;
+        }
     }
 
     /// <summary>

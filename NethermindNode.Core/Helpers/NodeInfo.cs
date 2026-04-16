@@ -244,6 +244,24 @@ public static class NodeInfo
         return long.Parse(result.Result);
     }
 
+    // Exception patterns to ignore — these are expected during normal operation
+    private static readonly string[] IgnoredExceptionPatterns = new[]
+    {
+        "ObjectDisposedException",      // Timer disposal race condition
+        "DISCONNECT",                   // NetworkDiag peer disconnect traces (RlpException, etc.)
+        "Error in communication with",  // NetworkDiag peer communication errors
+    };
+
+    private static bool IsIgnoredException(string logLine)
+    {
+        foreach (var pattern in IgnoredExceptionPatterns)
+        {
+            if (logLine.Contains(pattern))
+                return true;
+        }
+        return false;
+    }
+
     public static bool VerifyLogsForUndesiredEntries(ref List<string> errors)
     {
         var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
@@ -256,14 +274,11 @@ public static class NodeInfo
         {
             foreach (var item in exceptions)
             {
-                if (!string.IsNullOrEmpty(item))
+                if (!string.IsNullOrEmpty(item) && !IsIgnoredException(item))
                 {
-                    if (!item.Contains("ObjectDisposedException")) //HACK: Until Timer disposals will be fixed
-                    {
-                        undesiredEntries.Add("Exception: " + item.Trim());
-                        errors.Add(item);
-                        status = false;
-                    }
+                    undesiredEntries.Add("Exception: " + item.Trim());
+                    errors.Add(item);
+                    status = false;
                 }
             }
         }

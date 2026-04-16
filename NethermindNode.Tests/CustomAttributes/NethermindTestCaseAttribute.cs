@@ -12,7 +12,7 @@ namespace NethermindNode.Tests.CustomAttributes
         public void BeforeTest(ITest test)
         {
             TestLoggerContext.Logger = LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-            TestLoggerContext.Logger.Info($"***Starting test: {test.Name}***");
+            TestLoggerContext.Logger.Info($"[TEST] \u25b6 Starting: {test.Name}");
 
             ForceStopWatcher.Start();
         }
@@ -20,7 +20,7 @@ namespace NethermindNode.Tests.CustomAttributes
         public void AfterTest(ITest test)
         {
             TestLoggerContext.Logger = LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-            TestLoggerContext.Logger.Info($"***Test finished: {test.Name}***");
+            TestLoggerContext.Logger.Info($"[TEST] \u25a0 Finished: {test.Name}");
         }
 
         public ActionTargets Targets => ActionTargets.Test;

@@ -37,6 +37,7 @@ public static class NodeInfo
     public static void WaitForNodeToBeReady(Logger logger)
     {
         var apiIsAvailable = false;
+        int attempt = 0;
 
         while (!apiIsAvailable)
         {
@@ -51,14 +52,17 @@ public static class NodeInfo
                 }
                 else
                 {
-                    logger.Info("API is not yet ready, waiting for 5 seconds...");
+                    if (attempt == 0 || attempt % 12 == 0)
+                        logger.Info("API is not yet ready, waiting...");
+                    attempt++;
                     Thread.Sleep(TimeSpan.FromSeconds(5));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                logger.Info($"Error while checking API availability: {ex.Message}");
-                logger.Info("Retrying in 5 seconds...");
+                if (attempt == 0 || attempt % 12 == 0)
+                    logger.Info("API is not yet ready, waiting...");
+                attempt++;
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
         }
@@ -80,7 +84,7 @@ public static class NodeInfo
         if (output == "")
             output = ((GetSyncStage)deserialized).Result.CurrentStage;
 
-        logger.Debug("Current stage is: " + output);
+        logger.Trace("Current stage is: " + output);
         return output;
     }
 
@@ -110,7 +114,7 @@ public static class NodeInfo
             }
         }
 
-        logger.Debug("Current stage is: " + output);
+        logger.Trace("Current stage is: " + output);
         return result;
     }
 
@@ -119,7 +123,7 @@ public static class NodeInfo
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_blockNumber", "", apiBaseUrl, logger);
         string output = commandResult.Result.Item1;
 
-        logger.Debug("Current Block is: " + output);
+        logger.Trace("Current Block is: " + output);
         return Convert.ToInt32(output);
     }
 
@@ -129,7 +133,7 @@ public static class NodeInfo
         string output = commandResult.Result?.Item1;
         if (string.IsNullOrEmpty(output))
         {
-            logger.Debug("Peer count: N/A (no response)");
+            logger.Trace("Peer count: N/A (no response)");
             return -1;
         }
 
@@ -137,21 +141,24 @@ public static class NodeInfo
         {
             var cleaned = output.Replace("\"", "").Trim();
             int count = Convert.ToInt32(cleaned, 16);
-            logger.Debug("Peer count: " + count);
+            logger.Trace("Peer count: " + count);
             return count;
         }
         catch (Exception ex)
         {
-            logger.Debug("Failed to parse peer count: " + ex.Message);
+            logger.Trace("Failed to parse peer count: " + ex.Message);
             return -1;
         }
     }
 
     public static void WaitForNodeToBeSynced(Logger logger)
     {
+        int iteration = 0;
         while (!IsFullySynced(logger))
         {
-            logger.Debug("Waiting for node to be fully synced...");
+            if (iteration == 0 || iteration % 6 == 0)
+                logger.Info("Waiting for node to be fully synced...");
+            iteration++;
             Thread.Sleep(10000);
         }
     }
@@ -206,6 +213,7 @@ public static class NodeInfo
         var corruption = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Corruption");
         var freeDiskSpace = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Free disk space");
         bool status = true;
+        var undesiredEntries = new List<string>();
 
         if (exceptions.Any())
         {
@@ -213,11 +221,9 @@ public static class NodeInfo
             {
                 if (!string.IsNullOrEmpty(item))
                 {
-                    if (!item.Contains("ObjectDisposedException")) //HACK: Until TImer disposals will be fixed
+                    if (!item.Contains("ObjectDisposedException")) //HACK: Until Timer disposals will be fixed
                     {
-                        TestLoggerContext.Logger.Error("Found undesired exception: ");
-                        TestLoggerContext.Logger.Error(item);
-
+                        undesiredEntries.Add("Exception: " + item.Trim());
                         errors.Add(item);
                         status = false;
                     }
@@ -231,8 +237,7 @@ public static class NodeInfo
             {
                 if (!string.IsNullOrEmpty(item))
                 {
-                    TestLoggerContext.Logger.Error("Found undesired corruption: ");
-                    TestLoggerContext.Logger.Error(item);
+                    undesiredEntries.Add("Corruption: " + item.Trim());
                 }
             }
             errors.AddRange(corruption);
@@ -245,12 +250,26 @@ public static class NodeInfo
             {
                 if (!string.IsNullOrEmpty(item))
                 {
-                    TestLoggerContext.Logger.Error("Found free disk space shutdown: ");
-                    TestLoggerContext.Logger.Error(item);
+                    undesiredEntries.Add("FreeDiskSpace: " + item.Trim());
                 }
             }
             errors.AddRange(freeDiskSpace);
             status = false;
+        }
+
+        if (undesiredEntries.Count > 0)
+        {
+            int total = undesiredEntries.Count;
+            int displayCount = Math.Min(total, 5);
+            TestLoggerContext.Logger.Error($"[VERIFY] Found {total} undesired log entries:");
+            for (int i = 0; i < displayCount; i++)
+            {
+                TestLoggerContext.Logger.Error($"  - {undesiredEntries[i]}");
+            }
+            if (total > 5)
+            {
+                TestLoggerContext.Logger.Error($"  ... and {total - 5} more");
+            }
         }
 
         return status;

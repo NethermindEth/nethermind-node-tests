@@ -46,13 +46,12 @@ public class StagesTests : BaseTest
 
             if (stage.MissingOnNonValidatorNode && isNonValidatorNode)
             {
-                TestLoggerContext.Logger.Info("Skipping stage: " + stage.Stages.ToJoinedString() + " because nonValidatorNode enabled.");
+                TestLoggerContext.Logger.Info("[STAGES] Skipping " + stage.Stages.ToJoinedString() + " (nonValidatorNode enabled)");
                 continue;
             }
 
-            TestLoggerContext.Logger.Info("Waiting for stage: " + stage.Stages.ToJoinedString());
-
             var currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
+            int pollCount = 0;
             while (
                     (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString()))
                     ||
@@ -60,10 +59,15 @@ public class StagesTests : BaseTest
                   )
             {
                 ForceStopWatcher.ThrowIfStopRequested();
+                if (pollCount == 0 || pollCount % 60 == 0)
+                {
+                    TestLoggerContext.Logger.Info($"[STAGES] Waiting for {stage.Stages.ToJoinedString()}... (current: {currentStage})");
+                }
+                pollCount++;
                 Thread.Sleep(1000);
                 currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);
             }
-            TestLoggerContext.Logger.Info("Stage found! " + stage.Stages.ToJoinedString());
+            TestLoggerContext.Logger.Info($"[STAGES] \u2713 {stage.Stages.ToJoinedString()} found");
         }
     }
 }

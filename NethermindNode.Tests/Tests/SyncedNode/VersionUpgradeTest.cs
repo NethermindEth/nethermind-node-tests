@@ -28,8 +28,6 @@ namespace NethermindNode.Tests.Tests.SyncedNode
         [Category("VersionUpgrade")]
         public void UpgradeToTargetVersion()
         {
-            TestLoggerContext.Logger.Info($"=== VERSION UPGRADE TEST STARTED ===");
-
             // Get the target image from environment (set by run-test.sh from the tested branch)
             string? targetImage = Environment.GetEnvironmentVariable(UpgradeTargetImageEnvVar);
             // Legacy fallback: manual version input
@@ -37,12 +35,11 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
             if (!string.IsNullOrEmpty(targetImage))
             {
-                TestLoggerContext.Logger.Info($"Upgrade target image (from tested branch): {targetImage}");
+                // already set
             }
             else if (!string.IsNullOrEmpty(targetVersion))
             {
                 targetImage = $"nethermindeth/nethermind:{targetVersion}";
-                TestLoggerContext.Logger.Info($"Upgrade target image (from manual version): {targetImage}");
             }
             else
             {
@@ -53,72 +50,41 @@ namespace NethermindNode.Tests.Tests.SyncedNode
                 return;
             }
 
-            // ============================================
-            // PHASE 1: Wait for initial sync to complete
-            // ============================================
-            TestLoggerContext.Logger.Info("PHASE 1: Waiting for initial sync...");
-            
-            // Use the same proven pattern as UpgradeDowngrade.cs
-            NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
-            TestLoggerContext.Logger.Info("Node API is ready.");
-            
-            NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
-            TestLoggerContext.Logger.Info("Initial sync completed successfully!");
-
-            // Extra stability wait after sync (like BlockProduction.cs uses 120s)
-            TestLoggerContext.Logger.Info("Waiting 120 seconds for post-sync stability...");
-            Thread.Sleep(120000);
-
-            // ============================================
-            // PHASE 2: Perform the upgrade
-            // ============================================
-            TestLoggerContext.Logger.Info("PHASE 2: Performing upgrade...");
-
             string envFilePath = GetEnvFilePath();
             string currentVersion = GetCurrentImageVersion(envFilePath);
-            TestLoggerContext.Logger.Info($"Current version before upgrade: {currentVersion}");
+            TestLoggerContext.Logger.Info($"[UPGRADE] Starting \u2014 from {currentVersion} to {targetImage}");
 
-            // Update to target image
-            TestLoggerContext.Logger.Info($"Updating .env to use: {targetImage}");
+            // Phase 1: Wait for initial sync
+            TestLoggerContext.Logger.Info("[UPGRADE] Phase 1: Waiting for initial sync...");
+            NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+            NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
+            TestLoggerContext.Logger.Info("[UPGRADE] \u2713 Initial sync complete");
+
+            // Extra stability wait after sync
+            Thread.Sleep(120000);
+
+            // Phase 2: Perform the upgrade
+            TestLoggerContext.Logger.Info($"[UPGRADE] Phase 2: Upgrading {currentVersion} \u2192 {targetImage}");
             UpdateDockerImageVersionInEnvFile(envFilePath, EcImageVersionVariableName, targetImage);
-
-            // Restart container with new version (same as UpgradeDowngrade.cs)
-            TestLoggerContext.Logger.Info("Restarting container with new version...");
             RestartDockerContainer(
                 ConfigurationHelper.Instance["execution-container-name"],
                 Path.Combine(Path.GetDirectoryName(envFilePath)!, "docker-compose.yml"),
                 TestLoggerContext.Logger
             );
+            TestLoggerContext.Logger.Info("[UPGRADE] \u2713 Container restarted with new version");
 
-            // ============================================
-            // PHASE 3: Wait for post-upgrade sync
-            // ============================================
-            TestLoggerContext.Logger.Info("PHASE 3: Waiting for post-upgrade sync...");
-
-            // Give container time to restart
-            TestLoggerContext.Logger.Info("Waiting 30 seconds for container restart...");
+            // Phase 3: Wait for post-upgrade sync
+            TestLoggerContext.Logger.Info("[UPGRADE] Phase 3: Waiting for post-upgrade sync...");
             Thread.Sleep(30000);
-
-            // Wait for node to be ready again
             NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
-            TestLoggerContext.Logger.Info("Node API is ready after upgrade.");
-
-            // Wait for sync to complete after upgrade
             NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
-            TestLoggerContext.Logger.Info("Post-upgrade sync completed!");
+            TestLoggerContext.Logger.Info("[UPGRADE] \u2713 Post-upgrade sync complete");
 
-            // ============================================
-            // PHASE 4: Verify health after upgrade
-            // ============================================
-            TestLoggerContext.Logger.Info("PHASE 4: Verifying health after upgrade...");
-
-            // Verify no errors in logs (same as UpgradeDowngrade.cs - 10 iterations, 60s each)
-            TestLoggerContext.Logger.Info("Monitoring logs for errors (10 minutes)...");
+            // Phase 4: Verify health
+            TestLoggerContext.Logger.Info("[UPGRADE] Phase 4: Verifying health (10 min)");
             VerifyNoUndesiredLogs(maxIterations: 10, intervalMs: 60000);
 
-            TestLoggerContext.Logger.Info($"=== VERSION UPGRADE TEST COMPLETED SUCCESSFULLY ===");
-            TestLoggerContext.Logger.Info($"Upgraded from: {currentVersion}");
-            TestLoggerContext.Logger.Info($"Upgraded to: {targetImage}");
+            TestLoggerContext.Logger.Info($"[UPGRADE] \u2713 ALL PHASES PASSED \u2014 upgraded from {currentVersion} to {targetImage}");
         }
 
         /// <summary>

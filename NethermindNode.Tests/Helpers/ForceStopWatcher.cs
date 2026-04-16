@@ -32,7 +32,7 @@ public static class ForceStopWatcher
         Task.Run(() =>
         {
             var logger = LogManager.GetLogger("ForceStopWatcher");
-            logger.Info("ForceStopWatcher started, polling for force-stop.json");
+            logger.Info("[FORCESTOP] Watcher active \u2014 polling for force-stop.json");
 
             while (!_cts.IsCancellationRequested)
             {
@@ -52,7 +52,7 @@ public static class ForceStopWatcher
                         {
                             var content = File.ReadAllText(path);
                             _reason = content;
-                            logger.Warn($"Force stop file found at {path}: {content}");
+                            logger.Warn($"[FORCESTOP] \u26a0 Stop requested: {content}");
                             _cts.Cancel();
                             return;
                         }

@@ -21,7 +21,7 @@ public class StabilityTests : BaseTest
         List<string> errors = new List<string>();
 
         // Phase 1: Wait for initial sync
-        TestLoggerContext.Logger.Info("=== PHASE 1: Waiting for initial sync ===");
+        TestLoggerContext.Logger.Info("[SYNC] Waiting for initial sync...");
         while (!isNodeSynced)
         {
             ForceStopWatcher.ThrowIfStopRequested();
@@ -30,7 +30,7 @@ public class StabilityTests : BaseTest
 
             if (isNodeSynced)
             {
-                TestLoggerContext.Logger.Info("Node is fully synced.");
+                TestLoggerContext.Logger.Info("[SYNC] \u2713 Node fully synced");
                 break;
             }
 
@@ -41,34 +41,33 @@ public class StabilityTests : BaseTest
         }
 
         // Phase 2: Graceful restart
-        TestLoggerContext.Logger.Info("=== PHASE 2: Graceful restart (docker stop) ===");
+        TestLoggerContext.Logger.Info("[RESTART] Graceful restart (docker stop \u2192 docker start)");
         DockerCommands.StopDockerContainer(ContainerName, TestLoggerContext.Logger);
-        TestLoggerContext.Logger.Info("Container stopped gracefully. Starting again...");
         DockerCommands.StartDockerContainer(ContainerName, TestLoggerContext.Logger);
 
-        TestLoggerContext.Logger.Info("Waiting for node to be ready after graceful restart...");
+        TestLoggerContext.Logger.Info("[RESTART] Waiting for node...");
         NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
-        TestLoggerContext.Logger.Info("Node is ready. Verifying stability for 10 minutes...");
+        TestLoggerContext.Logger.Info("[RESTART] \u2713 Node ready \u2014 verifying stability (10 min)");
         VerifyStabilityForDuration(TimeSpan.FromMinutes(10), errors);
 
         // Phase 3: Ungraceful restart
-        TestLoggerContext.Logger.Info("=== PHASE 3: Ungraceful restart (docker kill) ===");
+        TestLoggerContext.Logger.Info("[RESTART] Ungraceful restart (docker kill \u2192 docker start)");
         DockerCommands.KillDockerContainer(ContainerName, TestLoggerContext.Logger);
-        TestLoggerContext.Logger.Info("Container killed. Starting again...");
         Thread.Sleep(5000); // Brief pause before restart
         DockerCommands.StartDockerContainer(ContainerName, TestLoggerContext.Logger);
 
-        TestLoggerContext.Logger.Info("Waiting for node to be ready after ungraceful restart...");
+        TestLoggerContext.Logger.Info("[RESTART] Waiting for node...");
         NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
-        TestLoggerContext.Logger.Info("Node is ready. Verifying stability for 10 minutes...");
+        TestLoggerContext.Logger.Info("[RESTART] \u2713 Node ready \u2014 verifying stability (10 min)");
         VerifyStabilityForDuration(TimeSpan.FromMinutes(10), errors);
 
-        TestLoggerContext.Logger.Info("=== ALL PHASES PASSED ===");
+        TestLoggerContext.Logger.Info("[RESULT] \u2713 ALL PHASES PASSED");
     }
 
     private void VerifyStabilityForDuration(TimeSpan duration, List<string> errors)
     {
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var lastProgressLog = System.Diagnostics.Stopwatch.StartNew();
 
         while (stopwatch.Elapsed < duration)
         {
@@ -78,9 +77,16 @@ public class StabilityTests : BaseTest
             Assert.That(verificationSucceeded == true,
                 "Undesired log occurred during stability check: " + string.Join(", ", errors));
 
+            if (lastProgressLog.Elapsed >= TimeSpan.FromMinutes(2))
+            {
+                var remaining = duration - stopwatch.Elapsed;
+                TestLoggerContext.Logger.Info($"[STABILITY] Monitoring... {remaining.TotalMinutes:F0} min remaining");
+                lastProgressLog.Restart();
+            }
+
             Thread.Sleep(10000);
         }
 
-        TestLoggerContext.Logger.Info($"Stability verified for {duration.TotalMinutes} minutes — no errors found.");
+        TestLoggerContext.Logger.Info($"[STABILITY] \u2713 No errors for {duration.TotalMinutes:F0} minutes");
     }
 }

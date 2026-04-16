@@ -1,6 +1,7 @@
 using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
+using NethermindNode.Tests.Helpers;
 
 namespace NethermindNode.Tests.SyncingNode;
 
@@ -12,16 +13,19 @@ public class ArchiveTests : BaseTest
     public void ShouldSyncArchiveTillSpecifiedBlock(int blocksCount)
     {
         NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
-        var blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger);
         List<string> errors = new List<string>();
-        bool verificationSuceeded;
 
+        var blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger);
         while (blockNumber <= blocksCount)
         {
-            verificationSuceeded = NodeInfo.VerifyLogsForUndesiredEntries(ref errors);
-            Assert.That(verificationSuceeded == true, "Undesired log occurred: " + string.Join(", ", errors));
-            TestLoggerContext.Logger.Info($"Waiting for block {blocksCount}. Current block is: " + blockNumber);
+            ForceStopWatcher.ThrowIfStopRequested();
+
+            bool verificationSucceeded = NodeInfo.VerifyLogsForUndesiredEntries(ref errors);
+            Assert.That(verificationSucceeded == true, "Undesired log occurred: " + string.Join(", ", errors));
+
+            TestLoggerContext.Logger.Info($"Waiting for block {blocksCount}. Current block is: {blockNumber}");
             Thread.Sleep(10000);
+            blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger);
         }
 
         TestLoggerContext.Logger.Info($"Block {blocksCount} reached.");

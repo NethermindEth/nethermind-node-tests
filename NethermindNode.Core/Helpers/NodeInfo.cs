@@ -128,25 +128,33 @@ public static class NodeInfo
     }
 
     /// <summary>
-    /// Gets the currently synced block from eth_syncing.currentBlock.
-    /// Unlike GetCurrentBlock (eth_blockNumber) which returns the chain head,
-    /// this returns the locally processed block — critical for archive sync progress.
-    /// Returns -1 if node is not syncing or data unavailable.
+    /// Gets the currently synced block for progress tracking.
+    /// First tries eth_syncing.currentBlock (locally processed block).
+    /// If eth_syncing returns false (fully synced) or is unparseable,
+    /// falls back to eth_blockNumber.
+    /// Returns -1 only if both methods fail.
     /// </summary>
     public static long GetSyncingCurrentBlock(Logger logger)
     {
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", apiBaseUrl, logger);
         string output = commandResult.Result?.Item1 ?? "";
 
+        // If eth_syncing returns false → fully synced, use eth_blockNumber for actual count
         if (string.IsNullOrEmpty(output) || output.Contains("false"))
         {
-            // Node reports not syncing — fully synced
-            return long.MaxValue;
+            try
+            {
+                return GetCurrentBlock(logger);
+            }
+            catch
+            {
+                return -1;
+            }
         }
 
+        // Try parsing currentBlock from eth_syncing response
         try
         {
-            // eth_syncing returns: {"currentBlock":"0x1234","highestBlock":"0x5678",...}
             var json = System.Text.Json.JsonDocument.Parse(output);
             if (json.RootElement.TryGetProperty("currentBlock", out var currentBlock))
             {
@@ -158,10 +166,19 @@ public static class NodeInfo
         }
         catch (Exception ex)
         {
-            logger.Trace($"Failed to parse eth_syncing: {ex.Message}");
+            logger.Trace($"Failed to parse eth_syncing currentBlock: {ex.Message}");
         }
 
-        return -1;
+        // Fallback: try eth_blockNumber (may return chain head for snap sync,
+        // but better than -1 for progress display)
+        try
+        {
+            return GetCurrentBlock(logger);
+        }
+        catch
+        {
+            return -1;
+        }
     }
 
     public static int GetPeerCount(Logger logger)

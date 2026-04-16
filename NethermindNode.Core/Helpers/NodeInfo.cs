@@ -127,6 +127,43 @@ public static class NodeInfo
         return Convert.ToInt32(output);
     }
 
+    /// <summary>
+    /// Gets the currently synced block from eth_syncing.currentBlock.
+    /// Unlike GetCurrentBlock (eth_blockNumber) which returns the chain head,
+    /// this returns the locally processed block — critical for archive sync progress.
+    /// Returns -1 if node is not syncing or data unavailable.
+    /// </summary>
+    public static long GetSyncingCurrentBlock(Logger logger)
+    {
+        var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", apiBaseUrl, logger);
+        string output = commandResult.Result?.Item1 ?? "";
+
+        if (string.IsNullOrEmpty(output) || output.Contains("false"))
+        {
+            // Node reports not syncing — fully synced
+            return long.MaxValue;
+        }
+
+        try
+        {
+            // eth_syncing returns: {"currentBlock":"0x1234","highestBlock":"0x5678",...}
+            var json = System.Text.Json.JsonDocument.Parse(output);
+            if (json.RootElement.TryGetProperty("currentBlock", out var currentBlock))
+            {
+                string hex = currentBlock.GetString()?.Replace("\"", "").Trim() ?? "0x0";
+                long block = Convert.ToInt64(hex, 16);
+                logger.Trace($"Syncing currentBlock: {block}");
+                return block;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.Trace($"Failed to parse eth_syncing: {ex.Message}");
+        }
+
+        return -1;
+    }
+
     public static int GetPeerCount(Logger logger)
     {
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("net_peerCount", "", apiBaseUrl, logger);

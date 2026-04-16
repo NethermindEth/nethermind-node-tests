@@ -16,8 +16,9 @@ public class ArchiveTests : BaseTest
         List<string> errors = new List<string>();
 
         int iteration = 0;
-        var blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger);
-        while (blockNumber <= blocksCount)
+        // Use eth_syncing.currentBlock (locally processed) NOT eth_blockNumber (chain head)
+        long blockNumber = NodeInfo.GetSyncingCurrentBlock(TestLoggerContext.Logger);
+        while (blockNumber < blocksCount)
         {
             ForceStopWatcher.ThrowIfStopRequested();
 
@@ -27,13 +28,13 @@ public class ArchiveTests : BaseTest
             if (iteration == 0 || iteration % 30 == 0)
             {
                 double pct = blocksCount > 0 ? (double)blockNumber / blocksCount * 100.0 : 0;
-                TestLoggerContext.Logger.Info($"[ARCHIVE] Waiting for block {blocksCount:N0} \u2014 current: {blockNumber:N0} ({pct:F1}%)");
+                TestLoggerContext.Logger.Info($"[ARCHIVE] Waiting for block {blocksCount:N0} — synced: {blockNumber:N0} ({pct:F1}%)");
             }
             iteration++;
             Thread.Sleep(10000);
-            blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger);
+            blockNumber = NodeInfo.GetSyncingCurrentBlock(TestLoggerContext.Logger);
         }
 
-        TestLoggerContext.Logger.Info($"[ARCHIVE] \u2713 Block {blocksCount:N0} reached");
+        TestLoggerContext.Logger.Info($"[ARCHIVE] ✓ Block {blocksCount:N0} reached (synced: {blockNumber:N0})");
     }
 }

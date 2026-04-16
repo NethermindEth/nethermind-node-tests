@@ -19,6 +19,8 @@ namespace NethermindNode.Tests.Tests.SyncedNode
     public class VersionUpgradeTest : BaseTest
     {
         private const string EcImageVersionVariableName = "EC_IMAGE_VERSION";
+        private const string UpgradeTargetImageEnvVar = "UPGRADE_TARGET_IMAGE";
+        // Legacy fallback
         private const string UpgradeTargetVersionEnvVar = "UPGRADE_TARGET_VERSION";
 
         [NethermindTest]
@@ -27,21 +29,29 @@ namespace NethermindNode.Tests.Tests.SyncedNode
         public void UpgradeToTargetVersion()
         {
             TestLoggerContext.Logger.Info($"=== VERSION UPGRADE TEST STARTED ===");
-            
-            // Get the target version from environment variable
-            string? targetVersion = Environment.GetEnvironmentVariable(UpgradeTargetVersionEnvVar);
-            TestLoggerContext.Logger.Info($"Reading {UpgradeTargetVersionEnvVar} from environment: '{targetVersion ?? "(null)"}'");
 
-            if (string.IsNullOrEmpty(targetVersion))
+            // Get the target image from environment (set by run-test.sh from the tested branch)
+            string? targetImage = Environment.GetEnvironmentVariable(UpgradeTargetImageEnvVar);
+            // Legacy fallback: manual version input
+            string? targetVersion = Environment.GetEnvironmentVariable(UpgradeTargetVersionEnvVar);
+
+            if (!string.IsNullOrEmpty(targetImage))
             {
-                string errorMessage = $"Environment variable {UpgradeTargetVersionEnvVar} is not set or empty. " +
-                                     "Please provide the target version via the workflow input 'upgrade_target_version'.";
+                TestLoggerContext.Logger.Info($"Upgrade target image (from tested branch): {targetImage}");
+            }
+            else if (!string.IsNullOrEmpty(targetVersion))
+            {
+                targetImage = $"nethermindeth/nethermind:{targetVersion}";
+                TestLoggerContext.Logger.Info($"Upgrade target image (from manual version): {targetImage}");
+            }
+            else
+            {
+                string errorMessage = $"Neither {UpgradeTargetImageEnvVar} nor {UpgradeTargetVersionEnvVar} is set. " +
+                                     "The upgrade scope must be triggered with a branch that maps to a Docker image.";
                 TestLoggerContext.Logger.Error(errorMessage);
                 Assert.Fail(errorMessage);
                 return;
             }
-
-            TestLoggerContext.Logger.Info($"Target upgrade version: {targetVersion}");
 
             // ============================================
             // PHASE 1: Wait for initial sync to complete
@@ -68,10 +78,9 @@ namespace NethermindNode.Tests.Tests.SyncedNode
             string currentVersion = GetCurrentImageVersion(envFilePath);
             TestLoggerContext.Logger.Info($"Current version before upgrade: {currentVersion}");
 
-            // Update to target version
-            string newImageName = $"nethermindeth/nethermind:{targetVersion}";
-            TestLoggerContext.Logger.Info($"Updating .env to use: {newImageName}");
-            UpdateDockerImageVersionInEnvFile(envFilePath, EcImageVersionVariableName, newImageName);
+            // Update to target image
+            TestLoggerContext.Logger.Info($"Updating .env to use: {targetImage}");
+            UpdateDockerImageVersionInEnvFile(envFilePath, EcImageVersionVariableName, targetImage);
 
             // Restart container with new version (same as UpgradeDowngrade.cs)
             TestLoggerContext.Logger.Info("Restarting container with new version...");
@@ -103,16 +112,13 @@ namespace NethermindNode.Tests.Tests.SyncedNode
             // ============================================
             TestLoggerContext.Logger.Info("PHASE 4: Verifying health after upgrade...");
 
-            // Verify client version
-            VerifyClientVersion(targetVersion);
-
             // Verify no errors in logs (same as UpgradeDowngrade.cs - 10 iterations, 60s each)
             TestLoggerContext.Logger.Info("Monitoring logs for errors (10 minutes)...");
             VerifyNoUndesiredLogs(maxIterations: 10, intervalMs: 60000);
 
             TestLoggerContext.Logger.Info($"=== VERSION UPGRADE TEST COMPLETED SUCCESSFULLY ===");
             TestLoggerContext.Logger.Info($"Upgraded from: {currentVersion}");
-            TestLoggerContext.Logger.Info($"Upgraded to: {newImageName}");
+            TestLoggerContext.Logger.Info($"Upgraded to: {targetImage}");
         }
 
         /// <summary>

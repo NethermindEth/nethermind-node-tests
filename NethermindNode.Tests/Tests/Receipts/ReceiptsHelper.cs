@@ -19,10 +19,10 @@ class ReceiptsHelper
       var rcp = new TxReceipt
       {
         Bloom = new Bloom(receipts[i].LogsBloom.ToBytes()),
-        PostTransactionState = receipts[i].Root == null ? null : new Hash256(receipts[i].Root),
+        PostTransactionState = receipts[i].Root is null ? null : new Hash256(receipts[i].Root),
         ReturnValue = receipts[i].Status.HexValue.ToBytes(),
-        Recipient = receipts[i].To == null ? null : new Address(receipts[i].To),
-        ContractAddress = receipts[i].ContractAddress == null ? null : new Address(receipts[i].ContractAddress),
+        Recipient = receipts[i].To is null ? null : new Address(receipts[i].To),
+        ContractAddress = receipts[i].ContractAddress is null ? null : new Address(receipts[i].ContractAddress),
         Sender = new Address(receipts[i].From),
         GasUsedTotal = (long)receipts[i].CumulativeGasUsed.Value,
         GasUsed = (long)receipts[i].GasUsed.Value,

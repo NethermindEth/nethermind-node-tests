@@ -1,7 +1,8 @@
 ﻿using NethermindNode.Core.RpcResponses;
 
-namespace NethermindNode.Tests.RpcResponses;
+#nullable disable
 
+namespace NethermindNode.Tests.RpcResponses;
 
 public class Action
 {

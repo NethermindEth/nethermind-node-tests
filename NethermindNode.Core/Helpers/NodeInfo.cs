@@ -31,7 +31,7 @@ public static class NodeInfo
 
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("eth_syncing", "", apiBaseUrl, logger);
         var result = commandResult.Result;
-        return result == null ? false : result.Item1.Contains("false");
+        return result is null ? false : result.Item1.Contains("false");
     }
 
     public static void WaitForNodeToBeReady(Logger logger)
@@ -73,16 +73,19 @@ public static class NodeInfo
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", apiBaseUrl, logger);
         string output = "";
 
-        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
+        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeResponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse? deserialized);
         if (!isVerifiedPositively)
         {
-            if (deserialized is RpcError)
-                throw new Exception(((RpcError)deserialized).Error.Message);
+            if (deserialized is RpcError error)
+                throw new Exception(error.Error.Message);
             else
                 output = "WaitingForConnection";
         }
-        if (output == "")
-            output = ((GetSyncStage)deserialized).Result.CurrentStage;
+        if (deserialized is GetSyncStage getSyncStage)
+        {
+            if (output == "")
+                output = getSyncStage.Result.CurrentStage;
+        }
 
         logger.Trace("Current stage is: " + output);
         return output;
@@ -94,16 +97,19 @@ public static class NodeInfo
         var commandResult = HttpExecutor.ExecuteNethermindJsonRpcCommand("debug_getSyncStage", "", apiBaseUrl, logger);
         string output = "";
 
-        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse deserialized);
+        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeResponse<GetSyncStage>(commandResult.Result.Item1, out IRpcResponse? deserialized);
         if (!isVerifiedPositively)
         {
-            if (deserialized is RpcError)
-                throw new Exception(((RpcError)deserialized).Error.Message);
+            if (deserialized is RpcError error)
+                throw new Exception(error.Error.Message);
             else
                 output = "WaitingForConnection";
         }
-        if (output == "")
-            output = ((GetSyncStage)deserialized).Result.CurrentStage;
+        if (deserialized is GetSyncStage getSyncStage)
+        {
+            if (output == "")
+                output = getSyncStage.Result.CurrentStage;
+        }
 
         foreach (string stage in output.Split(','))
         {
@@ -247,7 +253,7 @@ public static class NodeInfo
     {
         var commandResult = await HttpExecutor.ExecuteAndSerialize<SingleResult>("eth_chainId", "", apiBaseUrl, logger);
         var result = commandResult.Result;
-        if (result == null)
+        if (result is null)
         {
             return NetworkType.Mainnet;
         }
@@ -268,7 +274,7 @@ public static class NodeInfo
     public static async Task<long> GetPivotNumber(Logger logger)
     {
         var result = await GetConfigValue(logger, "Sync", "PivotNumber");
-        if (result.Result == null)
+        if (result.Result is null)
         {
             return 0;
         }
@@ -279,7 +285,7 @@ public static class NodeInfo
     public static async Task<long> GetAncientReceiptsBarrier(Logger logger)
     {
         var result = await GetConfigValue(logger, "Sync", "AncientReceiptsBarrier");
-        if (result.Result == null)
+        if (result.Result is null)
         {
             return 0;
         }

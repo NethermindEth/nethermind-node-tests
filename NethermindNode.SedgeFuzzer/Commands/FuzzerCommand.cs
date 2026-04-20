@@ -1,6 +1,8 @@
 ﻿using CommandLine;
 using NethermindNode.Core.Helpers;
 
+#nullable disable
+
 namespace NethermindNode.SedgeFuzzer.Commands;
 
 [Verb("fuzzer", HelpText = "Execute fuzzing capability on docker container.")]

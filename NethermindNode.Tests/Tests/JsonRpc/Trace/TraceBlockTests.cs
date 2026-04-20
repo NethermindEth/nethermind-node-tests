@@ -27,7 +27,7 @@ public class TraceBlockTests : BaseTest
             {
                 var result = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", TestItems.RpcAddress, TestLoggerContext.Logger);
                 //Test result
-                bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(result.Result.Item1, out IRpcResponse deserialized);
+                bool isVerifiedPositively = JsonRpcHelper.TryDeserializeResponse<TraceBlock>(result.Result.Item1, out IRpcResponse? deserialized);
 
                 if (result.Result.Item3 && isVerifiedPositively)
                 {
@@ -85,7 +85,7 @@ public class TraceBlockTests : BaseTest
                 var batchedIds = Enumerable.Range(task, batchSize).Select(x => $"\"{x}\"").ToList();
                 var result = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, TestItems.RpcAddress, TestLoggerContext.Logger);
                 //Test result
-                bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(result.Result.Item1, out IEnumerable<IRpcResponse> deserialized);
+                bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(result.Result.Item1, out IEnumerable<IRpcResponse>? deserialized);
 
                 if (result.Result.Item3 && isVerifiedPositively)
                 {
@@ -100,7 +100,7 @@ public class TraceBlockTests : BaseTest
                 }
             });
 
-        Assert.That(executionTimes.Count > 0, "All requests failed - unable to measeure times of execution.");
+        Assert.That(executionTimes.Count > 0, "All requests failed - unable to measure times of execution.");
 
         var average = executionTimes.Average(x => x.TotalMilliseconds);
         var totalRequestsSucceeded = executionTimes.Count();
@@ -125,9 +125,9 @@ public class TraceBlockTests : BaseTest
         Console.WriteLine(serializedJson);
     }
 
-    [NethermindTestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcComapare")]
-    [NethermindTestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmarkComapare")]
-    [NethermindTestCase("18.222.197.12", "18.216.213.143", 500, 10, Category = "JsonRpcBenchmarkComapare")]
+    [NethermindTestCase("170.187.152.20", "51.159.102.95", 1, 1, Category = "JsonRpcCompare")]
+    [NethermindTestCase("170.187.152.20", "51.159.102.95", 40, 10, Category = "JsonRpcBenchmarkCompare")]
+    [NethermindTestCase("18.222.197.12", "18.216.213.143", 500, 10, Category = "JsonRpcBenchmarkCompare")]
     public void TraceBlockCompare(string sourceNode, string targetNode, int repeatCount, int parallelizableLevel)
     {
         List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -141,8 +141,8 @@ public class TraceBlockTests : BaseTest
                 var resultSource = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{sourceNode}:8545", TestLoggerContext.Logger);
                 var resultTarget = HttpExecutor.ExecuteNethermindJsonRpcCommand("trace_block", $"\"{task}\"", $"http://{targetNode}:8545", TestLoggerContext.Logger);
                 //Test result
-                bool isVerifiedPositivelySource = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(resultSource.Result.Item1, out IRpcResponse deserializedSource);
-                bool isVerifiedPositivelyTarget = JsonRpcHelper.TryDeserializeReponse<TraceBlock>(resultTarget.Result.Item1, out IRpcResponse deserializedTarget);
+                bool isVerifiedPositivelySource = JsonRpcHelper.TryDeserializeResponse<TraceBlock>(resultSource.Result.Item1, out IRpcResponse? deserializedSource);
+                bool isVerifiedPositivelyTarget = JsonRpcHelper.TryDeserializeResponse<TraceBlock>(resultTarget.Result.Item1, out IRpcResponse?  deserializedTarget);
 
                 Assert.That(isVerifiedPositivelyTarget, Is.EqualTo(isVerifiedPositivelySource), "Parsing result of both responses to TraceBlock schema is not the same.");
                 Assert.That(resultTarget.Result.Item3, Is.EqualTo(resultSource.Result.Item3), "Response code is not the same for both requests.");
@@ -151,7 +151,7 @@ public class TraceBlockTests : BaseTest
             });
     }
 
-    [NethermindTestCase("18.222.197.12", "18.216.213.143", 500, 5, 10, Category = "JsonRpcBenchmarkComapare")]
+    [NethermindTestCase("18.222.197.12", "18.216.213.143", 500, 5, 10, Category = "JsonRpcBenchmarkCompare")]
     public void TraceBlockBatchedCompare(string sourceNode, string targetNode, int requestsCount, int step, int parallelizableLevel)
     {
         List<TimeSpan> executionTimes = new List<TimeSpan>();
@@ -169,8 +169,8 @@ public class TraceBlockTests : BaseTest
                 var resultSource = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{sourceNode}:8545", TestLoggerContext.Logger);
                 var resultTarget = HttpExecutor.ExecuteBatchedNethermindJsonRpcCommand("trace_block", batchedIds, $"http://{targetNode}:8545", TestLoggerContext.Logger);
                 //Test result
-                bool isVerifiedPositivelySource = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(resultSource.Result.Item1, out IEnumerable<IRpcResponse> deserializedSource);
-                bool isVerifiedPositivelyTarget = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(resultTarget.Result.Item1, out IEnumerable<IRpcResponse> deserializedTarget);
+                bool isVerifiedPositivelySource = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(resultSource.Result.Item1, out IEnumerable<IRpcResponse>? deserializedSource);
+                bool isVerifiedPositivelyTarget = JsonRpcHelper.TryDeserializeReponses<IEnumerable<TraceBlock>>(resultTarget.Result.Item1, out IEnumerable<IRpcResponse>? deserializedTarget);
 
                 Assert.That(isVerifiedPositivelyTarget, Is.EqualTo(isVerifiedPositivelySource), "Parsing result of both responses to TraceBlock schema is not the same.");
                 Assert.That(resultTarget.Result.Item3, Is.EqualTo(resultSource.Result.Item3), "Response code is not the same for both requests.");

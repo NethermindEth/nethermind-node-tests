@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using Docker.DotNet;
 using Docker.DotNet.Models;
+using System.Runtime.CompilerServices;
 
 namespace NethermindNode.Core.Helpers;
 
@@ -62,7 +63,7 @@ public static class DockerCommands
         return GetDockerDetails(ConfigurationHelper.Instance["execution-container-name"], "{{ range .Mounts }}{{ if eq .Destination \\\"/nethermind/data\\\" }}{{ .Source }}{{ end }}{{ end }}", logger).Trim();
     }
 
-    public static IEnumerable<string> GetDockerLogs(string containerIdOrName, string logFilter = null, bool followLogs = false, CancellationToken? cancellationToken = null, string additionaloptions = "")
+    public static IEnumerable<string> GetDockerLogs(string containerIdOrName, string? logFilter = null, bool followLogs = false, CancellationToken? cancellationToken = null, string additionaloptions = "")
     {
         string followFlag = followLogs ? "-f" : "";
         string grepCommand = string.IsNullOrEmpty(logFilter) ? "" : $"| grep \"{logFilter}\"";
@@ -87,8 +88,8 @@ public static class DockerCommands
                     cancellationToken.Value.ThrowIfCancellationRequested();
                 }
 
-                string line = process.StandardOutput.ReadLine();
-                if (line != null)
+                string? line = process.StandardOutput.ReadLine();
+                if (line is not null)
                 {
                     yield return line;
                 }
@@ -96,7 +97,7 @@ public static class DockerCommands
         }
     }
 
-    public static async IAsyncEnumerable<string> GetDockerLogsAsync(string containerIdOrName, string logFilter, bool followLogs, CancellationToken cancellationToken)
+    public static async IAsyncEnumerable<string> GetDockerLogsAsync(string containerIdOrName, string logFilter, bool followLogs, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using (var client = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient())
         {
@@ -111,8 +112,8 @@ public static class DockerCommands
             using (Stream stream = await client.Containers.GetContainerLogsAsync(containerIdOrName, parameters, cancellationToken))
             using (StreamReader reader = new StreamReader(stream))
             {
-                string line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                string? line;
+                while ((line = await reader.ReadLineAsync(cancellationToken)) is not null)
                 {
                     if (!string.IsNullOrEmpty(logFilter) && !line.Contains(logFilter))
                     {

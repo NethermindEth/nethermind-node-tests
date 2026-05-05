@@ -25,9 +25,11 @@ public class CanonicalChainTests : BaseTest
     private const int BatchSize = 500;
     private const string ZeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-    [NethermindTestCase(3_000_000, "finalized", Category = "JsonRpc")]
+    [NethermindTestCase(3_000_000, "finalized", Category = "CanonicalChain")]
     public async Task CanonicalChain_WhenWalkingFromTag_ByNumberMatchesByHashChain(int depth, string startTag)
     {
+        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
+
         EthBlockResult? startBlock = await FetchBlockByNumberOrTag(startTag);
         Assert.That(startBlock, Is.Not.Null,
             $"Node returned null for '{startTag}' — is it synced?");

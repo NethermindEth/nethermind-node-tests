@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Demerzel Solutions Limited
+// SPDX-FileCopyrightText: 2026 Demerzel Solutions Limited
 // SPDX-License-Identifier: LGPL-3.0-only
 
 using NethermindNode.Core;
@@ -15,25 +15,27 @@ namespace NethermindNode.Tests.JsonRpc;
 ///
 /// Reproduces the Nethermind canonical-mismatch bug where engine_forkchoiceUpdatedV3 to a
 /// canonical ancestor leaves beacon-synced descendants with stale HasBlockOnMainChain=true
-/// markers, causing eth_getBlockByNumber to return the wrong block after a reorg.
+/// markers, causing eth_getBlockByNumber to return the wrong block after a reorg. The walk
+/// goes deep (3M blocks) to surface stale markers left behind by historical reorgs.
 /// </summary>
 [TestFixture]
 [Parallelizable(ParallelScope.None)]
 public class CanonicalChainTests : BaseTest
 {
     private const int BatchSize = 500;
+    private const string ZeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-    [NethermindTestCase(1000, "finalized", Category = "JsonRpc")]
+    [NethermindTestCase(3_000_000, "finalized", Category = "JsonRpc")]
     public async Task CanonicalChain_WhenWalkingFromTag_ByNumberMatchesByHashChain(int depth, string startTag)
     {
         EthBlockResult? startBlock = await FetchBlockByNumberOrTag(startTag);
         Assert.That(startBlock, Is.Not.Null,
             $"Node returned null for '{startTag}' — is it synced?");
 
-        TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Start: #{HexToLong(startBlock!.Number)}  hash={startBlock.Hash}");
+        TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Start: #{HexToLong(startBlock!.Number)}  hash={startBlock.Hash}  walking back {depth} blocks");
 
         List<(long Number, string Hash)> truthChain = await BuildTruthChain(startBlock.Hash, depth);
-        TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Phase 1 complete: {truthChain.Count} block(s) walked");
+        TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Phase 1 complete: {truthChain.Count} block(s) walked by parentHash");
 
         Dictionary<long, string?> byNumberMap = await FetchBlocksByNumber(
             truthChain.Select(t => t.Number).ToList());
@@ -138,5 +140,5 @@ public class CanonicalChainTests : BaseTest
 
     private static long HexToLong(string hex) => Convert.ToInt64(hex, 16);
 
-    private static bool IsGenesis(EthBlockResult block) => HexToLong(block.ParentHash) == 0;
+    private static bool IsGenesis(EthBlockResult block) => block.ParentHash == ZeroHash;
 }

@@ -25,7 +25,7 @@ public class CanonicalChainTests : BaseTest
     private const int BatchSize = 500;
     private const string ZeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-    [NethermindTestCase(3_000_000, "finalized", Category = "CanonicalChain")]
+    [NethermindTestCase(10_000_000, "finalized", Category = "CanonicalChain")]
     public async Task CanonicalChain_WhenWalkingFromTag_ByNumberMatchesByHashChain(int depth, string startTag)
     {
         EthBlockResult startBlock = await WaitForBlockWithDepth(startTag, depth);

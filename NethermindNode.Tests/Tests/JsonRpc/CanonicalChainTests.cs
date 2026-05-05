@@ -28,13 +28,9 @@ public class CanonicalChainTests : BaseTest
     [NethermindTestCase(3_000_000, "finalized", Category = "CanonicalChain")]
     public async Task CanonicalChain_WhenWalkingFromTag_ByNumberMatchesByHashChain(int depth, string startTag)
     {
-        NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
+        EthBlockResult startBlock = await WaitForBlockWithDepth(startTag, depth);
 
-        EthBlockResult? startBlock = await FetchBlockByNumberOrTag(startTag);
-        Assert.That(startBlock, Is.Not.Null,
-            $"Node returned null for '{startTag}' — is it synced?");
-
-        TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Start: #{HexToLong(startBlock!.Number)}  hash={startBlock.Hash}  walking back {depth} blocks");
+        TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Start: #{HexToLong(startBlock.Number)}  hash={startBlock.Hash}  walking back {depth} blocks");
 
         List<(long Number, string Hash)> truthChain = await BuildTruthChain(startBlock.Hash, depth);
         TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Phase 1 complete: {truthChain.Count} block(s) walked by parentHash");
@@ -59,6 +55,29 @@ public class CanonicalChainTests : BaseTest
 
     private static Task<EthBlockResult?> FetchBlockByNumberOrTag(string numberOrTag) =>
         FetchBlock("eth_getBlockByNumber", $"\"{numberOrTag}\", false");
+
+    private static async Task<EthBlockResult> WaitForBlockWithDepth(string tag, int requiredDepth)
+    {
+        TimeSpan pollInterval = TimeSpan.FromSeconds(30);
+        while (true)
+        {
+            try
+            {
+                EthBlockResult? block = await FetchBlockByNumberOrTag(tag);
+                if (block is not null && HexToLong(block.Number) >= requiredDepth)
+                {
+                    return block;
+                }
+                string status = block is null ? "null" : $"#{HexToLong(block.Number)} (need >= {requiredDepth})";
+                TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting for sync: {tag} = {status}");
+            }
+            catch (Exception ex)
+            {
+                TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting for node: {ex.Message}");
+            }
+            await Task.Delay(pollInterval);
+        }
+    }
 
     private static async Task<List<(long Number, string Hash)>> BuildTruthChain(string startHash, int depth)
     {

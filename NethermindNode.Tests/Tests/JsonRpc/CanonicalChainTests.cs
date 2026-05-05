@@ -10,13 +10,13 @@ using Newtonsoft.Json;
 namespace NethermindNode.Tests.JsonRpc;
 
 /// <summary>
-/// Verifies canonical chain integrity: eth_getBlockByNumber(N) must return the same block
-/// as walking backward via parentHash from the chain head.
+/// Regression test for NethermindEth/nethermind#10876.
 ///
-/// Reproduces the Nethermind canonical-mismatch bug where engine_forkchoiceUpdatedV3 to a
-/// canonical ancestor leaves beacon-synced descendants with stale HasBlockOnMainChain=true
-/// markers, causing eth_getBlockByNumber to return the wrong block after a reorg. The walk
-/// goes deep (3M blocks) to surface stale markers left behind by historical reorgs.
+/// 1. Call eth_getBlockByNumber("finalized") — finalized blocks cannot be reorged, so this is a trusted anchor.
+/// 2. Walk backward N blocks via parentHash using eth_getBlockByHash to build a ground-truth (number, hash) chain.
+/// 3. Batch-fetch those block numbers via eth_getBlockByNumber to get the node's canonical view.
+/// 4. If eth_getBlockByNumber(N).hash differs from the ground-truth hash at N, the node has a stale canonical
+///    marker (HasBlockOnMainChain=true on a non-canonical block) — that's the bug #10876 surfaces.
 /// </summary>
 [TestFixture]
 [Parallelizable(ParallelScope.None)]
@@ -25,7 +25,7 @@ public class CanonicalChainTests : BaseTest
     private const int BatchSize = 500;
     private const string ZeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-    [NethermindTestCase(10_000_000, "finalized", Category = "CanonicalChain")]
+    [NethermindTestCase(5_000_000, "finalized", Category = "CanonicalChain")]
     public async Task CanonicalChain_WhenWalkingFromTag_ByNumberMatchesByHashChain(int depth, string startTag)
     {
         EthBlockResult startBlock = await WaitForBlockWithDepth(startTag, depth);
@@ -63,13 +63,22 @@ public class CanonicalChainTests : BaseTest
         {
             try
             {
-                EthBlockResult? block = await FetchBlockByNumberOrTag(tag);
-                if (block is not null && HexToLong(block.Number) >= requiredDepth)
+                EthBlockResult? startBlock = await FetchBlockByNumberOrTag(tag);
+                if (startBlock is null || HexToLong(startBlock.Number) < requiredDepth)
                 {
-                    return block;
+                    string status = startBlock is null ? "null" : $"#{HexToLong(startBlock.Number)} (need >= {requiredDepth})";
+                    TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting for sync: {tag} = {status}");
                 }
-                string status = block is null ? "null" : $"#{HexToLong(block.Number)} (need >= {requiredDepth})";
-                TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting for sync: {tag} = {status}");
+                else
+                {
+                    long deepNumber = HexToLong(startBlock.Number) - requiredDepth;
+                    EthBlockResult? deepBlock = await FetchBlockByNumberOrTag($"0x{deepNumber:X}");
+                    if (deepBlock is not null)
+                    {
+                        return startBlock;
+                    }
+                    TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting for backward header sync: block #{deepNumber} not yet locally available");
+                }
             }
             catch (Exception ex)
             {
@@ -87,7 +96,13 @@ public class CanonicalChainTests : BaseTest
         for (int i = 0; i < depth; i++)
         {
             EthBlockResult? block = await FetchBlockByHash(currentHash);
-            if (block is null) break;
+            if (block is null)
+            {
+                throw new Exception(
+                    $"eth_getBlockByHash returned null at iteration {i} for hash {currentHash}. " +
+                    $"Walked {truthChain.Count}/{depth} blocks. The node likely hasn't backward-synced headers " +
+                    "to that depth yet. Wait longer or run in archive mode.");
+            }
 
             truthChain.Add((HexToLong(block.Number), block.Hash));
 

@@ -19,8 +19,6 @@ namespace NethermindNode.Tests.Tests.SyncedNode
     public class VersionUpgradeTest : BaseTest
     {
         private const string EcImageVersionVariableName = "EC_IMAGE_VERSION";
-        private const string UpgradeTargetImageEnvVar = "UPGRADE_TARGET_IMAGE";
-        // Legacy fallback
         private const string UpgradeTargetVersionEnvVar = "UPGRADE_TARGET_VERSION";
 
         [NethermindTest]
@@ -28,63 +26,93 @@ namespace NethermindNode.Tests.Tests.SyncedNode
         [Category("VersionUpgrade")]
         public void UpgradeToTargetVersion()
         {
-            // Get the target image from environment (set by run-test.sh from the tested branch)
-            string? targetImage = Environment.GetEnvironmentVariable(UpgradeTargetImageEnvVar);
-            // Legacy fallback: manual version input
+            TestLoggerContext.Logger.Info($"=== VERSION UPGRADE TEST STARTED ===");
+            
+            // Get the target version from environment variable
             string? targetVersion = Environment.GetEnvironmentVariable(UpgradeTargetVersionEnvVar);
+            TestLoggerContext.Logger.Info($"Reading {UpgradeTargetVersionEnvVar} from environment: '{targetVersion ?? "(null)"}'");
 
-            if (!string.IsNullOrEmpty(targetImage))
+            if (string.IsNullOrEmpty(targetVersion))
             {
-                // already set
-            }
-            else if (!string.IsNullOrEmpty(targetVersion))
-            {
-                targetImage = $"nethermindeth/nethermind:{targetVersion}";
-            }
-            else
-            {
-                string errorMessage = $"Neither {UpgradeTargetImageEnvVar} nor {UpgradeTargetVersionEnvVar} is set. " +
-                                     "The upgrade scope must be triggered with a branch that maps to a Docker image.";
+                string errorMessage = $"Environment variable {UpgradeTargetVersionEnvVar} is not set or empty. " +
+                                     "Please provide the target version via the workflow input 'upgrade_target_version'.";
                 TestLoggerContext.Logger.Error(errorMessage);
                 Assert.Fail(errorMessage);
                 return;
             }
 
-            string envFilePath = GetEnvFilePath();
-            string currentVersion = GetCurrentImageVersion(envFilePath);
-            TestLoggerContext.Logger.Info($"[UPGRADE] Starting \u2014 from {currentVersion} to {targetImage}");
+            TestLoggerContext.Logger.Info($"Target upgrade version: {targetVersion}");
 
-            // Phase 1: Wait for initial sync
-            TestLoggerContext.Logger.Info("[UPGRADE] Phase 1: Waiting for initial sync...");
+            // ============================================
+            // PHASE 1: Wait for initial sync to complete
+            // ============================================
+            TestLoggerContext.Logger.Info("PHASE 1: Waiting for initial sync...");
+            
+            // Use the same proven pattern as UpgradeDowngrade.cs
             NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+            TestLoggerContext.Logger.Info("Node API is ready.");
+            
             NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
-            TestLoggerContext.Logger.Info("[UPGRADE] \u2713 Initial sync complete");
+            TestLoggerContext.Logger.Info("Initial sync completed successfully!");
 
-            // Extra stability wait after sync
+            // Extra stability wait after sync (like BlockProduction.cs uses 120s)
+            TestLoggerContext.Logger.Info("Waiting 120 seconds for post-sync stability...");
             Thread.Sleep(120000);
 
-            // Phase 2: Perform the upgrade
-            TestLoggerContext.Logger.Info($"[UPGRADE] Phase 2: Upgrading {currentVersion} \u2192 {targetImage}");
-            UpdateDockerImageVersionInEnvFile(envFilePath, EcImageVersionVariableName, targetImage);
+            // ============================================
+            // PHASE 2: Perform the upgrade
+            // ============================================
+            TestLoggerContext.Logger.Info("PHASE 2: Performing upgrade...");
+
+            string envFilePath = GetEnvFilePath();
+            string currentVersion = GetCurrentImageVersion(envFilePath);
+            TestLoggerContext.Logger.Info($"Current version before upgrade: {currentVersion}");
+
+            // Update to target version
+            string newImageName = $"nethermindeth/nethermind:{targetVersion}";
+            TestLoggerContext.Logger.Info($"Updating .env to use: {newImageName}");
+            UpdateDockerImageVersionInEnvFile(envFilePath, EcImageVersionVariableName, newImageName);
+
+            // Restart container with new version (same as UpgradeDowngrade.cs)
+            TestLoggerContext.Logger.Info("Restarting container with new version...");
             RestartDockerContainer(
                 ConfigurationHelper.Instance["execution-container-name"],
                 Path.Combine(Path.GetDirectoryName(envFilePath)!, "docker-compose.yml"),
                 TestLoggerContext.Logger
             );
-            TestLoggerContext.Logger.Info("[UPGRADE] \u2713 Container restarted with new version");
 
-            // Phase 3: Wait for post-upgrade sync
-            TestLoggerContext.Logger.Info("[UPGRADE] Phase 3: Waiting for post-upgrade sync...");
+            // ============================================
+            // PHASE 3: Wait for post-upgrade sync
+            // ============================================
+            TestLoggerContext.Logger.Info("PHASE 3: Waiting for post-upgrade sync...");
+
+            // Give container time to restart
+            TestLoggerContext.Logger.Info("Waiting 30 seconds for container restart...");
             Thread.Sleep(30000);
-            NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
-            NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
-            TestLoggerContext.Logger.Info("[UPGRADE] \u2713 Post-upgrade sync complete");
 
-            // Phase 4: Verify health
-            TestLoggerContext.Logger.Info("[UPGRADE] Phase 4: Verifying health (10 min)");
+            // Wait for node to be ready again
+            NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+            TestLoggerContext.Logger.Info("Node API is ready after upgrade.");
+
+            // Wait for sync to complete after upgrade
+            NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
+            TestLoggerContext.Logger.Info("Post-upgrade sync completed!");
+
+            // ============================================
+            // PHASE 4: Verify health after upgrade
+            // ============================================
+            TestLoggerContext.Logger.Info("PHASE 4: Verifying health after upgrade...");
+
+            // Verify client version
+            VerifyClientVersion(targetVersion);
+
+            // Verify no errors in logs (same as UpgradeDowngrade.cs - 10 iterations, 60s each)
+            TestLoggerContext.Logger.Info("Monitoring logs for errors (10 minutes)...");
             VerifyNoUndesiredLogs(maxIterations: 10, intervalMs: 60000);
 
-            TestLoggerContext.Logger.Info($"[UPGRADE] \u2713 ALL PHASES PASSED \u2014 upgraded from {currentVersion} to {targetImage}");
+            TestLoggerContext.Logger.Info($"=== VERSION UPGRADE TEST COMPLETED SUCCESSFULLY ===");
+            TestLoggerContext.Logger.Info($"Upgraded from: {currentVersion}");
+            TestLoggerContext.Logger.Info($"Upgraded to: {newImageName}");
         }
 
         /// <summary>

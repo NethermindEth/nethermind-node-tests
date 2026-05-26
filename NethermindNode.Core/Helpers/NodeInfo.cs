@@ -293,6 +293,7 @@ public static class NodeInfo
         "ObjectDisposedException",      // Timer disposal race condition
         "DISCONNECT",                   // NetworkDiag peer disconnect traces (RlpException, etc.)
         "Error in communication with",  // NetworkDiag peer communication errors
+        "over limit 8 or",              // RlpLimitException at HelloMessageSerializer when a peer advertises a capability protocol code >8 bytes — strict spec rejection is intended behavior (NethermindEth/nethermind#11751 closed without merge)
     };
 
     private static bool IsIgnoredException(string logLine)

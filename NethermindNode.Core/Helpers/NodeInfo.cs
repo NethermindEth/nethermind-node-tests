@@ -293,6 +293,7 @@ public static class NodeInfo
         "ObjectDisposedException",      // Timer disposal race condition
         "DISCONNECT",                   // NetworkDiag peer disconnect traces (RlpException, etc.)
         "Error in communication with",  // NetworkDiag peer communication errors
+        "Receipt count mismatch",       // eth/70 receipts mismatch when remote peer briefly lacks receipts (NethermindEth/nethermind#11752)
     };
 
     private static bool IsIgnoredException(string logLine)

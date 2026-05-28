@@ -290,10 +290,11 @@ public static class NodeInfo
     // Exception patterns to ignore — these are expected during normal operation
     private static readonly string[] IgnoredExceptionPatterns = new[]
     {
-        "ObjectDisposedException",      // Timer disposal race condition
-        "DISCONNECT",                   // NetworkDiag peer disconnect traces (RlpException, etc.)
-        "Error in communication with",  // NetworkDiag peer communication errors
-        "over limit 8 or",              // RlpLimitException at HelloMessageSerializer when a peer advertises a capability protocol code >8 bytes — strict spec rejection is intended behavior (NethermindEth/nethermind#11751 closed without merge)
+        "ObjectDisposedException",         // Timer disposal race condition
+        "Cannot access a disposed object", // PLINQ-wrapped ObjectDisposedException from SnapProvider.AddAccountRange's AsParallel _codeDb.KeyExists racing RocksDB disposal on shutdown; logged as AggregateException whose header lacks the literal "ObjectDisposedException" token so the pattern above doesn't match. Node recovers fine on restart.
+        "DISCONNECT",                      // NetworkDiag peer disconnect traces (RlpException, etc.)
+        "Error in communication with",     // NetworkDiag peer communication errors
+        "over limit 8 or",                 // RlpLimitException at HelloMessageSerializer when a peer advertises a capability protocol code >8 bytes — strict spec rejection is intended behavior (NethermindEth/nethermind#11751 closed without merge)
     };
 
     private static bool IsIgnoredException(string logLine)

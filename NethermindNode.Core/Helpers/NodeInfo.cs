@@ -295,6 +295,7 @@ public static class NodeInfo
         "DISCONNECT",                      // NetworkDiag peer disconnect traces (RlpException, etc.)
         "Error in communication with",     // NetworkDiag peer communication errors
         "over limit 8 or",                 // RlpLimitException at HelloMessageSerializer when a peer advertises a capability protocol code >8 bytes — strict spec rejection is intended behavior (NethermindEth/nethermind#11751 closed without merge)
+        "Failed to deserialize message",   // ProtocolHandlerBase: a peer that negotiated eth/69+ sent a malformed/old-format Status (or Disconnect) message — Nethermind's eth/69 decoder hits a scalar where a 32-byte hash is expected and throws DecodeKeccakRlpException/RlpException. These are non-conformant or foreign-network peers (e.g. energi3, bor, besu-dev); the node correctly disconnects them and syncs fine. Capability negotiation only agrees versions the peer advertised, so this is benign peer noise, not a node defect.
     };
 
     private static bool IsIgnoredException(string logLine)

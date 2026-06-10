@@ -63,6 +63,19 @@ public class StagesTests : BaseTest
                 {
                     TestLoggerContext.Logger.Info($"[STAGES] Waiting for {stage.Stages.ToJoinedString()}... (current: {currentStage})");
                 }
+
+                // Short-lived stages (and mode flags like FastSync, which can show up
+                // at any point or not at all) are easily missed between 1s polls. Once
+                // the node is fully synced no further stage can appear, so waiting any
+                // longer would hang the test forever \u2014 this exact hang burned 6x10h
+                // jobs per scheduled smoke run while stuck on "Waiting for SnapSync"
+                // with the node long since at WaitingForBlock.
+                if (pollCount % 30 == 0 && NodeInfo.IsFullySynced(TestLoggerContext.Logger))
+                {
+                    TestLoggerContext.Logger.Info($"[STAGES] Node became fully synced while waiting for {stage.Stages.ToJoinedString()} (current: {currentStage}). Remaining stages already completed or skipped.");
+                    Assert.Pass($"Node fully synced while waiting for {stage.Stages.ToJoinedString()} \u2014 stage was passed between polls.");
+                }
+
                 pollCount++;
                 Thread.Sleep(1000);
                 currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);

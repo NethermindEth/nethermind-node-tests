@@ -12,6 +12,9 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
     [Option("dockerContainerName", Required = false, HelpText = "Defines which docker container will be fuzzed.", Default = "sedge-execution-client")]
     public string DockerContainerName  { get; set; }
 
+    [Option("companionContainerName", Required = false, HelpText = "Container to restart after the fuzzed container is started again — for CLs that never redial a restarted EL (e.g. nimbus over ws://, nimbus-eth2#8595).", Default = "")]
+    public string CompanionContainerName { get; set; }
+
     [Option("fullSync", HelpText = "Wait for fully synced node only.")]
     public bool IsFullySyncedCheck { get; set; }
 
@@ -38,6 +41,7 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
     public FuzzerCommand(IFuzzerCommand fuzzerCommandOptions, NLog.Logger logger)
     {
         DockerContainerName = fuzzerCommandOptions.DockerContainerName;
+        CompanionContainerName = fuzzerCommandOptions.CompanionContainerName;
         IsFullySyncedCheck = fuzzerCommandOptions.IsFullySyncedCheck;
         ShouldForceKillCommand = fuzzerCommandOptions.ShouldForceKillCommand;
         ShouldForceGracefullCommand = fuzzerCommandOptions.ShouldForceGracefullCommand;
@@ -83,6 +87,13 @@ public class FuzzerCommand : ICommand, IFuzzerCommand
             Logger.Info("Waiting for for: " + beforeStartWait + " seconds before starting docker container.");
             Thread.Sleep(beforeStartWait * 1000);
             DockerCommands.StartDockerContainer(DockerContainerName, Logger);
+
+            if (!string.IsNullOrEmpty(CompanionContainerName) && CompanionContainerName != DockerContainerName)
+            {
+                Logger.Info($"Restarting companion container \"{CompanionContainerName}\" so it reconnects to the fuzzed container");
+                DockerCommands.StopDockerContainer(CompanionContainerName, Logger);
+                DockerCommands.StartDockerContainer(CompanionContainerName, Logger);
+            }
             i++;
         }
     }

@@ -308,6 +308,24 @@ public static class NodeInfo
         return false;
     }
 
+    // Nethermind's console layout carries the log level only in the leading ANSI
+    // color from NLog's highlight-row rules: Error/Fatal=Red(91/31), Warn=Yellow(93),
+    // Info=White(97). The line opens with default-color resets ([39;49m) before the
+    // level color, so we take the first non-reset foreground code.
+    private static readonly System.Text.RegularExpressions.Regex LeadingLevelColor =
+        new(@"^(?:\u001B\[[0-9;]*m)*?\u001B\[(3[0-7]|9[0-7])m", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    // A line that mentions an exception below Error level (e.g. WARN SubprotocolException
+    // when a misbehaving peer is rejected) is the node handling a problem, not having one.
+    // Colorless lines classify as Error so plain-layout logs keep the strict behavior.
+    public static bool IsErrorLevelLine(string logLine)
+    {
+        var match = LeadingLevelColor.Match(logLine);
+        if (!match.Success)
+            return true;
+        return match.Groups[1].Value is "91" or "31";
+    }
+
     public static bool VerifyLogsForUndesiredEntries(ref List<string> errors)
     {
         var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
@@ -316,17 +334,27 @@ public static class NodeInfo
         bool status = true;
         var undesiredEntries = new List<string>();
 
+        int belowErrorCount = 0;
         if (exceptions.Any())
         {
             foreach (var item in exceptions)
             {
                 if (!string.IsNullOrEmpty(item) && !IsIgnoredException(item))
                 {
+                    if (!IsErrorLevelLine(item))
+                    {
+                        belowErrorCount++;
+                        continue;
+                    }
                     undesiredEntries.Add("Exception: " + item.Trim());
                     errors.Add(item);
                     status = false;
                 }
             }
+        }
+        if (belowErrorCount > 0)
+        {
+            TestLoggerContext.Logger.Info($"[VERIFY] Skipped {belowErrorCount} below-Error log lines mentioning exceptions (node-handled, e.g. rejected peers)");
         }
 
         if (corruption.Any())

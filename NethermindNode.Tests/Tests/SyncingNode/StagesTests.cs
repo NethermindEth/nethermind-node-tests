@@ -76,6 +76,23 @@ public class StagesTests : BaseTest
                     Assert.Pass($"Node fully synced while waiting for {stage.Stages.ToJoinedString()} \u2014 stage was passed between polls.");
                 }
 
+                // A restart (fuzz kill / stability check) resumes from an already-populated DB, so this
+                // stage may never reappear while the node reports one that only occurs later in the
+                // pipeline (or Full block processing). The IsFullySynced escape above never fires in fuzz
+                // lanes where the node is killed mid-backfill (eth_syncing stays true), which kept burning
+                // jobs to the 10h cap on "Waiting for SnapSync" \u2014 treat the stage as missed and move on.
+                string[] currentParts = currentStage.Split(", ", StringSplitOptions.RemoveEmptyEntries);
+                bool nodeIsPastThisStage =
+                    currentParts.Contains("Full") ||
+                    currentParts.Any(part => correctOrderOfStages
+                        .Skip(correctOrderOfStages.IndexOf(stage) + 1)
+                        .Any(later => later.Stages.Any(s => s.ToString() == part)));
+                if (nodeIsPastThisStage)
+                {
+                    TestLoggerContext.Logger.Info($"[STAGES] \u26a0 {stage.Stages.ToJoinedString()} missed (current: {currentStage} occurs later in the pipeline) \u2014 passed between polls or skipped after a restart.");
+                    break;
+                }
+
                 pollCount++;
                 Thread.Sleep(1000);
                 currentStage = NodeInfo.GetCurrentStage(TestLoggerContext.Logger);

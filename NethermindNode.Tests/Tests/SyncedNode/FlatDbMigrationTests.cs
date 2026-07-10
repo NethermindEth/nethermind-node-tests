@@ -108,9 +108,16 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
             while (true)
             {
-                bool skipMarkerSeen = ContainerLogsContain(executionContainerName, ImportSkippedExistsMarker);
+                // One unfiltered snapshot per poll, matched in-process: GetDockerLogs' shell grep
+                // mis-tokenizes multi-word filters (nested quotes), and a single snapshot keeps all
+                // marker checks consistent with each other.
+                List<string> logSnapshot = DockerCommands.GetDockerLogs(
+                    executionContainerName, null, false, null, "--tail 100000").ToList();
+                bool LogsContain(string marker) => logSnapshot.Any(l => l is not null && l.Contains(marker));
 
-                if (ContainerLogsContain(executionContainerName, EmptyFlatDbCrashMarker))
+                bool skipMarkerSeen = LogsContain(ImportSkippedExistsMarker);
+
+                if (LogsContain(EmptyFlatDbCrashMarker))
                 {
                     Assert.Fail(
                         "Node crashed reading head state from an empty flat DB " +
@@ -118,7 +125,7 @@ namespace NethermindNode.Tests.Tests.SyncedNode
                         "This is the regression fixed by nethermind#12383.");
                 }
 
-                if (ContainerLogsContain(executionContainerName, ImportSkippedNoRootMarker))
+                if (LogsContain(ImportSkippedNoRootMarker))
                 {
                     Assert.Fail(
                         "Flat DB import was skipped because the pruning trie state does not contain the head " +
@@ -128,7 +135,7 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
                 if (!importStarted)
                 {
-                    if (ContainerLogsContain(executionContainerName, ImportStartedMarker))
+                    if (LogsContain(ImportStartedMarker))
                     {
                         importStarted = true;
                         phaseDeadline = DateTime.UtcNow + importCompleteTimeout;
@@ -148,7 +155,7 @@ namespace NethermindNode.Tests.Tests.SyncedNode
                 }
                 else if (!importCompleted)
                 {
-                    if (ContainerLogsContain(executionContainerName, ImportCompletedMarker))
+                    if (LogsContain(ImportCompletedMarker))
                     {
                         importCompleted = true;
                         phaseDeadline = DateTime.UtcNow + secondBootTimeout;
@@ -173,11 +180,6 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
                 Thread.Sleep(pollInterval);
             }
-        }
-
-        private bool ContainerLogsContain(string containerName, string marker)
-        {
-            return DockerCommands.GetDockerLogs(containerName, marker).Any(l => !string.IsNullOrEmpty(l));
         }
 
         private void VerifyFlatDbIsEnabled()

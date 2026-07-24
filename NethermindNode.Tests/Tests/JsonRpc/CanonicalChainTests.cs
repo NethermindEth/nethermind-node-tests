@@ -17,6 +17,9 @@ namespace NethermindNode.Tests.JsonRpc;
 /// 3. Batch-fetch those block numbers via eth_getBlockByNumber to get the node's canonical view.
 /// 4. If eth_getBlockByNumber(N).hash differs from the ground-truth hash at N, the node has a stale canonical
 ///    marker (HasBlockOnMainChain=true on a non-canonical block) — that's the bug #10876 surfaces.
+///
+/// The requested depth is an upper bound: on non-validator nodes ancient headers below the sync pivot are never
+/// downloaded, so the walk is capped at the pivot instead of waiting for blocks that will never arrive.
 /// </summary>
 [TestFixture]
 [Parallelizable(ParallelScope.None)]
@@ -25,14 +28,23 @@ public class CanonicalChainTests : BaseTest
     private const int BatchSize = 500;
     private const string ZeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
+    // Below this many walkable blocks the check is meaningless; keep waiting for the head to advance instead.
+    private const int MinAdaptiveDepth = 128;
+    // Don't walk right up to the pivot block itself — bodies/headers immediately at the pivot edge can lag.
+    private const int PivotSafetyMargin = 64;
+    // Upper bound on the sync wait — must cover a full initial snap sync (mainnet on g6-standard-16 takes hours).
+    // Without it this loop burned the full 20 h job timeout on lanes whose node could never serve the requested
+    // depth (JsonRpcGL/ML, 1.39.2 validation 2026-07-16).
+    private static readonly TimeSpan MaxSyncWait = TimeSpan.FromMinutes(360);
+
     [NethermindTestCase(5_000_000, "finalized", Category = "CanonicalChain")]
     public async Task CanonicalChain_WhenWalkingFromTag_ByNumberMatchesByHashChain(int depth, string startTag)
     {
-        EthBlockResult startBlock = await WaitForBlockWithDepth(startTag, depth);
+        (EthBlockResult startBlock, int effectiveDepth) = await WaitForBlockWithDepth(startTag, depth);
 
-        TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Start: #{HexToLong(startBlock.Number)}  hash={startBlock.Hash}  walking back {depth} blocks");
+        TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Start: #{HexToLong(startBlock.Number)}  hash={startBlock.Hash}  walking back {effectiveDepth} blocks");
 
-        List<(long Number, string Hash)> truthChain = await BuildTruthChain(startBlock.Hash, depth);
+        List<(long Number, string Hash)> truthChain = await BuildTruthChain(startBlock.Hash, effectiveDepth);
         TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Phase 1 complete: {truthChain.Count} block(s) walked by parentHash");
 
         Dictionary<long, string?> byNumberMap = await FetchBlocksByNumber(
@@ -56,35 +68,83 @@ public class CanonicalChainTests : BaseTest
     private static Task<EthBlockResult?> FetchBlockByNumberOrTag(string numberOrTag) =>
         FetchBlock("eth_getBlockByNumber", $"\"{numberOrTag}\", false");
 
-    private static async Task<EthBlockResult> WaitForBlockWithDepth(string tag, int requiredDepth)
+    private static async Task<(EthBlockResult StartBlock, int Depth)> WaitForBlockWithDepth(string tag, int requiredDepth)
     {
         TimeSpan pollInterval = TimeSpan.FromSeconds(30);
-        while (true)
+        DateTime deadline = DateTime.UtcNow + MaxSyncWait;
+        string lastStatus = "no status yet";
+
+        // Non-validator nodes never download headers below the sync pivot, so a walk deeper than
+        // head-minus-pivot can never be served — cap the depth there instead of waiting forever.
+        bool isNonValidator = await IsNonValidatorNode();
+        long pivot = isNonValidator ? await NodeInfo.GetPivotNumber(TestLoggerContext.Logger) : 0;
+        if (isNonValidator)
+            TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Non-validator node detected (Sync.NonValidatorNode=true), pivot={pivot}: depth will be capped at the pivot");
+
+        while (DateTime.UtcNow < deadline)
         {
             try
             {
-                EthBlockResult? startBlock = await FetchBlockByNumberOrTag(tag);
-                if (startBlock is null || HexToLong(startBlock.Number) < requiredDepth)
+                // Canonical markers are only trustworthy on a synced node; during snap/fast sync the
+                // by-number index is still being (re)written, so don't judge canonicality mid-sync.
+                if (!NodeInfo.IsFullySynced(TestLoggerContext.Logger))
                 {
-                    string status = startBlock is null ? "null" : $"#{HexToLong(startBlock.Number)} (need >= {requiredDepth})";
-                    TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting for sync: {tag} = {status}");
+                    lastStatus = "node not fully synced yet";
+                }
+                else if (await FetchBlockByNumberOrTag(tag) is not EthBlockResult startBlock)
+                {
+                    lastStatus = $"{tag} = null";
                 }
                 else
                 {
-                    long deepNumber = HexToLong(startBlock.Number) - requiredDepth;
-                    EthBlockResult? deepBlock = await FetchBlockByNumberOrTag($"0x{deepNumber:X}");
-                    if (deepBlock is not null)
+                    long startNumber = HexToLong(startBlock.Number);
+                    long lowestReachable = isNonValidator ? pivot + PivotSafetyMargin : 0;
+                    int effectiveDepth = (int)Math.Min(requiredDepth, startNumber - lowestReachable);
+
+                    if (effectiveDepth < MinAdaptiveDepth)
                     {
-                        return startBlock;
+                        lastStatus = $"only {effectiveDepth} walkable block(s) above pivot {pivot}; waiting for head to advance (need >= {MinAdaptiveDepth})";
                     }
-                    TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting for backward header sync: block #{deepNumber} not yet locally available");
+                    else
+                    {
+                        long deepNumber = startNumber - effectiveDepth;
+                        EthBlockResult? deepBlock = await FetchBlockByNumberOrTag($"0x{deepNumber:X}");
+                        if (deepBlock is not null)
+                        {
+                            if (effectiveDepth < requiredDepth)
+                                TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Depth capped to {effectiveDepth} (requested {requiredDepth}): headers below pivot {pivot} are not downloaded on this node");
+                            return (startBlock, effectiveDepth);
+                        }
+                        lastStatus = $"block #{deepNumber} not yet locally available (backward header sync in progress)";
+                    }
                 }
+                TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting: {lastStatus}");
             }
             catch (Exception ex)
             {
+                lastStatus = ex.Message;
                 TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Waiting for node: {ex.Message}");
             }
             await Task.Delay(pollInterval);
+        }
+
+        Assert.Fail($"Node could not serve a {requiredDepth}-deep block walk from '{tag}' within {MaxSyncWait.TotalMinutes:F0} min. " +
+                    $"Last status: {lastStatus}. If this node is expected to backfill that deep, raise MaxSyncWait; " +
+                    "otherwise lower the test-case depth or run against a node that keeps ancient headers.");
+        throw new Exception("unreachable — Assert.Fail throws");
+    }
+
+    private static async Task<bool> IsNonValidatorNode()
+    {
+        try
+        {
+            var configValue = await NodeInfo.GetConfigValue(TestLoggerContext.Logger, "Sync", "NonValidatorNode");
+            return bool.TryParse(configValue?.Result, out bool nonValidator) && nonValidator;
+        }
+        catch (Exception ex)
+        {
+            TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Could not read Sync.NonValidatorNode ({ex.Message}); assuming validator node");
+            return false;
         }
     }
 

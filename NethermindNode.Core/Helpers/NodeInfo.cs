@@ -313,6 +313,19 @@ public static class NodeInfo
         return false;
     }
 
+    // Stack-trace continuation lines must follow their header's fate, never be judged
+    // alone: the docker-log grep for "Exception" also matches frames whose method
+    // SIGNATURE contains the word (e.g. "at CountingStreamPipeWriter.CompleteAsync(
+    // Exception exception)"), so an exception whose header is allowlisted still fails
+    // the scan on its frames (SyncSNWS, run 30865692535: "WebSocket not open (Aborted)"
+    // header ignored per allowlist, its two CompleteAsync frames flagged). The header
+    // line itself always names the exception type, so no signal is lost by skipping.
+    private static bool IsStackTraceContinuation(string logLine)
+    {
+        string trimmed = logLine.TrimStart();
+        return trimmed.StartsWith("at ") || trimmed.StartsWith("--- End of");
+    }
+
     public static bool VerifyLogsForUndesiredEntries(ref List<string> errors)
     {
         var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
@@ -325,7 +338,7 @@ public static class NodeInfo
         {
             foreach (var item in exceptions)
             {
-                if (!string.IsNullOrEmpty(item) && !IsIgnoredException(item))
+                if (!string.IsNullOrEmpty(item) && !IsStackTraceContinuation(item) && !IsIgnoredException(item))
                 {
                     undesiredEntries.Add("Exception: " + item.Trim());
                     errors.Add(item);

@@ -1,6 +1,7 @@
 ﻿using NethermindNode.Core.RpcResponses;
 using NethermindNode.Tests.Enums;
 using NLog;
+using System.Text.RegularExpressions;
 
 namespace NethermindNode.Core.Helpers;
 
@@ -296,18 +297,29 @@ public static class NodeInfo
         "Error in communication with",     // NetworkDiag peer communication errors
         "over limit 8 or",                 // RlpLimitException at HelloMessageSerializer when a peer advertises a capability protocol code >8 bytes — strict spec rejection is intended behavior (NethermindEth/nethermind#11751 closed without merge)
         "Failed to deserialize message",   // ProtocolHandlerBase: a peer that negotiated eth/69+ sent a malformed/old-format Status (or Disconnect) message — Nethermind's eth/69 decoder hits a scalar where a 32-byte hash is expected and throws DecodeKeccakRlpException/RlpException. These are non-conformant or foreign-network peers (e.g. energi3, bor, besu-dev); the node correctly disconnects them and syncs fine. Capability negotiation only agrees versions the peer advertised, so this is benign peer noise, not a node defect.
-        "partial receipts response below minimum size", // SubprotocolException in the eth/6x-70 receipts sync dispatcher when a PEER serves an undersized receipts page during Old-Receipts backfill. The node rejects the response and retries another peer; it never affects local state. Confirmed benign: the only "failure" it caused was this detector flagging it on an otherwise-healthy, head-following node (gnosis SyncGLFV). Peer-quality noise, not a node defect.
-        "SubprotocolException: Receipt count",          // Same eth/70 receipts-paging peer-noise class as above, other validation face: Eth70ProtocolHandler.ValidateReceiptCount/ValidateReceiptSizeAgainstTransactionGasLimit throw "Receipt count exceeds/mismatch with block transactions count" when a PEER's GetReceipts page doesn't line up with the block's transactions. SyncDispatcher logs it as "Failure when executing request", drops the response and retries another peer. Flagged on a healthy, progressing hoodi node (MigHLF run 29121944036: blocks processing and Old-Receipts advancing throughout). Scoped to the exception type + message prefix so other subprotocol faults are NOT masked.
+        "partial receipts response below minimum size", // SubprotocolException in the eth/6x-70 receipts sync dispatcher when a PEER serves an undersized receipts page during Old-Receipts backfill. The node rejects the response and retries another peer; it never affects local state. Confirmed benign: the only "failure" it caused was this detector flagging it on an otherwise-healthy, head-following node (gnosis SyncGLFV). Peer-quality noise, not a node defect. Subsumed by the SubprotocolException entry below; kept for documentation of a known face.
+        "SubprotocolException: Receipt count",          // Documented face of the eth/70 receipts-paging peer-noise class (Eth70ProtocolHandler ValidateReceiptCount/ValidateReceiptSizeAgainstTransactionGasLimit: "Receipt count exceeds/mismatch with block transactions count"). Subsumed by the SubprotocolException entry below; kept for documentation.
+        "Failure when executing request Nethermind.Network.P2P.Subprotocols.SubprotocolException", // Whole eth-sync peer-response-validation noise class. A SubprotocolException surfaced through the SyncDispatcher's "Failure when executing request" wrapper always means a PEER served a response that violates the subprotocol on a sync request (bodies/receipts/etc.); Nethermind logs at WARN, discards the response, deprioritizes the peer and retries the batch elsewhere — local state is never touched. This subsumes the receipts-validation family whose 13 distinct messages (Eth70ProtocolHandler.cs: "Cumulative gas decreased within block receipts", "Intrinsic gas lower bound exceeds block gas used", "Receipt count exceeds/mismatch", "Received more receipts than requested", "Invalid firstBlockReceiptIndex", "Received ... above hard limit", "Receipt/Block receipts size exceeds ... gas ... allowance", "Peer returned no progress for partial receipts", the two "partial receipts"/"Receipt count" faces above, etc.) all reduce to the same benign class — string-by-string allowlisting kept missing new faces (FuzzHT hit "Cumulative gas decreased" on run 31318571038 after "Receipt count" was allowlisted). Scoped to the SyncDispatcher wrapper + the SubprotocolException type so a real node-side fault (which surfaces as a different exception type and/or ERROR/FATAL, not as a peer sync-request failure) is NOT masked.
         "Network is unreachable",          // OS-level SocketException from the Discv5 discovery handler when a peer endpoint is unroutable. Discovery-layer only; nodes logging it synced fine (SyncHL/SyncHLF/BPSMN passed). Transient networking, not a node defect.
-        "WebSocket not open (Aborted)",    // IOException writing to a WebSocket (JSON-RPC/subscription) whose socket was aborted — typically during a fuzz kill / restart teardown. Socket lifecycle, irrelevant to node/state health.
+        "WebSocket not open",              // IOException writing to a WebSocket (JSON-RPC/subscription) whose socket was already closed — teardown artifact during a fuzz kill / restart. The close reason varies by timing ("(Aborted)", "(CloseReceived)", …); all are the same benign socket-lifecycle event, so match the reason-independent prefix. Irrelevant to node/state health. (run 31318571038: FuzzHN flagged the "(CloseReceived)" variant that the earlier "(Aborted)"-only entry missed.)
         "Unhandled exception in BlockDownloader: System.OperationCanceledException", // BlockDownloader task cancelled on shutdown / sync-mode transition. Scoped to the cancellation type so a real BlockDownloader fault is NOT masked. Nodes logging it passed (archive lanes). Benign lifecycle cancellation.
     };
 
+    // Nethermind's console logs are ANSI-colored, so a captured log line can be
+    // wrapped in SGR escape sequences (e.g. "\e[91m   at Foo.Bar()\e[0m"). Both the
+    // continuation check and the allowlist Contains-match must run against the plain
+    // text, or a leading escape defeats StartsWith("at ") and a mid-phrase escape can
+    // break a pattern match. Strip all CSI escape sequences before comparing.
+    private static readonly Regex AnsiEscape = new(@"\u001b\[[0-9;]*[A-Za-z]", RegexOptions.Compiled);
+
+    private static string StripAnsi(string logLine) => AnsiEscape.Replace(logLine, string.Empty);
+
     private static bool IsIgnoredException(string logLine)
     {
+        string clean = StripAnsi(logLine);
         foreach (var pattern in IgnoredExceptionPatterns)
         {
-            if (logLine.Contains(pattern))
+            if (clean.Contains(pattern))
                 return true;
         }
         return false;
@@ -320,9 +332,11 @@ public static class NodeInfo
     // the scan on its frames (SyncSNWS, run 30865692535: "WebSocket not open (Aborted)"
     // header ignored per allowlist, its two CompleteAsync frames flagged). The header
     // line itself always names the exception type, so no signal is lost by skipping.
+    // ANSI must be stripped first: on run 31318571038 the frames arrived color-wrapped
+    // ("\e[91m   at ...") so the pre-ANSI StartsWith("at ") check let them leak through.
     private static bool IsStackTraceContinuation(string logLine)
     {
-        string trimmed = logLine.TrimStart();
+        string trimmed = StripAnsi(logLine).TrimStart();
         return trimmed.StartsWith("at ") || trimmed.StartsWith("--- End of");
     }
 

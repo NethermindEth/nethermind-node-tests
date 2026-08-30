@@ -303,6 +303,18 @@ public static class NodeInfo
         "Network is unreachable",          // OS-level SocketException from the Discv5 discovery handler when a peer endpoint is unroutable. Discovery-layer only; nodes logging it synced fine (SyncHL/SyncHLF/BPSMN passed). Transient networking, not a node defect.
         "WebSocket not open",              // IOException writing to a WebSocket (JSON-RPC/subscription) whose socket was already closed — teardown artifact during a fuzz kill / restart. The close reason varies by timing ("(Aborted)", "(CloseReceived)", …); all are the same benign socket-lifecycle event, so match the reason-independent prefix. Irrelevant to node/state health. (run 31318571038: FuzzHN flagged the "(CloseReceived)" variant that the earlier "(Aborted)"-only entry missed.)
         "Unhandled exception in BlockDownloader: System.OperationCanceledException", // BlockDownloader task cancelled on shutdown / sync-mode transition. Scoped to the cancellation type so a real BlockDownloader fault is NOT masked. Nodes logging it passed (archive lanes). Benign lifecycle cancellation.
+        "Find neighbour op failed: DotNetty.Transport.Channels.ClosedChannelException", // Discv4 discovery FindNeighbours op whose DotNetty channel was torn down mid-flight when the fuzzer / graceful-restart runs `docker stop` on the node (FuzzSN, FuzzMN — run 33229259411). WARN-level Discovery-layer teardown noise, same benign socket-lifecycle class as "WebSocket not open"; scoped to the ClosedChannelException type so a genuine discovery fault (different exception type) is NOT masked. Irrelevant to node/state health.
+    };
+
+    // Trie-divergence tokens: the signatures a REAL flat/verify-trie state mismatch would emit
+    // (#11993 family). Used as a hard veto below — a verify-trie line carrying any of these is
+    // never ignored, no matter how many cancellations are aggregated alongside it. An
+    // AggregateException's Message embeds every inner message inline, so a real fault always
+    // surfaces on the same header line these tokens are checked against — it cannot hide in the
+    // "--->" detail lines (which are treated as continuations anyway).
+    private static readonly string[] TrieDivergenceTokens = new[]
+    {
+        "InvalidStateRoot", "MismatchedAccounts", "TrieException", "TrieNodeException", "Missing trie node", "Corrupt",
     };
 
     // Nethermind's console logs are ANSI-colored, so a captured log line can be
@@ -322,6 +334,24 @@ public static class NodeInfo
             if (clean.Contains(pattern))
                 return true;
         }
+
+        // Verify-trie sweep cancelled by a graceful restart. With Sync.VerifyTrieOnStateSyncFinished
+        // the flat-vs-trie verify keeps running (~108 min on mainnet) AFTER the node reports synced;
+        // StabilityTests' graceful restart issues `docker stop` the instant stages report synced, so
+        // the in-flight sweep is cancelled and the node logs
+        //   "Error in verify trie System.AggregateException: One or more errors occurred. (A task was canceled.) ..."
+        // plus one TaskCanceledException per cancelled worker (SyncMNWSF — run 33229259411). This is the
+        // verify-trie analogue of the BlockDownloader shutdown-cancel above. Ignore it ONLY when the
+        // line is a pure cancellation AND carries no divergence token — the TrieDivergenceTokens veto
+        // guarantees a real flat divergence (#11993: InvalidStateRoot / MismatchedAccounts / TrieException
+        // / Missing trie node) can NEVER be masked by this rule.
+        if (clean.Contains("Error in verify trie")
+            && (clean.Contains("A task was canceled") || clean.Contains("TaskCanceledException"))
+            && !TrieDivergenceTokens.Any(clean.Contains))
+        {
+            return true;
+        }
+
         return false;
     }
 
@@ -337,7 +367,14 @@ public static class NodeInfo
     private static bool IsStackTraceContinuation(string logLine)
     {
         string trimmed = StripAnsi(logLine).TrimStart();
-        return trimmed.StartsWith("at ") || trimmed.StartsWith("--- End of");
+        // "--->" marks an inner/nested exception in an AggregateException or chained-exception
+        // render (e.g. "---> (Inner Exception #7) System.Threading.Tasks.TaskCanceledException: ...").
+        // Like stack frames, these belong to a header line that is judged on its own, and the
+        // AggregateException header already embeds every inner message inline — so a nested line is
+        // never independent signal. Judging them alone would flag each of the N cancelled workers
+        // separately (SyncMNWSF logged 19). No signal is lost by treating them as continuations: a
+        // real fault still trips the detector via its header.
+        return trimmed.StartsWith("at ") || trimmed.StartsWith("--- End of") || trimmed.StartsWith("--->");
     }
 
     public static bool VerifyLogsForUndesiredEntries(ref List<string> errors)

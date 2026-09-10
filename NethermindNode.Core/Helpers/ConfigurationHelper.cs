@@ -21,9 +21,6 @@ namespace NethermindNode.Core.Helpers
             Configuration = builder.Build();
         }
 
-        public string this[string setting]
-        {
-            get { return Configuration[setting]; }
-        }
+        public string this[string setting] => Configuration[setting] ?? string.Empty;
     }
 }

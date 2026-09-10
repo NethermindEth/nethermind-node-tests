@@ -29,7 +29,7 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
             RestartDockerContainer(
                 ConfigurationHelper.Instance["execution-container-name"],
-                Path.Combine(Path.GetDirectoryName(envFilePath), "docker-compose.yml"), //Hack: get docker compose dir
+                Path.Combine(Path.GetDirectoryName(envFilePath)!, "docker-compose.yml"), //Hack: get docker compose dir
                 TestLoggerContext.Logger
             );
 
@@ -56,7 +56,7 @@ namespace NethermindNode.Tests.Tests.SyncedNode
 
             RestartDockerContainer(
                 ConfigurationHelper.Instance["execution-container-name"],
-                Path.Combine(Path.GetDirectoryName(envFilePath), "docker-compose.yml"), //Hack: get docker compose dir
+                Path.Combine(Path.GetDirectoryName(envFilePath)!, "docker-compose.yml"), //Hack: get docker compose dir
                 TestLoggerContext.Logger
             );
             

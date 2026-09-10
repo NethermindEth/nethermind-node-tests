@@ -22,7 +22,6 @@ public class EthCallTests : BaseTest
     [NethermindTestCase(10000, 500, Category = "JsonRpcBenchmark,JsonRpcEthCallBenchmarkStress")]
     public async Task EthCall(int repeatCount, int parallelizableLevel)
     {
-        int i = 0;
         double startidx = 300 * Math.Pow(10, 6);   // Randomly chosen starting address, change this for multiple runs
         double increment = 50 * Math.Pow(10, 2);   // Randomly chosen increment between eth_calls
 
@@ -69,7 +68,6 @@ public class EthCallTests : BaseTest
         int counter = 0;
         int success = 0;
         int fail = 0;
-        int elapsedSeconds = 0;
 
         BlockingCollection<Task<string>> responseTasks = new BlockingCollection<Task<string>>();
 
@@ -199,7 +197,8 @@ public class EthCallTests : BaseTest
         catch (Exception e)
         {
             TestLoggerContext.Logger.Error(e.Message);
-            TestLoggerContext.Logger.Error(e.StackTrace);
+            if (e.StackTrace is not null)
+                TestLoggerContext.Logger.Error(e.StackTrace);
         }
     }
 

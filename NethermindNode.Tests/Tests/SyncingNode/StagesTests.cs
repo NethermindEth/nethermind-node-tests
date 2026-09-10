@@ -55,7 +55,7 @@ public class StagesTests : BaseTest
             while (
                     (stage.ShouldOccureAlone ? currentStage != stage.Stages.ToJoinedString() : !currentStage.Contains(stage.Stages.ToJoinedString()))
                     ||
-                    (stage.ShouldNotOccurWith != null && currentStage.Contains(stage.ShouldNotOccurWith.Value.ToString()))
+                    (stage.ShouldNotOccurWith is not null && currentStage.Contains(stage.ShouldNotOccurWith.Value.ToString()))
                   )
             {
                 ForceStopWatcher.ThrowIfStopRequested();

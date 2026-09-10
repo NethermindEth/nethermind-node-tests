@@ -10,7 +10,7 @@ namespace NethermindNode.Tests.Tests.Pruning
     [Parallelizable(ParallelScope.All)]
     public class JsonRpcPruning
     {
-        [Timeout(172800000)] //48 hours
+        [CancelAfter(172800000)] //48 hours
         [Category("RpcPruning")]
         [NethermindTest]
         public async Task ShouldPruneDbUsingAdminRpc()
@@ -19,10 +19,10 @@ namespace NethermindNode.Tests.Tests.Pruning
 
             string dataPath = DockerCommands.GetExecutionDataPath(TestLoggerContext.Logger);
             string nethermindDbPath = Path.Combine(dataPath, "nethermind_db");
-            string network = Directory.GetDirectories(nethermindDbPath).FirstOrDefault();
-            Assert.That(network != null, "There is no network directory.");
+            string? network = Directory.GetDirectories(nethermindDbPath).FirstOrDefault();
+            Assert.That(network is not null, "There is no network directory.");
 
-            string statePath = Path.Combine(network, "state");
+            string statePath = Path.Combine(network!, "state");
 
             // Check if only one state 
             var stateDirectories = Directory.GetDirectories(statePath);

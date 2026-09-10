@@ -21,7 +21,7 @@ public static class HttpExecutor
         logger.Info($"Executing command: {command} with parameters: {parameters}");
         var response = await ExecuteNethermindJsonRpcCommand(command, parameters, url, logger);
         logger.Info($"Response: {response.Item1}");
-        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<T>(response.Item1, out IRpcResponse deserialized);
+        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeResponse<T>(response.Item1, out IRpcResponse? deserialized);
         logger.Info(deserialized);
 
         if (!isVerifiedPositively)
@@ -32,7 +32,7 @@ public static class HttpExecutor
                 throw new Exception("Error while deserializing response");
         }
 
-        return (T)deserialized;
+        return (T)deserialized!;
     }
 
     public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBatchedNethermindJsonRpcCommand(string command, List<string> parameters, string url, Logger logger)
@@ -60,11 +60,11 @@ public static class HttpExecutor
         {
             bool isSuccess = false;
             string responseString = "";
-            HttpResponseMessage result = new HttpResponseMessage();
+            HttpResponseMessage? result = new HttpResponseMessage();
 
             result = await TryPostAsync(url, data, logger);
 
-            if (result != null && result.IsSuccessStatusCode)
+            if (result is not null && result.IsSuccessStatusCode)
             {
                 isSuccess = true;
                 var responseContent = result.Content;
@@ -98,7 +98,8 @@ public static class HttpExecutor
                 if (logger.IsTraceEnabled)
                 {
                     logger.Trace(e.Message);
-                    logger.Trace(e.StackTrace);
+                    if (e.StackTrace is not null)
+                        logger.Trace(e.StackTrace);
                 }
                 return null;
             }
@@ -115,11 +116,12 @@ public static class HttpExecutor
                 if (logger.IsTraceEnabled)
                 {
                     logger.Trace(e.Message);
-                    logger.Trace(e.StackTrace);
+                    if (e.StackTrace is not null)
+                        logger.Trace(e.StackTrace);
                 }
                 return null;
             }
-            throw e;
+            throw;
         }
     }
 }

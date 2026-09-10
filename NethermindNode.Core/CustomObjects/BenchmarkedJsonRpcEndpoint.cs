@@ -1,4 +1,6 @@
-﻿namespace NethermindNode.Tests.CustomObjects;
+﻿#nullable disable
+
+namespace NethermindNode.Tests.CustomObjects;
 
 public class BenchmarkedJsonRpcEndpoint
 {

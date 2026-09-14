@@ -50,7 +50,7 @@ namespace NethermindNode.Tests.SyncingNode
 
             // 3
             var execPath = DockerCommands.GetExecutionDataPath(Logger);
-            CommandExecutor.BackupDirectory(execPath + "/nethermind_db", execPath + "/nethermind_db_backup" , Logger);
+            CommandExecutor.CopyDirectory(execPath + "/nethermind_db", execPath + "/nethermind_db_backup" , Logger);
 
             // 4
             string[] flagsToRemove =
@@ -85,7 +85,7 @@ namespace NethermindNode.Tests.SyncingNode
                 DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
 
                 CommandExecutor.RemoveDirectory(execPath + "/nethermind_db", Logger);
-                CommandExecutor.BackupDirectory(execPath + "/nethermind_db_backup", execPath + "/nethermind_db", Logger);
+                CommandExecutor.CopyDirectory(execPath + "/nethermind_db_backup", execPath + "/nethermind_db", Logger);
 
                 // For logs cleanup purpose only
                 DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", Logger);

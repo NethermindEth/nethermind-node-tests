@@ -35,7 +35,7 @@ public static class CommandExecutor
         }
     }
 
-    public static void BackupDirectory(string absolutePath, string backupPath, NLog.Logger logger)
+    public static void CopyDirectory(string absolutePath, string backupPath, NLog.Logger logger)
     {
         ProcessStartInfo processInfo;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))

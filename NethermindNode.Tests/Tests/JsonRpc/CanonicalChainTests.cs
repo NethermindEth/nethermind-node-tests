@@ -74,12 +74,25 @@ public class CanonicalChainTests : BaseTest
         DateTime deadline = DateTime.UtcNow + MaxSyncWait;
         string lastStatus = "no status yet";
 
-        // Non-validator nodes never download headers below the sync pivot, so a walk deeper than
+        // Headers below the sync pivot are never downloaded, so a walk deeper than
         // head-minus-pivot can never be served — cap the depth there instead of waiting forever.
-        bool isNonValidator = await IsNonValidatorNode();
-        long pivot = isNonValidator ? await NodeInfo.GetPivotNumber(TestLoggerContext.Logger) : 0;
-        if (isNonValidator)
-            TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Non-validator node detected (Sync.NonValidatorNode=true), pivot={pivot}: depth will be capped at the pivot");
+        //
+        // This is a property of the PIVOT, not of Sync.NonValidatorNode. Gating it on that flag
+        // meant the cap never engaged on an ordinary snap-synced node: JsonRpcGL and JsonRpcML
+        // set no NonValidatorNode flag, so pivot stayed 0, lowestReachable stayed 0, and both
+        // lanes attempted the full 5,000,000-block walk their node could never serve. Each then
+        // burned the entire 360-minute MaxSyncWait and failed — run 35280402155, 6h03m and 6h23m,
+        // with the node healthy and at tip throughout (mainnet processed 26001918 in 30 ms while
+        // the walk was still waiting).
+        //
+        // A node that genuinely holds every header — archive, or full sync from genesis — reports
+        // Sync.PivotNumber = 0 and is therefore still walked uncapped, which is the intent.
+        long pivot = await NodeInfo.GetPivotNumber(TestLoggerContext.Logger);
+        bool cappedByPivot = pivot > 0;
+        if (cappedByPivot)
+            TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Sync pivot {pivot} detected (NonValidatorNode={await IsNonValidatorNode()}): depth will be capped at the pivot");
+        else
+            TestLoggerContext.Logger.Info("[CANONICAL-CHECK] Sync.PivotNumber=0 (archive or full-sync node): walking uncapped");
 
         while (DateTime.UtcNow < deadline)
         {
@@ -98,7 +111,7 @@ public class CanonicalChainTests : BaseTest
                 else
                 {
                     long startNumber = HexToLong(startBlock.Number);
-                    long lowestReachable = isNonValidator ? pivot + PivotSafetyMargin : 0;
+                    long lowestReachable = cappedByPivot ? pivot + PivotSafetyMargin : 0;
                     int effectiveDepth = (int)Math.Min(requiredDepth, startNumber - lowestReachable);
 
                     if (effectiveDepth < MinAdaptiveDepth)

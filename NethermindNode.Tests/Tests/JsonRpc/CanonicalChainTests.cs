@@ -87,12 +87,16 @@ public class CanonicalChainTests : BaseTest
         //
         // A node that genuinely holds every header — archive, or full sync from genesis — reports
         // Sync.PivotNumber = 0 and is therefore still walked uncapped, which is the intent.
-        long pivot = await NodeInfo.GetPivotNumber(TestLoggerContext.Logger);
-        bool cappedByPivot = pivot > 0;
-        if (cappedByPivot)
-            TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Sync pivot {pivot} detected (NonValidatorNode={await IsNonValidatorNode()}): depth will be capped at the pivot");
-        else
-            TestLoggerContext.Logger.Info("[CANONICAL-CHECK] Sync.PivotNumber=0 (archive or full-sync node): walking uncapped");
+        //
+        // The pivot is read lazily, from inside the retry loop, because the node's JSON-RPC is not
+        // guaranteed to be listening when this method is entered. GetPivotNumber has no internal
+        // guard (unlike IsNonValidatorNode, which swallows and returns false), so reading it here
+        // threw straight out of the test before the loop could absorb it: run 35357693250 killed
+        // JsonRpcGL and JsonRpcML ~16 s after node start while the node was healthily syncing
+        // headers. Deferring the read puts it under the loop's existing catch-and-retry.
+        long pivot = 0;
+        bool pivotKnown = false;
+        bool cappedByPivot = false;
 
         while (DateTime.UtcNow < deadline)
         {
@@ -111,6 +115,18 @@ public class CanonicalChainTests : BaseTest
                 else
                 {
                     long startNumber = HexToLong(startBlock.Number);
+
+                    if (!pivotKnown)
+                    {
+                        pivot = await NodeInfo.GetPivotNumber(TestLoggerContext.Logger);
+                        pivotKnown = true;
+                        cappedByPivot = pivot > 0;
+                        if (cappedByPivot)
+                            TestLoggerContext.Logger.Info($"[CANONICAL-CHECK] Sync pivot {pivot} detected (NonValidatorNode={await IsNonValidatorNode()}): depth will be capped at the pivot");
+                        else
+                            TestLoggerContext.Logger.Info("[CANONICAL-CHECK] Sync.PivotNumber=0 (archive or full-sync node): walking uncapped");
+                    }
+
                     long lowestReachable = cappedByPivot ? pivot + PivotSafetyMargin : 0;
                     int effectiveDepth = (int)Math.Min(requiredDepth, startNumber - lowestReachable);
 

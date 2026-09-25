@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using NethermindNode.Core.RpcResponses;
+using NLog;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
@@ -13,6 +14,25 @@ public static class HttpExecutor
         var response = await PostHttpWithTimingInfo(url, data, logger);
 
         return response;
+    }
+
+    static public async Task<T> ExecuteAndSerialize<T>(string command, string parameters, string url, Logger logger) where T : IRpcResponse
+    {
+        logger.Info($"Executing command: {command} with parameters: {parameters}");
+        var response = await ExecuteNethermindJsonRpcCommand(command, parameters, url, logger);
+        logger.Info($"Response: {response.Item1}");
+        bool isVerifiedPositively = JsonRpcHelper.TryDeserializeReponse<T>(response.Item1, out IRpcResponse deserialized);
+        logger.Info(deserialized);
+
+        if (!isVerifiedPositively)
+        {
+            if (deserialized is RpcError)
+                throw new Exception(((RpcError)deserialized).Error.Message);
+            else
+                throw new Exception("Error while deserializing response");
+        }
+
+        return (T)deserialized;
     }
 
     public async static Task<Tuple<string, TimeSpan, bool>> ExecuteBatchedNethermindJsonRpcCommand(string command, List<string> parameters, string url, Logger logger)
@@ -88,7 +108,7 @@ public static class HttpExecutor
                     e.InnerException.Message.Contains("Connection refused") ||
                     e.InnerException.Message.Contains("Network is unreachable") ||
                     e.InnerException.Message.Contains("No connection could be made because the target machine actively refused it.") ||
-                    e.InnerException.Message.Contains("Cannot assign requested address")                    
+                    e.InnerException.Message.Contains("Cannot assign requested address")
                 )
             )
             {

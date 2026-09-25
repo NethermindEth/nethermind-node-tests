@@ -1,4 +1,4 @@
-﻿namespace NethermindNode.Tests.Helpers;
+﻿namespace NethermindNode.Core.Helpers;
 
 public static class ExtensionMethods
 {

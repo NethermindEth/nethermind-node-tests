@@ -1,4 +1,6 @@
-﻿using NethermindNode.Core.Helpers;
+﻿using NethermindNode.Core;
+using NethermindNode.Core.Helpers;
+using NethermindNode.Tests.CustomAttributes;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 
@@ -7,10 +9,7 @@ namespace NethermindNode.Tests.SyncingNode
     [TestFixture]
     public class BodiesAndReceiptsTests : BaseTest
     {
-
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetLogger(TestContext.CurrentContext.Test.Name);
-
-        [TestCase(10)]
+        [NethermindTestCase(10)]
         [Category("BodiesAndReceipts")]
         [Description(
             """
@@ -30,10 +29,8 @@ namespace NethermindNode.Tests.SyncingNode
             )]
         public void ShouldResyncBodiesAndReceiptsAfterNonValidator(int repeatCount)
         {
-            Logger.Info("***Starting test: ShouldResyncBodiesAndReceiptsAfterNonValidator***");
-
             // 1
-            NodeInfo.WaitForNodeToBeReady(Logger);
+            NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
 
             var delay = Backoff.ConstantBackoff(TimeSpan.FromSeconds(3), retryCount: 100);
 
@@ -41,16 +38,16 @@ namespace NethermindNode.Tests.SyncingNode
             .HandleResult<string>(s => !s.Contains("SnapSync") && !s.Contains("StateNodes"))
             .WaitAndRetry(delay);
 
-            string result = retryPolicy.Execute(() => NodeInfo.GetCurrentStage(Logger));
+            string result = retryPolicy.Execute(() => NodeInfo.GetCurrentStage(TestLoggerContext.Logger));
 
-            NodeInfo.WaitForNodeToBeSynced(Logger);
+            NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
 
             // 2
-            DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+            DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger);
 
             // 3
-            var execPath = DockerCommands.GetExecutionDataPath(Logger);
-            CommandExecutor.CopyDirectory(execPath + "/nethermind_db", execPath + "/nethermind_db_backup" , Logger);
+            var execPath = DockerCommands.GetExecutionDataPath(TestLoggerContext.Logger);
+            CommandExecutor.CopyDirectory(execPath + "/nethermind_db", execPath + "/nethermind_db_backup" , TestLoggerContext.Logger);
 
             // 4
             string[] flagsToRemove =
@@ -60,7 +57,7 @@ namespace NethermindNode.Tests.SyncingNode
                 "--Sync.DownloadReceiptsInFastSync=false"
             };
 
-            Logger.Info("Reading docker compose file at path: " + execPath + "/../docker-compose.yml");
+            TestLoggerContext.Logger.Info("Reading docker compose file at path: " + execPath + "/../docker-compose.yml");
             var dockerCompose = DockerComposeHelper.ReadDockerCompose(execPath + "/../docker-compose.yml");
             foreach (var flag in flagsToRemove)
             {
@@ -68,29 +65,29 @@ namespace NethermindNode.Tests.SyncingNode
                 DockerComposeHelper.RemoveCommandFlag(dockerCompose, "execution", flag);
             }
             DockerComposeHelper.WriteDockerCompose(dockerCompose, execPath + "/../docker-compose.yml");
-            DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", Logger);
-            DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+            DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", TestLoggerContext.Logger);
+            DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger);
 
             // 5-6-7
             for (int i = 0; i < repeatCount; i++)
             {
-                NodeInfo.WaitForNodeToBeReady(Logger);
-                NodeInfo.WaitForNodeToBeSynced(Logger);
+                NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+                NodeInfo.WaitForNodeToBeSynced(TestLoggerContext.Logger);
                 var bodiesLine = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Fast blocks bodies task completed.");
                 var receiptsLine = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Fast blocks receipts task completed.");
 
-                Assert.IsTrue(bodiesLine.Count() > 0, "Bodies log line missing - verify with getBlockByNumber.");
-                Assert.IsTrue(receiptsLine.Count() > 0, "Receipts log line missing - verify with getReceipt");
+                Assert.That(bodiesLine.Count() > 0, "Bodies log line missing - verify with getBlockByNumber.");
+                Assert.That(receiptsLine.Count() > 0, "Receipts log line missing - verify with getReceipt");
 
-                DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+                DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger);
 
-                CommandExecutor.RemoveDirectory(execPath + "/nethermind_db", Logger);
-                CommandExecutor.CopyDirectory(execPath + "/nethermind_db_backup", execPath + "/nethermind_db", Logger);
+                CommandExecutor.RemoveDirectory(execPath + "/nethermind_db", TestLoggerContext.Logger);
+                CommandExecutor.CopyDirectory(execPath + "/nethermind_db_backup", execPath + "/nethermind_db", TestLoggerContext.Logger);
 
                 // For logs cleanup purpose only
-                DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", Logger);
+                DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", TestLoggerContext.Logger);
 
-                DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+                DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger);
             }
 
             // Restore to previous state
@@ -100,9 +97,9 @@ namespace NethermindNode.Tests.SyncingNode
                 DockerComposeHelper.AddCommandFlag(dockerCompose, "execution", flag);
             }
             DockerComposeHelper.WriteDockerCompose(dockerCompose, execPath + "/../docker-compose.yml");
-            DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", Logger);
-            DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
-            DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], Logger);
+            DockerCommands.RecreateDockerCompose("execution", execPath + "/../docker-compose.yml", TestLoggerContext.Logger);
+            DockerCommands.StopDockerContainer(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger);
+            DockerCommands.StartDockerContainer(ConfigurationHelper.Instance["execution-container-name"], TestLoggerContext.Logger);
         }
     }
 }

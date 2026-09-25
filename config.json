@@ -1,4 +1,10 @@
 {
     "execution-container-name": "sedge-execution-client",
-    "consensus-container-name": "sedge-consensus-client"
+    "consensus-container-name": "sedge-consensus-client",
+    "sync-mode": "SnapSync",
+    "non-validator-node": false,
+    "default-rpc-port": 8545,
+    "health-verification": false,
+    "current-version-docker-image": "nethermindeth/nethermind:master",
+    "latest-nethermind-version": "1.30.3+87c86379"
 }

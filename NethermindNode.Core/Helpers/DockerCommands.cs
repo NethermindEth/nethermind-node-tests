@@ -1,7 +1,8 @@
 ﻿using NLog;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using Docker.DotNet;
+using Docker.DotNet.Models;
 
 namespace NethermindNode.Core.Helpers;
 
@@ -26,6 +27,12 @@ public static class DockerCommands
     {
         DockerCommandExecute("start " + containerName, logger);
     }
+
+    public static void ComposeUp(string containerName, string dockerComposeFilePath, Logger logger)
+    {
+        DockerCommandExecute($"compose -f {dockerComposeFilePath}" + " up -d " + containerName, logger);
+    }
+
 
     public static string GetDockerContainerStatus(string containerName, Logger logger)
     {
@@ -88,6 +95,35 @@ public static class DockerCommands
                 string line = process.StandardOutput.ReadLine();
                 if (line != null)
                 {
+                    yield return line;
+                }
+            }
+        }
+    }
+
+    public static async IAsyncEnumerable<string> GetDockerLogsAsync(string containerIdOrName, string logFilter, bool followLogs, CancellationToken cancellationToken)
+    {
+        using (var client = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient())
+        {
+            var parameters = new ContainerLogsParameters
+            {
+                ShowStdout = true,
+                ShowStderr = true,
+                Follow = followLogs,
+                Timestamps = false
+            };
+
+            using (Stream stream = await client.Containers.GetContainerLogsAsync(containerIdOrName, parameters, cancellationToken))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                string line;
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    if (!string.IsNullOrEmpty(logFilter) && !line.Contains(logFilter))
+                    {
+                        continue;
+                    }
+
                     yield return line;
                 }
             }

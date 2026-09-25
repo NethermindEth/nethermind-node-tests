@@ -5,9 +5,9 @@ namespace NethermindNode.Core.Helpers;
 
 public static class JsonRpcHelper
 {
-    public static bool TryDeserializeReponse<T>(string result, out IRpcResponse deserialized) where T : IRpcResponse
+    public static bool TryDeserializeReponse<T>(string result, out IRpcResponse? deserialized) where T : IRpcResponse
     {
-        deserialized = default;
+        deserialized = null;
         try
         {
             RpcError error = JsonConvert.DeserializeObject<RpcError>(result);

@@ -19,6 +19,7 @@
     <PackageReference Include="Notion.Net" Version="4.2.0" />
     <PackageReference Include="NUnit" Version="4.3.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.0.0-beta.5" />
+    <PackageReference Include="YamlDotNet" Version="15.1.2" />
 	<None Include="..\config.json" Link="config.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 

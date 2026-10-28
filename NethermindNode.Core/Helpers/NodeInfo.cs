@@ -342,9 +342,12 @@ public static class NodeInfo
 
     public static bool VerifyLogsForUndesiredEntries(ref List<string> errors)
     {
-        var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception");
-        var corruption = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Corruption");
-        var freeDiskSpace = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Free disk space");
+        // Materialized once: GetDockerLogs is lazy, so Any() followed by foreach ran each `docker logs | grep`
+        // twice, and Any() dropped the pipe after one line - grep's "write error: Broken pipe" on the test
+        // host's stderr then displaced the real failure in vstest's crash report.
+        var exceptions = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Exception").ToList();
+        var corruption = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Corruption").ToList();
+        var freeDiskSpace = DockerCommands.GetDockerLogs(ConfigurationHelper.Instance["execution-container-name"], "Free disk space").ToList();
         bool status = true;
         var undesiredEntries = new List<string>();
 

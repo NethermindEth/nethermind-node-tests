@@ -4,8 +4,9 @@ namespace NethermindNode.Tests.Helpers;
 
 /// <summary>
 /// Watches for a force-stop.json file. When the file appears (e.g. created by the
-/// health monitor), sets a cancellation token that tests can check to stop gracefully,
-/// allowing NUnit to generate the test report before exiting.
+/// health monitor), or a background check calls <see cref="RequestStop"/>, sets a
+/// cancellation token that tests can check to stop gracefully, allowing NUnit to
+/// generate the test report before exiting.
 /// </summary>
 public static class ForceStopWatcher
 {
@@ -13,6 +14,7 @@ public static class ForceStopWatcher
     private static bool _started;
     private static readonly object _lock = new();
     private static string? _reason;
+    private static string? _stopMessage;
 
     public static CancellationToken Token => _cts.Token;
     public static string? StopReason => _reason;
@@ -51,9 +53,8 @@ public static class ForceStopWatcher
                         if (File.Exists(path))
                         {
                             var content = File.ReadAllText(path);
-                            _reason = content;
                             logger.Warn($"[FORCESTOP] \u26a0 Stop requested: {content}");
-                            _cts.Cancel();
+                            Stop(content, $"Test stopped by force-stop.json: {content}");
                             return;
                         }
                     }
@@ -69,6 +70,27 @@ public static class ForceStopWatcher
     }
 
     /// <summary>
+    /// Stops the running test from inside the process, for checks that run beside it and so cannot fail it
+    /// directly. The next <see cref="ThrowIfStopRequested"/> fails the test with <paramref name="reason"/>.
+    /// </summary>
+    public static void RequestStop(string reason)
+    {
+        LogManager.GetLogger("ForceStopWatcher").Warn($"[FORCESTOP] \u26a0 Stop requested: {reason}");
+        Stop(reason, reason);
+    }
+
+    private static void Stop(string reason, string stopMessage)
+    {
+        lock (_lock)
+        {
+            if (_cts.IsCancellationRequested) return;
+            _reason = reason;
+            _stopMessage = stopMessage;
+            _cts.Cancel();
+        }
+    }
+
+    /// <summary>
     /// Throws Assert.Fail if the force stop has been triggered.
     /// Call this in test loops to break out gracefully.
     /// </summary>
@@ -76,7 +98,7 @@ public static class ForceStopWatcher
     {
         if (_cts.IsCancellationRequested)
         {
-            Assert.Fail($"Test stopped by force-stop.json: {_reason ?? "no reason provided"}");
+            Assert.Fail(_stopMessage ?? "Test stopped: no reason provided");
         }
     }
 }

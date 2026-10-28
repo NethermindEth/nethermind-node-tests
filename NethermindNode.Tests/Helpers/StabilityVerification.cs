@@ -13,7 +13,7 @@ public class StabilityVerification
     /// </summary>
     public string? WaitForUndesiredLogs(CancellationToken cancellationToken)
     {
-        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger, cancellationToken);
 
         List<string> errors = new List<string>();
 

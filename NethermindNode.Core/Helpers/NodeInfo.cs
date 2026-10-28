@@ -35,16 +35,16 @@ public static class NodeInfo
         return result == null ? false : result.Item1.Contains("false");
     }
 
-    public static void WaitForNodeToBeReady(Logger logger)
+    public static void WaitForNodeToBeReady(Logger logger, CancellationToken cancellationToken = default)
     {
         var apiIsAvailable = false;
         int attempt = 0;
 
-        while (!apiIsAvailable)
+        while (!apiIsAvailable && !cancellationToken.IsCancellationRequested)
         {
             try
             {
-                var response = client.GetAsync(apiBaseUrl).Result;
+                var response = client.GetAsync(apiBaseUrl, cancellationToken).Result;
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -56,7 +56,7 @@ public static class NodeInfo
                     if (attempt == 0 || attempt % 12 == 0)
                         logger.Info("API is not yet ready, waiting...");
                     attempt++;
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                    cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(5));
                 }
             }
             catch (Exception)
@@ -64,7 +64,7 @@ public static class NodeInfo
                 if (attempt == 0 || attempt % 12 == 0)
                     logger.Info("API is not yet ready, waiting...");
                 attempt++;
-                Thread.Sleep(TimeSpan.FromSeconds(5));
+                cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(5));
             }
         }
     }

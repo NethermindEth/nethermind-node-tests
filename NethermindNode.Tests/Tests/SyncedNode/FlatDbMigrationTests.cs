@@ -26,6 +26,11 @@ namespace NethermindNode.Tests.Tests.SyncedNode
         // TxPool crash reading head state from an empty flat DB — the failure mode of
         // https://github.com/NethermindEth/nethermind/pull/12383 when the import is wrongly skipped.
         private const string EmptyFlatDbCrashMarker = "no longer exists; concurrently removed";
+        // Backend decision logged at every start (Nethermind.Init/FlatStateActivationPolicy.cs; same text in the
+        // release builds). FlatDb.Enabled=true alone does not make a flat node: with no committed flat state and
+        // patricia data present, the node stays on patricia.
+        private const string FlatBackendMarker = "State backend: flat (existing flat DB detected)";
+        private const string PatriciaBackendMarker = "State backend: patricia";
 
         [Timeout(86400000)] // 24 hours
         [NonParallelizable]
@@ -232,11 +237,15 @@ namespace NethermindNode.Tests.Tests.SyncedNode
         }
 
         /// <summary>
-        /// NodeInfo's waits poll forever; this one also stops on a force-stop or a health-verification failure
-        /// and on the FlatDb node exiting, so a broken post-migration boot fails with its cause.
+        /// Waits for the recreated FlatDb node to boot onto the imported flat state and sync. It must log
+        /// <see cref="FlatBackendMarker"/>: a node that falls back to patricia fails at once, as does one that exits.
+        /// NodeInfo's waits poll forever; this one also stops on a force-stop or a health-verification failure.
         /// </summary>
         private void WaitForNodeToBeSyncedOnFlatDb(string executionContainerName)
         {
+            TimeSpan backendDecisionTimeout = TimeSpan.FromMinutes(10);
+            DateTime backendDeadline = DateTime.UtcNow + backendDecisionTimeout;
+            bool flatBackendConfirmed = false;
             int iteration = 0;
             while (true)
             {
@@ -246,14 +255,38 @@ namespace NethermindNode.Tests.Tests.SyncedNode
                 Assert.That(state, Is.Not.EqualTo("exited").And.Not.EqualTo("dead"),
                     "FlatDb node stopped after the migration.");
 
-                bool synced;
-                try
+                if (!flatBackendConfirmed)
                 {
-                    synced = NodeInfo.IsFullySynced(TestLoggerContext.Logger);
+                    // The container was recreated, so its logs start at the post-import boot.
+                    List<string> logSnapshot = DockerCommands.GetDockerLogs(
+                        executionContainerName, null, false, null, "--tail 100000").ToList();
+
+                    string? patricia = logSnapshot.FirstOrDefault(l => l is not null && l.Contains(PatriciaBackendMarker));
+                    Assert.That(patricia, Is.Null,
+                        $"Node booted on the patricia backend after the import, so the flat DB holds no committed state: {patricia?.Trim()}");
+
+                    flatBackendConfirmed = logSnapshot.Any(l => l is not null && l.Contains(FlatBackendMarker));
+                    if (flatBackendConfirmed)
+                    {
+                        TestLoggerContext.Logger.Info("FlatDb node booted on the imported flat state.");
+                    }
+                    else if (DateTime.UtcNow > backendDeadline)
+                    {
+                        Assert.Fail($"FlatDb node did not log \"{FlatBackendMarker}\" within {backendDecisionTimeout.TotalMinutes} min of start.");
+                    }
                 }
-                catch (Exception)
+
+                bool synced = false;
+                if (flatBackendConfirmed)
                 {
-                    synced = false; // RPC not up yet
+                    try
+                    {
+                        synced = NodeInfo.IsFullySynced(TestLoggerContext.Logger);
+                    }
+                    catch (Exception)
+                    {
+                        // RPC not up yet
+                    }
                 }
 
                 if (synced)

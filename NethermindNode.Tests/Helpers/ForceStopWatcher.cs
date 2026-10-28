@@ -4,9 +4,9 @@ namespace NethermindNode.Tests.Helpers;
 
 /// <summary>
 /// Watches for a force-stop.json file. When the file appears (e.g. created by the
-/// health monitor), or a background check calls <see cref="RequestStop"/>, sets a
-/// cancellation token that tests can check to stop gracefully, allowing NUnit to
-/// generate the test report before exiting.
+/// health monitor), sets a cancellation token that tests can check to stop gracefully,
+/// allowing NUnit to generate the test report before exiting. A check running beside the
+/// current test can also stop it through <see cref="RequestStop"/>; that stop is per test.
 /// </summary>
 public static class ForceStopWatcher
 {
@@ -14,7 +14,7 @@ public static class ForceStopWatcher
     private static bool _started;
     private static readonly object _lock = new();
     private static string? _reason;
-    private static string? _stopMessage;
+    private static string? _testStopReason;
 
     public static CancellationToken Token => _cts.Token;
     public static string? StopReason => _reason;
@@ -53,8 +53,9 @@ public static class ForceStopWatcher
                         if (File.Exists(path))
                         {
                             var content = File.ReadAllText(path);
+                            _reason = content;
                             logger.Warn($"[FORCESTOP] \u26a0 Stop requested: {content}");
-                            Stop(content, $"Test stopped by force-stop.json: {content}");
+                            _cts.Cancel();
                             return;
                         }
                     }
@@ -70,23 +71,31 @@ public static class ForceStopWatcher
     }
 
     /// <summary>
-    /// Stops the running test from inside the process, for checks that run beside it and so cannot fail it
-    /// directly. The next <see cref="ThrowIfStopRequested"/> fails the test with <paramref name="reason"/>.
+    /// Stops the current test from a check running beside it, which cannot fail the test directly: the next
+    /// <see cref="ThrowIfStopRequested"/> fails it with <paramref name="reason"/>. Ignored once
+    /// <paramref name="owner"/> is cancelled, i.e. after the requesting test has finished, so a late verdict cannot
+    /// leak into the next test. Unlike force-stop.json, <see cref="ClearTestStop"/> lifts it.
     /// </summary>
-    public static void RequestStop(string reason)
-    {
-        LogManager.GetLogger("ForceStopWatcher").Warn($"[FORCESTOP] \u26a0 Stop requested: {reason}");
-        Stop(reason, reason);
-    }
-
-    private static void Stop(string reason, string stopMessage)
+    public static void RequestStop(string reason, CancellationToken owner)
     {
         lock (_lock)
         {
-            if (_cts.IsCancellationRequested) return;
-            _reason = reason;
-            _stopMessage = stopMessage;
-            _cts.Cancel();
+            if (owner.IsCancellationRequested || _testStopReason is not null) return;
+            _testStopReason = reason;
+        }
+
+        LogManager.GetLogger("ForceStopWatcher").Warn($"[FORCESTOP] \u26a0 Test stop requested: {reason}");
+    }
+
+    /// <summary>
+    /// Lifts a <see cref="RequestStop"/> at the end of the test that requested it. Cancel the owner token first,
+    /// so no request can land after the clear.
+    /// </summary>
+    public static void ClearTestStop()
+    {
+        lock (_lock)
+        {
+            _testStopReason = null;
         }
     }
 
@@ -98,7 +107,18 @@ public static class ForceStopWatcher
     {
         if (_cts.IsCancellationRequested)
         {
-            Assert.Fail(_stopMessage ?? "Test stopped: no reason provided");
+            Assert.Fail($"Test stopped by force-stop.json: {_reason ?? "no reason provided"}");
+        }
+
+        string? testStopReason;
+        lock (_lock)
+        {
+            testStopReason = _testStopReason;
+        }
+
+        if (testStopReason is not null)
+        {
+            Assert.Fail(testStopReason);
         }
     }
 }

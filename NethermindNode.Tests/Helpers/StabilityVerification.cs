@@ -5,17 +5,28 @@ namespace NethermindNode.Tests.Helpers;
 
 public class StabilityVerification
 {
-    public void ShouldVerifyThatNodeSyncsWithoutErrors()
+    /// <summary>
+    /// Polls the execution client's logs every 10 seconds until an undesired entry shows up or the token is
+    /// cancelled. Returns the failure message, or null once cancelled. Runs beside the test, so it reports rather
+    /// than asserts: NUnit assertions belong to the test thread, and an exception escaping a background task
+    /// used to crash the test host before any result was written.
+    /// </summary>
+    public string? WaitForUndesiredLogs(CancellationToken cancellationToken)
     {
-        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
-        
+        NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger, cancellationToken);
+
         List<string> errors = new List<string>();
-        
-        while (true)
+
+        while (!cancellationToken.IsCancellationRequested)
         {
-            bool verificationSuceeded = NodeInfo.VerifyLogsForUndesiredEntries(ref errors);
-            Assert.That(verificationSuceeded == true, "Undesired log occurred: " + string.Join(", ", errors));
-            Thread.Sleep(10000);
+            if (!NodeInfo.VerifyLogsForUndesiredEntries(ref errors))
+            {
+                return "Undesired log occurred: " + string.Join(", ", errors);
+            }
+
+            cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(10));
         }
+
+        return null;
     }
 }

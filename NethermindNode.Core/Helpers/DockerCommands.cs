@@ -112,7 +112,7 @@ public static class DockerCommands
             using (StreamReader reader = new StreamReader(stream))
             {
                 string line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
                 {
                     if (!string.IsNullOrEmpty(logFilter) && !line.Contains(logFilter))
                     {

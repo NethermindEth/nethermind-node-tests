@@ -1,6 +1,7 @@
 using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
+using NethermindNode.Tests.Helpers;
 
 namespace NethermindNode.Tests.SyncingNode;
 
@@ -12,18 +13,28 @@ public class ArchiveTests : BaseTest
     public void ShouldSyncArchiveTillSpecifiedBlock(int blocksCount)
     {
         NodeInfo.WaitForNodeToBeReady(TestLoggerContext.Logger);
-        var blockNumber = NodeInfo.GetCurrentBlock(TestLoggerContext.Logger);
         List<string> errors = new List<string>();
-        bool verificationSuceeded;
 
-        while (blockNumber <= blocksCount)
+        int iteration = 0;
+        // Use eth_syncing.currentBlock (locally processed) NOT eth_blockNumber (chain head)
+        long blockNumber = NodeInfo.GetSyncingCurrentBlock(TestLoggerContext.Logger);
+        while (blockNumber < blocksCount)
         {
-            verificationSuceeded = NodeInfo.VerifyLogsForUndesiredEntries(ref errors);
-            Assert.That(verificationSuceeded == true, "Undesired log occurred: " + string.Join(", ", errors));
-            TestLoggerContext.Logger.Info($"Waiting for block {blocksCount}. Current block is: " + blockNumber);
+            ForceStopWatcher.ThrowIfStopRequested();
+
+            bool verificationSucceeded = NodeInfo.VerifyLogsForUndesiredEntries(ref errors);
+            Assert.That(verificationSucceeded == true, "Undesired log occurred: " + string.Join(", ", errors));
+
+            if (iteration == 0 || iteration % 30 == 0)
+            {
+                double pct = blocksCount > 0 ? (double)blockNumber / blocksCount * 100.0 : 0;
+                TestLoggerContext.Logger.Info($"[ARCHIVE] Waiting for block {blocksCount:N0} — synced: {blockNumber:N0} ({pct:F1}%)");
+            }
+            iteration++;
             Thread.Sleep(10000);
+            blockNumber = NodeInfo.GetSyncingCurrentBlock(TestLoggerContext.Logger);
         }
 
-        TestLoggerContext.Logger.Info($"Block {blocksCount} reached.");
+        TestLoggerContext.Logger.Info($"[ARCHIVE] ✓ Block {blocksCount:N0} reached (synced: {blockNumber:N0})");
     }
 }

@@ -6,89 +6,103 @@ using YamlDotNet.RepresentationModel;
 
 namespace NethermindNode.Tests.HistoryExpiry;
 
+/// <summary>
+/// Edits the execution service of the Sedge docker-compose file that the node was started from.
+/// </summary>
 internal static class NodeConfig
 {
-    private const string ComposeFileName = "docker-compose.yml";
-    private static YamlStream _yaml = new();
+    private const string ExecutionService = "execution";
+    private const string BackupSuffix = ".era-test.bak";
 
-    public static void AddElFlag(string nameSpace, string key, string value)
+    /// <summary>Sedge writes the compose file to the home directory of the user that runs the tests.</summary>
+    public static string ComposeFilePath { get; } =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "docker-compose.yml");
+
+    public static void Backup() => File.Copy(ComposeFilePath, ComposeFilePath + BackupSuffix, overwrite: true);
+
+    public static void Restore()
     {
-        Load();
-        string flag = $"--{nameSpace}.{key}={value}";
-        string prefix = $"--{nameSpace}.{key}=";
-        YamlSequenceNode commandNode = GetSequenceNode("execution", "command");
-        if (commandNode.Children.Any(c => c.ToString().StartsWith(prefix, StringComparison.Ordinal)))
+        string backupPath = ComposeFilePath + BackupSuffix;
+        if (!File.Exists(backupPath))
         {
-            TestLoggerContext.Logger.Info($"Flag already set, skipping: {flag}");
             return;
         }
-        commandNode.Add(new YamlScalarNode(flag));
-        TestLoggerContext.Logger.Info($"Added flag: {flag}");
-        Save();
+
+        File.Copy(backupPath, ComposeFilePath, overwrite: true);
+        File.Delete(backupPath);
+        TestLoggerContext.Logger.Info($"Restored {ComposeFilePath}.");
+    }
+
+    public static void SetElFlag(string nameSpace, string key, string value)
+    {
+        YamlStream yaml = Load();
+        YamlSequenceNode command = GetSequenceNode(yaml, "command");
+        RemoveFlag(command, nameSpace, key);
+        command.Add(new YamlScalarNode($"--{nameSpace}.{key}={value}"));
+        TestLoggerContext.Logger.Info($"Set flag: --{nameSpace}.{key}={value}");
+        Save(yaml);
     }
 
     public static void RemoveElFlag(string nameSpace, string key)
     {
-        Load();
-        string prefix = $"--{nameSpace}.{key}";
-        YamlSequenceNode commandNode = GetSequenceNode("execution", "command");
-        for (int i = 0; i < commandNode.Children.Count; i++)
+        YamlStream yaml = Load();
+        if (RemoveFlag(GetSequenceNode(yaml, "command"), nameSpace, key))
         {
-            if (commandNode.Children[i].ToString().StartsWith(prefix, StringComparison.Ordinal))
-            {
-                commandNode.Children.RemoveAt(i);
-                TestLoggerContext.Logger.Info($"Removed flag: {prefix}");
-                break;
-            }
+            TestLoggerContext.Logger.Info($"Removed flag: --{nameSpace}.{key}");
+            Save(yaml);
         }
-        Save();
     }
 
     public static void AddVolume(string volume)
     {
-        Load();
-        YamlSequenceNode volumesNode = GetSequenceNode("execution", "volumes");
-        if (volumesNode.Children.Any(c => c.ToString() == volume))
+        YamlStream yaml = Load();
+        YamlSequenceNode volumes = GetSequenceNode(yaml, "volumes");
+        if (volumes.Children.Any(c => c.ToString() == volume))
         {
-            TestLoggerContext.Logger.Info($"Volume already set, skipping: {volume}");
             return;
         }
-        volumesNode.Add(new YamlScalarNode(volume));
-        Save();
+
+        volumes.Add(new YamlScalarNode(volume));
+        TestLoggerContext.Logger.Info($"Added volume: {volume}");
+        Save(yaml);
     }
 
-    private static void Load()
+    private static bool RemoveFlag(YamlSequenceNode command, string nameSpace, string key)
     {
-        _yaml = new YamlStream();
-        string path = GetComposeFilePath();
-        using StreamReader reader = new StreamReader(path);
-        _yaml.Load(reader);
+        // Match the full key so that removing EraE.From does not also remove EraE.FromSomething.
+        string prefix = $"--{nameSpace}.{key}=";
+        int removed = 0;
+        for (int i = command.Children.Count - 1; i >= 0; i--)
+        {
+            if (command.Children[i].ToString().StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                command.Children.RemoveAt(i);
+                removed++;
+            }
+        }
+
+        return removed > 0;
     }
 
-    private static void Save()
+    private static YamlStream Load()
     {
-        string path = GetComposeFilePath();
-        using StreamWriter writer = new StreamWriter(path);
-        _yaml.Save(writer, assignAnchors: false);
+        YamlStream yaml = new();
+        using StreamReader reader = new(ComposeFilePath);
+        yaml.Load(reader);
+        return yaml;
     }
 
-    private static YamlSequenceNode GetSequenceNode(string service, string key)
+    private static void Save(YamlStream yaml)
     {
-        YamlMappingNode serviceNode = GetServiceNode(service);
-        return (YamlSequenceNode)serviceNode.Children[new YamlScalarNode(key)];
+        using StreamWriter writer = new(ComposeFilePath);
+        yaml.Save(writer, assignAnchors: false);
     }
 
-    private static YamlMappingNode GetServiceNode(string service)
+    private static YamlSequenceNode GetSequenceNode(YamlStream yaml, string key)
     {
-        YamlMappingNode root = (YamlMappingNode)_yaml.Documents[0].RootNode;
+        YamlMappingNode root = (YamlMappingNode)yaml.Documents[0].RootNode;
         YamlMappingNode services = (YamlMappingNode)root.Children[new YamlScalarNode("services")];
-        return (YamlMappingNode)services.Children[new YamlScalarNode(service)];
-    }
-
-    private static string GetComposeFilePath()
-    {
-        string baseDirectory = AppContext.BaseDirectory;
-        string repoRoot = Path.GetFullPath(Path.Combine(baseDirectory, "../../../../../"));
-        return Path.Combine(repoRoot, ComposeFileName);
+        YamlMappingNode execution = (YamlMappingNode)services.Children[new YamlScalarNode(ExecutionService)];
+        return (YamlSequenceNode)execution.Children[new YamlScalarNode(key)];
     }
 }

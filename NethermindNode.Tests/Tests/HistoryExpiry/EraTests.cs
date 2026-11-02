@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Demerzel Solutions Limited
 // SPDX-License-Identifier: LGPL-3.0-only
 
+using System.Buffers.Binary;
+using System.Security.Cryptography;
+using System.Text.Json;
 using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
@@ -8,224 +11,306 @@ using NLog;
 
 namespace NethermindNode.Tests.HistoryExpiry;
 
+/// <summary>
+/// Imports a bounded range of pre-merge EraE archives from a public store into a snap-synced node,
+/// exports the same range from the node database, and checks both directions against reference data.
+/// </summary>
+/// <remarks>
+/// Snap sync does not download pre-merge bodies and receipts (AncientBodiesBarrier and AncientReceiptsBarrier
+/// are at the merge block on Sepolia), so the range is empty before the import and can only be filled by it.
+/// The test changes the Sedge docker-compose file and always restores it at the end.
+/// </remarks>
 [TestFixture]
 [NonParallelizable]
-[Category("EraExportImport")]
+[Category("EraE2E")]
 public class EraTests : BaseTest
 {
-    private const string EraDirectory = "/era";
-    private const string ImportDirectory = EraDirectory + "/import";
-    private const string ExportDirectory = EraDirectory + "/export";
-    private const string VolumeMapping = "/mnt/era-stavros:" + EraDirectory;
-    private const string ComposeFile = "/root/docker-compose.yml";
-    private const string RemoteBaseUrl = "https://data.ethpandaops.io/erae/mainnet/";
+    private const string ContainerEraDirectory = "/era";
+    private const string ContainerImportDirectory = ContainerEraDirectory + "/import";
+    private const string ContainerExportDirectory = ContainerEraDirectory + "/export";
+    private const string ExportExtension = ".ere";
+    private const string ChecksumsFileName = "checksums_sha256.txt";
+    private const string AccumulatorsFileName = "accumulators.txt";
+    private const ushort AccumulatorRootEntryType = 0x07;
+    private const long EpochSize = 8192;
 
-    // Pre-merge blocks: snap sync does not download bodies for these.
-    // After EraE import they must be accessible with correct hashes.
-    private static readonly (long Number, string Hash)[] PreMergeBlocks =
-    [
-        (1L,          "0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6"),
-        (1_920_000L,  "0x4985f5ca3d2afbec36529aa96f74de3cc10a2a4a6c44f2157a57d2c6059a11bb"), // DAO fork
-        (15_537_393L, "0x55b11b918355b1ef9c5db810302ebad0bf2544255b530cdce90674d5887bb286"), // last PoW block
-    ];
+    private static readonly TimeSpan JobTimeout = TimeSpan.FromHours(2);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
 
-    // Post-merge blocks: accessible from snap sync regardless of EraE import.
-    // Verified here to confirm import/export did not corrupt existing DB state.
-    private static readonly (long Number, string Hash)[] PostMergeBlocks =
-    [
-        (15_537_394L, "0x56a9bb0302da44b8c0b3df540781424684c3af04d0b7a38d72842b762076a664"), // first PoS block
-        (16_000_000L, "0x3dc4ef568ae2635db1419c5fec55c4a9322c05302ae527cd40bff380c1d465dd"),
-    ];
+    private const int PrunedHistoryUnavailable = 4444;
+
+    private static readonly string[] JobFailureMarkers = ["EraException", "EraImportException"];
+
+    private sealed record ReferenceBlock(long Number, string Hash, int TransactionCount);
+
+    private sealed record EraProfile(string Network, string RemoteBaseUrl, long FirstEpoch, long LastEpoch, ReferenceBlock[] Blocks)
+    {
+        public long From => FirstEpoch * EpochSize;
+        public long To => (LastEpoch + 1) * EpochSize - 1;
+    }
+
+    // Two full pre-merge epochs. Hashes and transaction counts come from a public Sepolia RPC. The hashes of the last
+    // block in each epoch also match the file names in the remote checksum manifest.
+    private static readonly Dictionary<NodeInfo.NetworkType, EraProfile> Profiles = new()
+    {
+        [NodeInfo.NetworkType.Sepolia] = new(
+            "sepolia",
+            "https://data.ethpandaops.io/erae/sepolia/",
+            FirstEpoch: 175,
+            LastEpoch: 176,
+            [
+                new(1_433_600, "0xcbcad93676594fbf8743513c6a9955ac34c0cd72809795eac2a885588c40d02c", 3),
+                new(1_435_150, "0x035260501993f01f5e3df00e8e45a2e586fcb4a139e22cc12854ce771f730d0b", 12),
+                new(1_438_150, "0x1189bf5323b8135cae3d598b60d600877a48fbd3794c60d2d4e5c2081a4323ca", 9),
+                new(1_441_791, "0xa7bdef90e9fc06c6524fa3d8b4785c8ccd78ded84568f372336cd11f65b28e71", 0),
+                new(1_441_792, "0xa909171c7b312d61e426d10dcdb3a6bfe75ecd4cf5f04e3bdb2f9ec135fe11eb", 1),
+                new(1_444_150, "0x9d0caff95a66b9b7a6df4927641cf207589d1f468a54f3ee023048d61564ccbd", 2),
+                new(1_449_983, "0xfb1459acdac5902a70341ca26b0981b619bcea604791edfa0e9f00d0cceb490d", 0),
+            ]),
+    };
+
+    private static string HostEraDirectory =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "era-e2e-test");
 
     [NethermindTest]
-    [Category("EraImport")]
-    public async Task ShouldImportFromRemote()
+    public async Task ShouldImportFromRemoteAndExportSameHistory()
     {
         Logger logger = TestLoggerContext.Logger;
         string containerName = ConfigurationHelper.Instance["execution-container-name"];
 
         NodeInfo.WaitForNodeToBeReady(logger);
         NodeInfo.WaitForNodeToBeSynced(logger);
-        logger.Info("Node snap sync complete.");
 
-        // Verify pre-merge blocks are NOT accessible before import
-        foreach ((long number, string _) in PreMergeBlocks)
+        NodeInfo.NetworkType network = await NodeInfo.GetNetworkType(logger);
+        if (!Profiles.TryGetValue(network, out EraProfile? profile))
         {
-            string response = await QueryBlock(number, logger);
-            Assert.That(response, Does.Contain("\"result\":null"),
-                $"Block {number} should not be accessible before EraE import.");
+            Assert.Ignore($"No EraE reference data for {network}.");
+            return;
         }
-        logger.Info("Confirmed pre-merge blocks absent before import.");
 
-        long lastImportedBlock = await ImportFromRemote(containerName, logger);
-
-        // Verify pre-merge blocks ARE accessible with correct hashes after import
-        foreach ((long number, string expectedHash) in PreMergeBlocks)
+        foreach (ReferenceBlock block in profile.Blocks)
         {
-            string response = await QueryBlock(number, logger);
-            Assert.That(response, Does.Contain(expectedHash),
-                $"Block {number} hash mismatch after import.");
+            Assert.That(await IsBlockBodyMissing(block.Number, logger), Is.True,
+                $"Block {block.Number} already has a body before the import, so the import cannot be verified.");
         }
-        logger.Info("All pre-merge blocks verified after import.");
 
-        // Verify post-merge blocks are unaffected
-        foreach ((long number, string expectedHash) in PostMergeBlocks)
+        string hostImportDirectory = Path.Combine(HostEraDirectory, "import");
+        string hostExportDirectory = Path.Combine(HostEraDirectory, "export");
+        ResetDirectory(HostEraDirectory);
+        Directory.CreateDirectory(hostImportDirectory);
+        Directory.CreateDirectory(hostExportDirectory);
+        NodeConfig.Backup();
+
+        try
         {
-            string response = await QueryBlock(number, logger);
-            Assert.That(response, Does.Contain(expectedHash),
-                $"Post-merge block {number} hash mismatch — DB may be corrupt.");
+            NodeConfig.AddVolume($"{HostEraDirectory}:{ContainerEraDirectory}");
+            NodeConfig.SetElFlag("EraE", "ImportDirectory", ContainerImportDirectory);
+            NodeConfig.SetElFlag("EraE", "RemoteBaseUrl", profile.RemoteBaseUrl);
+            NodeConfig.SetElFlag("EraE", "From", profile.From.ToString());
+            NodeConfig.SetElFlag("EraE", "To", profile.To.ToString());
+            RecreateExecutionContainer(containerName, logger);
+            WaitForEraJob(containerName, "Finished EraE import", logger);
+            NodeInfo.WaitForNodeToBeReady(logger);
+
+            await AssertReferenceBlocks(profile, "after import", logger);
+
+            NodeConfig.RemoveElFlag("EraE", "ImportDirectory");
+            NodeConfig.RemoveElFlag("EraE", "RemoteBaseUrl");
+            NodeConfig.SetElFlag("EraE", "ExportDirectory", ContainerExportDirectory);
+            RecreateExecutionContainer(containerName, logger);
+            WaitForEraJob(containerName, "Finished EraE export", logger);
+            NodeInfo.WaitForNodeToBeReady(logger);
+
+            AssertExport(profile, hostImportDirectory, hostExportDirectory, logger);
+            await AssertReferenceBlocks(profile, "after export", logger);
         }
-        logger.Info("All post-merge blocks verified.");
+        finally
+        {
+            NodeConfig.Restore();
+            RecreateExecutionContainer(containerName, logger);
+            NodeInfo.WaitForNodeToBeReady(logger);
+            Directory.Delete(HostEraDirectory, recursive: true);
+        }
     }
 
-    [NethermindTest]
-    [Category("EraExport")]
-    public async Task ShouldExportFromDb()
+    private static async Task AssertReferenceBlocks(EraProfile profile, string stage, Logger logger)
     {
-        Logger logger = TestLoggerContext.Logger;
-        string containerName = ConfigurationHelper.Instance["execution-container-name"];
-
-        NodeInfo.WaitForNodeToBeReady(logger);
-
-        // Verify pre-merge blocks are in DB (import must have run first)
-        foreach ((long number, string expectedHash) in PreMergeBlocks)
+        foreach (ReferenceBlock expected in profile.Blocks)
         {
-            string response = await QueryBlock(number, logger);
-            Assert.That(response, Does.Contain(expectedHash),
-                $"Block {number} not found — run EraImport test first.");
+            JsonElement block = (await ExecuteRpc("eth_getBlockByNumber", $"\"0x{expected.Number:x}\", false", logger)).Result;
+            Assert.That(block.ValueKind, Is.EqualTo(JsonValueKind.Object), $"Block {expected.Number} is missing {stage}.");
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(block.GetProperty("hash").GetString(), Is.EqualTo(expected.Hash),
+                    $"Block {expected.Number} hash {stage}.");
+                Assert.That(block.GetProperty("transactions").GetArrayLength(), Is.EqualTo(expected.TransactionCount),
+                    $"Block {expected.Number} transaction count {stage}.");
+            }
+
+            JsonElement receipts = (await ExecuteRpc("eth_getBlockReceipts", $"\"0x{expected.Number:x}\"", logger)).Result;
+            Assert.That(receipts.ValueKind, Is.EqualTo(JsonValueKind.Array), $"Block {expected.Number} receipts are missing {stage}.");
+            Assert.That(receipts.GetArrayLength(), Is.EqualTo(expected.TransactionCount), $"Block {expected.Number} receipt count {stage}.");
+            foreach (JsonElement receipt in receipts.EnumerateArray())
+            {
+                Assert.That(receipt.GetProperty("blockHash").GetString(), Is.EqualTo(expected.Hash),
+                    $"Block {expected.Number} receipt block hash {stage}.");
+            }
         }
 
-        DeleteImportedEraFiles(logger);
-
-        await ExportFromDb(containerName, 24_518_655L, logger);
-
-        // Verify era files were written to disk
-        string eraHostPath = DockerCommands.GetEraDataPath(logger);
-        string[] exportedFiles = Directory.GetFiles(Path.Combine(eraHostPath, "export"), "*.era", SearchOption.AllDirectories);
-        Assert.That(exportedFiles.Length, Is.GreaterThan(0), "No era files found in export directory.");
-        logger.Info($"Export produced {exportedFiles.Length} era file(s).");
-
-        // Verify all blocks still correct after export
-        foreach ((long number, string expectedHash) in PreMergeBlocks)
-        {
-            string response = await QueryBlock(number, logger);
-            Assert.That(response, Does.Contain(expectedHash),
-                $"Pre-merge block {number} hash mismatch after export.");
-        }
-        foreach ((long number, string expectedHash) in PostMergeBlocks)
-        {
-            string response = await QueryBlock(number, logger);
-            Assert.That(response, Does.Contain(expectedHash),
-                $"Post-merge block {number} hash mismatch after export.");
-        }
-        logger.Info("All blocks verified after export.");
+        logger.Info($"All {profile.Blocks.Length} reference blocks match {stage}.");
     }
 
-    [NethermindTest]
-    [Category("EraE2E")]
-    public async Task ShouldImportFromRemoteAndExportFromDbWithMatchingBlockData()
+    private static void AssertExport(EraProfile profile, string hostImportDirectory, string hostExportDirectory, Logger logger)
     {
-        Logger logger = TestLoggerContext.Logger;
-        string containerName = ConfigurationHelper.Instance["execution-container-name"];
+        Dictionary<string, string> checksums = ReadManifest(Path.Combine(hostExportDirectory, ChecksumsFileName));
+        Dictionary<string, string> accumulators = ReadManifest(Path.Combine(hostExportDirectory, AccumulatorsFileName));
 
-        NodeInfo.WaitForNodeToBeReady(logger);
-        NodeInfo.WaitForNodeToBeSynced(logger);
-        logger.Info("Node snap sync complete.");
-
-        long lastImportedBlock = await ImportFromRemote(containerName, logger);
-
-        foreach ((long number, string expectedHash) in PreMergeBlocks)
+        for (long epoch = profile.FirstEpoch; epoch <= profile.LastEpoch; epoch++)
         {
-            string response = await QueryBlock(number, logger);
-            Assert.That(response, Does.Contain(expectedHash),
-                $"Block {number} hash mismatch after import.");
+            ReferenceBlock lastBlock = profile.Blocks.Single(b => b.Number == (epoch + 1) * EpochSize - 1);
+            string hashPrefix = lastBlock.Hash[2..10];
+            string exportedName = $"{profile.Network}-{epoch:D5}-{hashPrefix}-noproofs{ExportExtension}";
+            string exportedPath = Path.Combine(hostExportDirectory, exportedName);
+            Assert.That(File.Exists(exportedPath), Is.True, $"Expected export file {exportedName} is missing.");
+
+            string remotePath = Directory.GetFiles(hostImportDirectory, $"{profile.Network}-{epoch:D5}-*").Single();
+            Assert.That(Path.GetFileName(remotePath), Does.StartWith($"{profile.Network}-{epoch:D5}-{hashPrefix}"),
+                $"Downloaded file for epoch {epoch} names a different last block.");
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(checksums.GetValueOrDefault(exportedName), Is.EqualTo(Sha256Hex(exportedPath)),
+                    $"{ChecksumsFileName} does not match the content of {exportedName}.");
+                Assert.That(accumulators.GetValueOrDefault(exportedName), Is.EqualTo(ReadAccumulatorRoot(remotePath)),
+                    $"Accumulator root of {exportedName} differs from the downloaded archive.");
+                Assert.That(ReadAccumulatorRoot(exportedPath), Is.EqualTo(ReadAccumulatorRoot(remotePath)),
+                    $"Accumulator root inside {exportedName} differs from the downloaded archive.");
+            }
         }
 
-        DeleteImportedEraFiles(logger);
-
-        await ExportFromDb(containerName, lastImportedBlock, logger);
-
-        string eraHostPath = DockerCommands.GetEraDataPath(logger);
-        string[] exportedFiles = Directory.GetFiles(Path.Combine(eraHostPath, "export"), "*.era", SearchOption.AllDirectories);
-        Assert.That(exportedFiles.Length, Is.GreaterThan(0), "No era files found in export directory.");
-
-        foreach ((long number, string expectedHash) in PreMergeBlocks.Concat(PostMergeBlocks))
-        {
-            string response = await QueryBlock(number, logger);
-            Assert.That(response, Does.Contain(expectedHash),
-                $"Block {number} hash mismatch after export.");
-        }
-        logger.Info("Full E2E import/export verified.");
+        int exportedFiles = Directory.GetFiles(hostExportDirectory, "*" + ExportExtension).Length;
+        Assert.That(exportedFiles, Is.EqualTo(profile.LastEpoch - profile.FirstEpoch + 1), "Unexpected number of exported files.");
+        logger.Info($"Export of {exportedFiles} file(s) matches the downloaded archives.");
     }
 
-    private static async Task<long> ImportFromRemote(string containerName, Logger logger)
+    private static void RecreateExecutionContainer(string containerName, Logger logger)
     {
-        logger.Info("Configuring remote era import.");
-
-        NodeConfig.AddVolume(VolumeMapping);
-        NodeConfig.AddElFlag("EraE", "ImportDirectory", ImportDirectory);
-        NodeConfig.AddElFlag("EraE", "RemoteBaseUrl", RemoteBaseUrl);
-
         DockerCommands.StopDockerContainer(containerName, logger);
-        DockerCommands.ComposeUp("execution", ComposeFile, logger);
-        NodeInfo.WaitForNodeToBeReady(logger);
-
-        string logLine = await WaitForLog(containerName, "Finished EraE import", logger);
-        logger.Info("Remote era import finished.");
-
-        // Parse last imported block from: "Finished EraE import from {from} to {to}"
-        const string toMarker = " to ";
-        int toIndex = logLine.LastIndexOf(toMarker, StringComparison.Ordinal);
-        long lastImportedBlock = long.Parse(logLine[(toIndex + toMarker.Length)..].Trim());
-        logger.Info($"Last imported block: {lastImportedBlock}");
-        return lastImportedBlock;
+        DockerCommands.ComposeUp("execution", NodeConfig.ComposeFilePath, logger);
     }
 
-    private static void DeleteImportedEraFiles(Logger logger)
+    /// <summary>
+    /// The import and export run in a startup step. A failed step stops the node, and the restart policy
+    /// starts it again, so a restart counts as a failure.
+    /// </summary>
+    private static void WaitForEraJob(string containerName, string successMarker, Logger logger)
     {
-        string eraHostPath = DockerCommands.GetEraDataPath(logger);
-        CommandExecutor.RemoveDirectory(Path.Combine(eraHostPath, "import"), logger);
-        logger.Info("Deleted downloaded era files.");
-    }
-
-    private static async Task ExportFromDb(string containerName, long to, Logger logger)
-    {
-        logger.Info("Configuring era export from DB.");
-
-        NodeConfig.RemoveElFlag("EraE", "ImportDirectory");
-        NodeConfig.RemoveElFlag("EraE", "RemoteBaseUrl");
-        NodeConfig.RemoveElFlag("EraE", "From");
-        NodeConfig.RemoveElFlag("EraE", "To");
-        NodeConfig.AddElFlag("EraE", "ExportDirectory", ExportDirectory);
-        NodeConfig.AddElFlag("EraE", "From", "0");
-        NodeConfig.AddElFlag("EraE", "To", to.ToString());
-
-        DockerCommands.StopDockerContainer(containerName, logger);
-        DockerCommands.ComposeUp("execution", ComposeFile, logger);
-        NodeInfo.WaitForNodeToBeReady(logger);
-
-        await WaitForLog(containerName, "Finished EraE export", logger);
-        logger.Info("Era export finished.");
-    }
-
-    private static async Task<string> QueryBlock(long blockNumber, Logger logger)
-    {
-        string rpcParams = $"\"0x{blockNumber:X}\", true";
-        Tuple<string, TimeSpan, bool> rpcResult = await HttpExecutor.ExecuteNethermindJsonRpcCommand(
-            "eth_getBlockByNumber", rpcParams, NodeInfo.apiBaseUrl, logger);
-        logger.Info($"Block {blockNumber} response: {rpcResult.Item1}");
-        return rpcResult.Item1;
-    }
-
-    private static async Task<string> WaitForLog(string containerName, string expectedLog, Logger logger)
-    {
-        logger.Info($"Waiting for log: '{expectedLog}'");
-        CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromHours(6));
-        await foreach (string line in DockerCommands.GetDockerLogsAsync(containerName, expectedLog, true, cts.Token))
+        logger.Info($"Waiting for '{successMarker}'.");
+        DateTime deadline = DateTime.UtcNow + JobTimeout;
+        while (DateTime.UtcNow < deadline)
         {
-            logger.Info($"Found log: {line}");
-            return line;
+            List<string> lines = DockerCommands.GetDockerLogs(containerName).ToList();
+            string? success = lines.FirstOrDefault(l => l.Contains(successMarker, StringComparison.Ordinal));
+            if (success is not null)
+            {
+                logger.Info($"Found: {success}");
+                return;
+            }
+
+            string? failure = lines.FirstOrDefault(l => JobFailureMarkers.Any(m => l.Contains(m, StringComparison.Ordinal)));
+            string restarts = DockerCommands.GetDockerDetails(containerName, "{{.RestartCount}}", logger).Trim();
+            string status = DockerCommands.GetDockerContainerStatus(containerName, logger).Trim();
+            if (failure is not null || restarts != "0" || !status.Contains("running", StringComparison.Ordinal))
+            {
+                Assert.Fail($"EraE job failed (status {status}, restarts {restarts}). Last log lines:{Environment.NewLine}" +
+                    string.Join(Environment.NewLine, lines.TakeLast(40)));
+            }
+
+            Thread.Sleep(PollInterval);
         }
-        throw new TimeoutException($"Log '{expectedLog}' not found within 6 hours.");
+
+        Assert.Fail($"'{successMarker}' not found within {JobTimeout}.");
+    }
+
+    /// <summary>A missing body gives either a null block or the pruned-history error, depending on the node version.</summary>
+    private static async Task<bool> IsBlockBodyMissing(long number, Logger logger)
+    {
+        (JsonElement result, int? errorCode) = await ExecuteRpc("eth_getBlockByNumber", $"\"0x{number:x}\", false", logger, allowError: true);
+        return errorCode == PrunedHistoryUnavailable || (errorCode is null && result.ValueKind == JsonValueKind.Null);
+    }
+
+    private static async Task<(JsonElement Result, int? ErrorCode)> ExecuteRpc(string method, string parameters, Logger logger, bool allowError = false)
+    {
+        Tuple<string, TimeSpan, bool> response =
+            await HttpExecutor.ExecuteNethermindJsonRpcCommand(method, parameters, NodeInfo.apiBaseUrl, logger);
+        using JsonDocument document = JsonDocument.Parse(response.Item1);
+        if (document.RootElement.TryGetProperty("error", out JsonElement error))
+        {
+            if (!allowError)
+            {
+                Assert.Fail($"{method}({parameters}) returned an error: {error}");
+            }
+
+            return (default, error.GetProperty("code").GetInt32());
+        }
+
+        return (document.RootElement.GetProperty("result").Clone(), null);
+    }
+
+    private static Dictionary<string, string> ReadManifest(string path)
+    {
+        Assert.That(File.Exists(path), Is.True, $"{Path.GetFileName(path)} is missing from the export.");
+        Dictionary<string, string> entries = new();
+        foreach (string line in File.ReadAllLines(path).Where(l => !string.IsNullOrWhiteSpace(l)))
+        {
+            string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            entries[parts[^1]] = NormalizeHex(parts[0]);
+        }
+
+        return entries;
+    }
+
+    private static string Sha256Hex(string path)
+    {
+        using FileStream stream = File.OpenRead(path);
+        return Convert.ToHexStringLower(SHA256.HashData(stream));
+    }
+
+    /// <summary>Reads the AccumulatorRoot entry of an e2store file: 2-byte type, 4-byte length, 2 reserved bytes, data.</summary>
+    private static string ReadAccumulatorRoot(string path)
+    {
+        using FileStream stream = File.OpenRead(path);
+        Span<byte> header = stackalloc byte[8];
+        while (stream.Position < stream.Length)
+        {
+            stream.ReadExactly(header);
+            ushort type = BinaryPrimitives.ReadUInt16LittleEndian(header);
+            uint length = BinaryPrimitives.ReadUInt32LittleEndian(header[2..]);
+            if (type == AccumulatorRootEntryType)
+            {
+                byte[] root = new byte[length];
+                stream.ReadExactly(root);
+                return Convert.ToHexStringLower(root);
+            }
+
+            stream.Seek(length, SeekOrigin.Current);
+        }
+
+        Assert.Fail($"{Path.GetFileName(path)} has no AccumulatorRoot entry.");
+        return string.Empty;
+    }
+
+    private static string NormalizeHex(string value) =>
+        (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? value[2..] : value).ToLowerInvariant();
+
+    private static void ResetDirectory(string path)
+    {
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, recursive: true);
+        }
+
+        Directory.CreateDirectory(path);
     }
 }

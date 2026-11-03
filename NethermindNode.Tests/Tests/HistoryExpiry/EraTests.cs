@@ -18,7 +18,8 @@ namespace NethermindNode.Tests.HistoryExpiry;
 /// <remarks>
 /// Snap sync does not download pre-merge bodies and receipts (AncientBodiesBarrier and AncientReceiptsBarrier
 /// are at the merge block on Sepolia), so the range is empty before the import and can only be filled by it.
-/// The test changes the Sedge docker-compose file and always restores it at the end.
+/// The test changes the Sedge docker-compose file and always restores it at the end. Era files go to a directory
+/// next to the compose file.
 /// </remarks>
 [TestFixture]
 [NonParallelizable]
@@ -69,8 +70,7 @@ public class EraTests : BaseTest
             ]),
     };
 
-    private static string HostEraDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "era-e2e-test");
+    private static string HostEraDirectory => Path.Combine(NodeConfig.ComposeDirectory, "era-e2e-test");
 
     [NethermindTest]
     public async Task ShouldImportFromRemoteAndExportSameHistory()

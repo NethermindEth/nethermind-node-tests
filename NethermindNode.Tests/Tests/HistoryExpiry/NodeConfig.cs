@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 using NethermindNode.Core;
+using NethermindNode.Core.Helpers;
 using YamlDotNet.RepresentationModel;
 
 namespace NethermindNode.Tests.HistoryExpiry;
@@ -14,9 +15,15 @@ internal static class NodeConfig
     private const string ExecutionService = "execution";
     private const string BackupSuffix = ".era-test.bak";
 
-    /// <summary>Sedge writes the compose file to the home directory of the user that runs the tests.</summary>
-    public static string ComposeFilePath { get; } =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "docker-compose.yml");
+    private static readonly Lazy<string> _composeFilePath = new(FindComposeFile);
+
+    /// <summary>
+    /// Sedge writes the compose file next to the execution data directory. The tests run on a VM (home directory)
+    /// and on a GitHub runner (workspace directory), so the path is read from the running container.
+    /// </summary>
+    public static string ComposeFilePath => _composeFilePath.Value;
+
+    public static string ComposeDirectory => Path.GetDirectoryName(ComposeFilePath)!;
 
     public static void Backup() => File.Copy(ComposeFilePath, ComposeFilePath + BackupSuffix, overwrite: true);
 
@@ -65,6 +72,21 @@ internal static class NodeConfig
         volumes.Add(new YamlScalarNode(volume));
         TestLoggerContext.Logger.Info($"Added volume: {volume}");
         Save(yaml);
+    }
+
+    private static string FindComposeFile()
+    {
+        string dataPath = DockerCommands.GetExecutionDataPath(TestLoggerContext.Logger);
+        string directory = Directory.GetParent(dataPath)?.FullName
+            ?? throw new DirectoryNotFoundException($"No parent directory for the execution data path '{dataPath}'.");
+        string path = Path.Combine(directory, "docker-compose.yml");
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException("The docker-compose.yml file was not found.", path);
+        }
+
+        TestLoggerContext.Logger.Info($"Using compose file {path}.");
+        return path;
     }
 
     private static bool RemoveFlag(YamlSequenceNode command, string nameSpace, string key)

@@ -20,6 +20,7 @@ public static class NodeInfo
         Volta = 73799,
         Sepolia = 11155111,
         Holesky = 17000,
+        Hoodi = 560048,
     }
 
     public static bool IsFullySynced(Logger logger)
@@ -255,7 +256,8 @@ public static class NodeInfo
         else
         {
             logger.Info($"Network type: {result}");
-            return (NetworkType)int.Parse(result, System.Globalization.NumberStyles.HexNumber);
+            string hex = result.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? result[2..] : result;
+            return (NetworkType)int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
         }
     }
 

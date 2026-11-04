@@ -1,6 +1,7 @@
 ﻿using NethermindNode.Core;
 using NethermindNode.Core.Helpers;
 using NethermindNode.Tests.CustomAttributes;
+using NethermindNode.Tests.Helpers;
 using NethermindNode.Tests.JsonRpc;
 using System.Diagnostics;
 
@@ -10,6 +11,15 @@ namespace NethermindNode.Tests.Tests.Pruning
     [Parallelizable(ParallelScope.All)]
     public class JsonRpcPruning
     {
+        // Unix time (seconds) at which the lane's test budget runs out; set by the harness through tests.service.
+        private const string LaneDeadlineEnvVar = "TESTS_DEADLINE_EPOCH";
+        // Used when no lane deadline is passed (local runs, older harness).
+        private static readonly TimeSpan DefaultFullPruningTimeout = TimeSpan.FromHours(24);
+        // Removing the old state directory is the behaviour under test; how fast a large DB unlinks is not.
+        private static readonly TimeSpan StateDirectoryCleanupTimeout = TimeSpan.FromMinutes(15);
+        // Left to the lane after this test for collecting logs and reporting.
+        private static readonly TimeSpan LaneReportingMargin = TimeSpan.FromMinutes(15);
+
         [Timeout(172800000)] //48 hours
         [Category("RpcPruning")]
         [NethermindTest]
@@ -51,7 +61,12 @@ namespace NethermindNode.Tests.Tests.Pruning
             Assert.That(stateDirectories.Length == 2, "Pruning active - backup state directory should be created.");
 
             // Verify Logs
-            CancellationTokenSource cts = new CancellationTokenSource();
+            DateTime pruningDeadline = GetFullPruningDeadline();
+            TimeSpan pruningBudget = pruningDeadline - DateTime.UtcNow;
+            Assert.That(pruningBudget, Is.GreaterThan(TimeSpan.Zero), $"No time left in the lane budget to wait for full pruning (deadline {pruningDeadline:u}).");
+
+            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ForceStopWatcher.Token);
+            cts.CancelAfter(pruningBudget);
 
             string[] expectedLogs =
             {
@@ -64,7 +79,7 @@ namespace NethermindNode.Tests.Tests.Pruning
             };
 
             HashSet<string> missingLogs = new HashSet<string>(expectedLogs);
-            List<string> foundLogs = new List<string>();
+            string? lastPruningLog = null;
 
             try
             {
@@ -73,7 +88,13 @@ namespace NethermindNode.Tests.Tests.Pruning
                     if (!line.Contains("Full Pruning") && !line.Contains("Disposing"))
                         continue;
 
-                    foreach (var expectedLog in missingLogs)
+                    if (line.Contains("Full Pruning"))
+                        lastPruningLog = line;
+
+                    if (line.Contains("Full Pruning Failed") || line.Contains("Full Pruning Cancelled"))
+                        Assert.Fail($"Full pruning aborted: {line}");
+
+                    foreach (var expectedLog in missingLogs.ToList())
                     {
                         if (!line.Contains(expectedLog))
                         {
@@ -81,25 +102,43 @@ namespace NethermindNode.Tests.Tests.Pruning
                         }
 
                         TestLoggerContext.Logger.Info($"Log found: \"{line}\" - Expected log: {expectedLog}");
-                        foundLogs.Add(expectedLog);
                         missingLogs.Remove(expectedLog);
                     }
 
-                    if (foundLogs.Count == expectedLogs.Length)
+                    if (missingLogs.Count == 0)
                     {
                         break;
                     }
                 }
             }
-            catch (OperationCanceledException)
+            catch (Exception e) when (cts.IsCancellationRequested && e is not AssertionException)
             {
-                TestLoggerContext.Logger.Info("Operation was canceled.");
+                ForceStopWatcher.ThrowIfStopRequested();
+                Assert.Fail($"Full pruning did not finish within {pruningBudget.TotalMinutes:F0} min (deadline {pruningDeadline:u}). Missing logs: {string.Join(", ", missingLogs)}. Last progress: {lastPruningLog ?? "none"}");
             }
 
-            //Wait for 30 seconds for data to be properly removed.
-            Thread.Sleep(30000);
+            Assert.That(missingLogs, Is.Empty, $"Execution client log stream ended before full pruning finished. Last progress: {lastPruningLog ?? "none"}");
+
+            DateTime cleanupDeadline = DateTime.UtcNow + StateDirectoryCleanupTimeout;
             stateDirectories = Directory.GetDirectories(statePath);
-            Assert.That(stateDirectories.Length, Is.EqualTo(1), "After Pruning directories length should be back on 1.");
+            while (stateDirectories.Length != 1 && DateTime.UtcNow < cleanupDeadline)
+            {
+                ForceStopWatcher.ThrowIfStopRequested();
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                stateDirectories = Directory.GetDirectories(statePath);
+            }
+
+            Assert.That(stateDirectories.Length, Is.EqualTo(1), $"After pruning only one state directory should remain, but {StateDirectoryCleanupTimeout.TotalMinutes:F0} min after \"Disposing DB State\" found: [{string.Join(", ", stateDirectories)}]");
+        }
+
+        private static DateTime GetFullPruningDeadline()
+        {
+            if (long.TryParse(Environment.GetEnvironmentVariable(LaneDeadlineEnvVar), out long laneDeadlineEpoch) && laneDeadlineEpoch > 0)
+            {
+                return DateTimeOffset.FromUnixTimeSeconds(laneDeadlineEpoch).UtcDateTime - StateDirectoryCleanupTimeout - LaneReportingMargin;
+            }
+
+            return DateTime.UtcNow + DefaultFullPruningTimeout;
         }
 
         [Category("RpcPruningInfinity")]

@@ -9,6 +9,7 @@ Restart=no
 ExecStart=dotnet test NethermindNode.Tests/NethermindNode.Tests.csproj -c Release --logger:"nunit;LogFilePath=%WORKINGDIR%/test-result.xml" --filter %CATEGORIES% --settings:NUnit.runsettings
 Environment=DOTNET_CLI_HOME=/tmp/
 Environment=UPGRADE_TARGET_VERSION=%UPGRADE_TARGET_VERSION%
+Environment=TESTS_DEADLINE_EPOCH=%TESTS_DEADLINE_EPOCH%
 StandardOutput=file:%WORKINGDIR%/testsOutput.log
 StandardError=file:%WORKINGDIR%/testsErrors.log
 

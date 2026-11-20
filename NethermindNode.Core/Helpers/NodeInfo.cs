@@ -261,9 +261,24 @@ public static class NodeInfo
         }
     }
 
+    /// <summary>
+    /// Reads a config item via <c>debug_getConfigValue</c>, accepting the short category ("Sync").
+    /// </summary>
+    /// <remarks>
+    /// Nethermind's sources disagree on the category spelling: CLI args and env vars are keyed on the
+    /// short form (<c>--Sync.PivotNumber</c>, <c>NETHERMIND_SYNC_PIVOTNUMBER</c>), while values from the
+    /// network's JSON config are keyed on <c>SyncConfig</c>. So the short form misses everything the chain
+    /// config sets, and Sync.PivotNumber came back null on a snap-synced RC node (run 44486333256,
+    /// JsonRpcML/JsonRpcGL walked uncapped for 6 h). The long form misses CLI overrides, so try the short
+    /// form first to keep their precedence and fall back to the long one.
+    /// </remarks>
     public static async Task<SingleResult> GetConfigValue(Logger logger, string category, string key)
     {
         var res = await HttpExecutor.ExecuteAndSerialize<SingleResult>("debug_getConfigValue", $"\"{category}\", \"{key}\"", apiBaseUrl, logger);
+        if (res?.Result == null && !category.EndsWith("Config", StringComparison.OrdinalIgnoreCase))
+        {
+            res = await HttpExecutor.ExecuteAndSerialize<SingleResult>("debug_getConfigValue", $"\"{category}Config\", \"{key}\"", apiBaseUrl, logger);
+        }
         return res;
     }
 
